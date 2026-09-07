@@ -19,13 +19,15 @@ Phase 1 — Chart Core foundation.
 - RSI 14 oscillator adapter and secondary chart pane are implemented; adapter behavior is covered by unit tests.
 - Package source entrypoints and a dedicated production-package TypeScript typecheck gate are implemented and verified by CI run 120.
 - Primary logical-range changes now propagate to the RSI pane through a local chart-range synchronization bus; CI run 135 verified typecheck, tests, and production build.
-- Crosshair synchronization bus primitives and immutable drawing-state operations are now implemented with unit coverage.
+- Crosshair synchronization is wired between the primary and RSI Lightweight Charts instances, including clear-on-leave behavior.
+- Drawing interaction primitives are covered by unit tests and the chart toolbar now places two-point line/trendline drawings through the chart-engine drawing-state contract.
+- Drawings render as chart line series, can be selected, and can be deleted with the toolbar or Delete/Backspace; Escape cancels the active drawing tool/selection.
 
 ## Immediate tasks
-- Wire the crosshair bus into the primary and RSI chart instances using the Lightweight Charts v5 crosshair APIs.
-- Wire drawing-state operations into the chart workspace without bypassing the chart-engine contract.
+- Add editing/drag handles for selected drawing points without bypassing chart-engine state transitions.
+- Persist drawing state through a versioned workspace contract; local-only drawing state is not yet durable across devices/sessions.
 - Improve chart interaction primitives: cursor, zoom/pan, symbol/timeframe state, and indicator configuration.
-- Add persistent indicator/drawing configuration only after the workspace contract is expanded safely.
+- Add persistent indicator configuration only after the workspace contract is expanded safely.
 - Replace the demo market boundary only with a licensed provider and authenticated/durable production services.
 
 ## Rule
