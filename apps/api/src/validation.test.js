@@ -39,11 +39,13 @@ describe("market request validation", () => {
     });
   });
 
-  it("rejects malformed screener fields, groups, symbols, and limits", () => {
+  it("rejects malformed screener fields, groups, symbols, limits, and cursors", () => {
     expect(() => parseScreenerRequest({ filters: [{ field: "unknown", operator: "gt", value: 1 }] })).toThrow("field");
     expect(() => parseScreenerRequest({ groups: [{ logic: "xor", filters: [] }] })).toThrow("logic");
     expect(() => parseScreenerRequest({ symbols: ["AAPL"] })).toThrow("EXCHANGE:TICKER");
     expect(() => parseScreenerRequest({ limit: 101 })).toThrow("limit");
     expect(() => parseScreenerRequest({ filters: [{ field: "peRatio", operator: "between", value: 20, upperValue: 10 }] })).toThrow("upperValue");
+    expect(() => parseScreenerRequest({ cursor: "" })).toThrow("cursor");
+    expect(() => parseScreenerRequest({ cursor: "x".repeat(513) })).toThrow("cursor");
   });
 });
