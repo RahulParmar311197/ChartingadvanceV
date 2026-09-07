@@ -40,3 +40,6 @@
 - Deterministic demo fundamentals API adapter added with explicit stale/simulated metadata.
 - Screener HTTP endpoint added with symbol selection and full query/filter/group support.
 - Centralized screener request validation added for fields, operators, ranges, groups, symbols, limits, cursors, and query objects, with regression coverage.
+- Browser screener API client added with local validation and normalized query serialization.
+- Fundamentals screener panel integrated into the workspace with filter controls, deterministic ranking, score display, freshness status, and explicit simulated-data disclosure.
+- Browser screener client regression tests and TypeScript/JavaScript runtime conformance tests added.
