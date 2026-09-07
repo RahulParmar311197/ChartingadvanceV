@@ -7,6 +7,9 @@
 - Added a deterministic demo fundamentals API endpoint and centralized HTTP request validation for symbols, filters, groups, operators, ranges, limits, cursors, and full query objects.
 - Added regression coverage for the complete screener request-validation boundary.
 - Kept demo screener pagination explicit: the provider returns no next cursor because the demo dataset has no additional page.
+- Added a browser screener API client with local filter validation and normalized query serialization.
+- Integrated a fundamentals screener panel into the workspace with filter controls, deterministic ranking/score display, freshness status, and explicit simulated-data disclosure.
+- Added browser-client regression tests and TypeScript/JavaScript runtime conformance coverage.
 
 ## 2026-09-07
 - Added deterministic backtesting support for opt-in short positions, average-entry tracking, realized P&L, win rate, profit factor, net/average trade P&L, maximum drawdown, equity curve, and Sharpe-style performance measurement.
