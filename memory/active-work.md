@@ -15,17 +15,21 @@ Phase 6 — Screener/fundamentals provider hardening and application workflows.
 - PostgreSQL portfolio saves now use optimistic account-version checks, including initial durable portfolio initialization.
 - Paper application service now has an injected asynchronous repository boundary, allowing the same application workflow to use memory or PostgreSQL without provider-specific branching.
 - API startup now supports explicit `PAPER_PERSISTENCE=postgres` with `DATABASE_URL`; development defaults remain deterministic in-memory, while `NODE_ENV=production` defaults to PostgreSQL and fails fast if `DATABASE_URL` is absent.
-- Added PostgreSQL adapter contract tests for optimistic portfolio writes, stale writes, transaction commit, rollback, and error preservation.
+- Added PostgreSQL adapter contract tests for row mapping, optimistic portfolio writes, stale writes, commit, and rollback behavior.
 - Wired the versioned PostgreSQL workspace repository/application service into the API durable mode while preserving the legacy in-memory demo workspace mode.
 - Added workspace ETag/revision metadata and 409 optimistic-concurrency handling for durable updates.
 - Restored workspace application validation at the persistence boundary and aligned the TypeScript workspace contract with the actual application state shape.
-- Wrapped paper order submission, cancellation, and replacement in the repository transaction boundary when available, making PostgreSQL order/fill/portfolio/ledger/audit mutation sequences atomic.
-- Added application regression coverage proving lifecycle mutations enter the transaction boundary.
+- Paper lifecycle submission, cancellation, and replacement now run through repository transactions when supported.
+- In-memory transactions now roll back all paper aggregate stores on failure.
+- PostgreSQL account initialization is conflict-safe for concurrent first creation.
+- Migration runner is reusable from integration tests and uses filesystem-safe path conversion.
+- Real PostgreSQL integration tests cover idempotent migrations, restart/recovery, and optimistic concurrent portfolio writes.
+- CI now provisions PostgreSQL 16 for the integration suite.
 
 ## Immediate tasks
-- Add real-database restart/recovery and concurrent lifecycle integration tests, plus migration smoke coverage against PostgreSQL.
-- Harden concurrent durable account initialization so first-use races cannot produce duplicate-account failures.
-- Continue backtesting application integration, then dedicated script runtime, community, authentication, and production hardening in roadmap order.
+- Verify the new PostgreSQL CI run end-to-end; investigate any integration failures before treating durable persistence as verified.
+- Add a concurrent paper-order submission regression for duplicate client IDs and ensure the losing transaction is handled as an idempotent duplicate rather than leaking a database uniqueness error.
+- Continue backtesting application integration after persistence verification.
 
 ## Rule
 When a task is completed, move it to `memory/completed-work.md` and update `docs/PROJECT_STATE.md`.
