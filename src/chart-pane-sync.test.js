@@ -38,4 +38,12 @@ describe("chart pane synchronization", () => {
     publishChartCrosshair("primary", { time: 124, price: 457 });
     expect(listener).toHaveBeenCalledTimes(1);
   });
+
+  it("publishes a null payload when the source crosshair leaves the chart", () => {
+    const listener = vi.fn();
+    const unsubscribe = subscribeChartCrosshair("primary", listener);
+    publishChartCrosshair("primary", null);
+    expect(listener).toHaveBeenCalledWith(null);
+    unsubscribe();
+  });
 });
