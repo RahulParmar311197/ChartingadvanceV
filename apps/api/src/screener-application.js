@@ -24,17 +24,13 @@ export function createScreenerApplication({ provider, providerName = DEFAULT_PRO
       const fingerprint = screenerRequestFingerprint(request);
       let providerCursor;
       if (request.cursor !== undefined) {
-        const continuation = await continuationRepository.consume({
-          continuationId: request.cursor,
-          ownerId,
-          requestFingerprint: fingerprint,
-          providerName,
-        });
+        const continuation = await continuationRepository.consume({ continuationId: request.cursor, ownerId, requestFingerprint: fingerprint, providerName });
         if (!continuation) throw new Error("invalid or expired screener cursor");
         providerCursor = continuation.providerCursor;
       }
 
-      const result = await runScreener(provider, { ...request, cursor: providerCursor });
+      const { ownerId: _ownerId, ...providerRequest } = request;
+      const result = await runScreener(provider, { ...providerRequest, cursor: providerCursor });
       if (result.nextCursor === undefined) return { ...result, nextCursor: undefined };
 
       const storedId = await continuationRepository.create({
