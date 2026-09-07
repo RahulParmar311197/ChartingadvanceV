@@ -11,7 +11,7 @@ export type FundamentalField =
 
 export interface FundamentalSnapshot {
   symbolId: string;
-  asOf: number;
+  asOf: number; // Unix epoch seconds, UTC.
   marketCap?: number;
   peRatio?: number;
   priceToBook?: number;
