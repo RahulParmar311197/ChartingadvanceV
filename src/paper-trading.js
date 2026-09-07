@@ -13,6 +13,18 @@ export function fetchPaperPortfolio(apiUrl = DEFAULT_API_URL, userId = DEMO_USER
   return request("/v1/paper/portfolio", {}, apiUrl, userId);
 }
 
+export function fetchPaperAudit(apiUrl = DEFAULT_API_URL, userId = DEMO_USER_ID, limit = 50) {
+  return request(`/v1/paper/audit?limit=${encodeURIComponent(limit)}`, {}, apiUrl, userId);
+}
+
 export function submitPaperOrder(order, apiUrl = DEFAULT_API_URL, userId = DEMO_USER_ID) {
   return request("/v1/paper/orders", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(order) }, apiUrl, userId);
+}
+
+export function cancelPaperOrder(orderId, apiUrl = DEFAULT_API_URL, userId = DEMO_USER_ID) {
+  return request(`/v1/paper/orders/${encodeURIComponent(orderId)}`, { method: "DELETE" }, apiUrl, userId);
+}
+
+export function replacePaperOrder(orderId, replacement, apiUrl = DEFAULT_API_URL, userId = DEMO_USER_ID) {
+  return request(`/v1/paper/orders/${encodeURIComponent(orderId)}`, { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(replacement) }, apiUrl, userId);
 }
