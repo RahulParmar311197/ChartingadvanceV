@@ -1,5 +1,6 @@
-import { afterEach, describe, expect, it } from "vitest";
-import { cancelPaperOrder, getPaperAudit, getPaperPortfolio, replacePaperOrder, resetPaperTradingStore, submitPaperOrder } from "./paper-trading.js";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { cancelPaperOrder, createPaperTradingService, getPaperAudit, getPaperPortfolio, replacePaperOrder, resetPaperTradingStore, submitPaperOrder } from "./paper-trading.js";
+import { createPaperRepository } from "./paper-repository.js";
 
 afterEach(async () => resetPaperTradingStore());
 
@@ -37,5 +38,15 @@ describe("paper trading application service", () => {
   });
   it("limits audit reads and keeps them isolated by user", async () => {
     await submitPaperOrder("user-a", { id: "one", symbolId: "NASDAQ:AAPL", side: "buy", type: "market", quantity: 1 }, 1_000); await submitPaperOrder("user-a", { id: "two", symbolId: "NASDAQ:MSFT", side: "buy", type: "market", quantity: 1 }, 2_000); expect(await getPaperAudit("user-a", 2)).toHaveLength(2); expect(await getPaperAudit("user-b")).toEqual([]);
+  });
+  it("wraps accepted paper lifecycle mutations in repository transactions", async () => {
+    const repository = createPaperRepository();
+    const transactionSpy = vi.spyOn(repository, "runTransaction");
+    const service = createPaperTradingService(repository);
+    await service.submitPaperOrder("user-a", { id: "tx-order", symbolId: "NASDAQ:AAPL", side: "buy", type: "market", quantity: 1 }, 1_000);
+    expect(transactionSpy).toHaveBeenCalledTimes(1);
+    await service.submitPaperOrder("user-a", { id: "tx-limit", symbolId: "NASDAQ:AAPL", side: "buy", type: "limit", quantity: 1, limitPrice: 0.01 }, 2_000);
+    await service.cancelPaperOrder("user-a", "tx-limit", 3_000);
+    expect(transactionSpy).toHaveBeenCalledTimes(3);
   });
 });
