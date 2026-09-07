@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fetchPaperPortfolio, submitPaperOrder } from "./paper-trading.js";
+import { cancelPaperOrder, fetchPaperAudit, fetchPaperPortfolio, replacePaperOrder, submitPaperOrder } from "./paper-trading.js";
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -16,8 +16,21 @@ describe("paper trading browser client", () => {
     expect(fetchMock.mock.calls[0][1].headers).toMatchObject({ "x-demo-user-id": "user-a", "content-type": "application/json" });
   });
 
+  it("serializes lifecycle endpoints with the demo identity", async () => {
+    const response = { ok: true, json: vi.fn().mockResolvedValue({ data: {} }) };
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(response);
+    await cancelPaperOrder("order/1", "http://api.test", "user-a");
+    await replacePaperOrder("order/1", { quantity: 2 }, "http://api.test", "user-a");
+    await fetchPaperAudit("http://api.test", "user-a", 25);
+    expect(fetchMock.mock.calls.map(([url, options]) => [url, options.method, options.headers["x-demo-user-id"]])).toEqual([
+      ["http://api.test/v1/paper/orders/order%2F1", "DELETE", "user-a"],
+      ["http://api.test/v1/paper/orders/order%2F1", "PUT", "user-a"],
+      ["http://api.test/v1/paper/audit?limit=25", undefined, "user-a"],
+    ]);
+  });
+
   it("surfaces API errors to the panel", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValue({ ok: false, status: 422, json: vi.fn().mockResolvedValue({ error: { message: "short positions are disabled" } }) });
-    await expect(submitPaperOrder({ symbolId: "NASDAQ:AAPL", side: "sell", type: "market", quantity: 1 }, "http://api.test")).rejects.toThrow("short positions are disabled");
+    vi.spyOn(globalThis, "fetch").mockResolvedValue({ ok: false, status: 422, json: vi.fn().mockResolvedValue({ error: { message: "order is terminal: filled" } }) });
+    await expect(cancelPaperOrder("filled", "http://api.test")).rejects.toThrow("order is terminal: filled");
   });
 });
