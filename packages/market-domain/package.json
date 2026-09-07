@@ -1,5 +1,10 @@
 {
   "name": "@chartingadvancev/market-domain",
   "private": true,
-  "type": "module"
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./demo-provider": "./src/demo-provider.ts",
+    "./realtime": "./src/realtime.ts"
+  }
 }
