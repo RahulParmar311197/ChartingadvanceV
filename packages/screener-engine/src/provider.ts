@@ -30,6 +30,12 @@ export interface ScreenerApplicationResult {
 const MAX_PAGE_SIZE = 100;
 const MAX_CURSOR_LENGTH = 512;
 
+function validateCursor(cursor: unknown, label: string): void {
+  if (typeof cursor !== 'string' || cursor.length === 0 || cursor.length > MAX_CURSOR_LENGTH) {
+    throw new Error(`${label} must be a non-empty string of at most 512 characters`);
+  }
+}
+
 function validateProviderPage(page: FundamentalsPage): void {
   if (!page || typeof page !== 'object') throw new Error('provider page must be an object');
   if (!Array.isArray(page.items)) throw new Error('provider items must be an array');
@@ -37,8 +43,9 @@ function validateProviderPage(page: FundamentalsPage): void {
   if (page.staleAt != null && (!Number.isFinite(page.staleAt) || page.staleAt < page.asOf)) {
     throw new Error('provider staleAt must be finite and >= asOf');
   }
-  if (page.nextCursor != null && (typeof page.nextCursor !== 'string' || page.nextCursor.length === 0 || page.nextCursor.length > MAX_CURSOR_LENGTH)) {
-    throw new Error('provider nextCursor must be a non-empty string of at most 512 characters');
+  if (page.nextCursor != null) validateCursor(page.nextCursor, 'provider nextCursor');
+  if (page.nextCursor != null && page.items.length === 0) {
+    throw new Error('provider cannot return an empty page with nextCursor');
   }
 }
 
@@ -50,9 +57,7 @@ export async function runScreener(
   if (!Number.isFinite(now)) throw new Error('now must be finite');
   const limit = request.limit ?? request.query?.limit ?? 25;
   if (!Number.isInteger(limit) || limit < 1 || limit > MAX_PAGE_SIZE) throw new Error('limit must be an integer from 1 to 100');
-  if (request.cursor != null && (typeof request.cursor !== 'string' || request.cursor.length === 0 || request.cursor.length > MAX_CURSOR_LENGTH)) {
-    throw new Error('cursor must be a non-empty string of at most 512 characters');
-  }
+  if (request.cursor != null) validateCursor(request.cursor, 'cursor');
 
   const page = await provider.getFundamentals({ ...request, limit });
   validateProviderPage(page);
