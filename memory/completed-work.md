@@ -45,3 +45,6 @@
 - Browser screener API client added with local validation and normalized query serialization.
 - Fundamentals screener panel integrated into the workspace with filter controls, deterministic ranking, score display, freshness status, and explicit simulated-data disclosure.
 - Browser screener client regression tests and TypeScript/JavaScript runtime conformance tests added.
+- Paper-trading application service added with isolated demo-user accounts, risk admission, order lifecycle submission, deterministic demo execution, fill application, and portfolio retrieval.
+- Paper-only HTTP portfolio and order-submission endpoints added with explicit simulated metadata and no brokerage execution path.
+- Paper-trading application regression coverage added for successful fills, account isolation, risk rejection, short-sale rejection, and untriggered limit orders.
