@@ -55,17 +55,17 @@ Phase 6 — Screener/fundamentals application integration in progress; chart cor
 - PostgreSQL order insertion now uses an atomic `insertOrderIfAbsent` repository contract backed by `ON CONFLICT (account_id,order_id) DO NOTHING`; duplicate-order handling no longer raises a unique-key exception inside the active lifecycle transaction.
 - Real PostgreSQL integration coverage added for idempotent migrations, restart/recovery, concurrent optimistic portfolio writes, and concurrent duplicate client-order races.
 - CI provisions PostgreSQL 16 and runs the real integration suite alongside package typecheck, unit/integration tests, and production build.
-- Application-level backtest boundary with bounded candle input, allowlisted Buy & Hold strategy execution, optional benchmark comparison, and explicit deterministic-simulation metadata.
+- Application-level backtest boundary with bounded candle input, allowlisted deterministic strategies, optional benchmark comparison, and explicit deterministic-simulation metadata.
 - `POST /v1/backtest` HTTP integration and browser API client.
-- Strategy Tester workspace panel with deterministic Buy & Hold controls, performance metrics, equity visualization, and explicit simulation limitations.
-- Browser strategy-tester regression coverage for successful requests and structured API errors.
+- Strategy Tester workspace panel with fixed allowlisted Buy & Hold and Candle Direction strategies, performance metrics, equity visualization, and explicit simulation limitations.
+- Browser strategy-tester regression coverage for successful requests and structured API errors, including the second built-in strategy.
 
 ## Not production-ready
 Market-data and fundamentals implementations are deterministic demo data. No licensed live exchange/fundamentals feeds, durable production market database, authenticated user system, production WebSocket gateway, alerts worker, or real order execution exists.
 
 Paper trading and backtesting are simulation/domain logic only. They do not claim broker execution, margin, exchange microstructure, historical-data completeness, or real-money guarantees. The `x-demo-user-id` identity boundary is not authenticated production identity. Mark-to-market valuation uses deterministic demo quotes.
 
-The backtest API intentionally accepts only a registered built-in strategy and never evaluates arbitrary JavaScript/Pine/code. The current built-in strategy is Buy & Hold. Candle-level execution does not model intrabar ordering, queue position, partial fills, borrow fees, margin calls, or corporate actions.
+The backtest API intentionally accepts only registered built-in strategies and never evaluates arbitrary JavaScript/Pine/code. Current built-ins are Buy & Hold and Candle Direction. Candle-level execution does not model intrabar ordering, queue position, partial fills, borrow fees, margin calls, or corporate actions.
 
 ## Verification
 - CI run 34099627805 on commit `601421f` passed package typecheck, the full test suite, and production Vite build.
@@ -73,6 +73,7 @@ The backtest API intentionally accepts only a registered built-in strategy and n
 - PostgreSQL integration CI run 34101299681 completed successfully for the PostgreSQL-enabled integration slice.
 - CI run 34103300368 on commit `631f686` passed package typecheck, the full test suite, and production Vite build.
 - CI run 34104366664 on commit `4901bb1` passed PostgreSQL provisioning, package typecheck, the full test suite, and production build, including the concurrent duplicate-order race integration test.
+- Strategy runtime expansion commits `3124545`, `88fc6dc`, and `ec08cec` require fresh CI verification.
 
 ## Current risks / gaps
 - Demo identity must be bound to authenticated identity before production user isolation.
@@ -84,4 +85,4 @@ The backtest API intentionally accepts only a registered built-in strategy and n
 - Dedicated script runtime, community, authentication, deployment, and production security remain planned.
 
 ## Next implementation slice
-Expand the strategy runtime boundary with a second deterministic, allowlisted strategy while preserving the no-arbitrary-code contract, then add interval-aware performance annualization.
+Add interval-aware performance annualization to the deterministic strategy engine, with explicit period assumptions in the API metadata and regression coverage across intraday, daily, weekly, and monthly intervals.
