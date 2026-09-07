@@ -1,0 +1,16 @@
+{
+  "name": "ChartingadvanceV",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-20-bookworm",
+  "forwardPorts": [5173, 8787, 8788],
+  "portsAttributes": {
+    "5173": { "label": "ChartingadvanceV", "onAutoForward": "openBrowser" },
+    "8787": { "label": "Market API", "onAutoForward": "notify" },
+    "8788": { "label": "Market WebSocket", "onAutoForward": "silent" }
+  },
+  "postCreateCommand": "npm install",
+  "customizations": {
+    "vscode": {
+      "extensions": ["dbaeumer.vscode-eslint", "vitest.explorer"]
+    }
+  }
+}
