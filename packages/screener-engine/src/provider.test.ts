@@ -79,4 +79,11 @@ describe('fundamentals application boundary', () => {
     await expect(runScreener(provider, {})).rejects.toThrow('provider nextCursor must be a non-empty string');
     await expect(runScreener(provider, { cursor: '' })).rejects.toThrow('cursor must be a non-empty string');
   });
+
+  it('rejects an empty page that claims another page exists', async () => {
+    const provider: FundamentalsProvider = {
+      async getFundamentals() { return { items: [], asOf: 100, nextCursor: 'page:2' }; },
+    };
+    await expect(runScreener(provider, {})).rejects.toThrow('provider cannot return an empty page with nextCursor');
+  });
 });
