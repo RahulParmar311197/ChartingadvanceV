@@ -1,6 +1,12 @@
 # Changelog
 
 ## 2026-09-07
+- Hardened PostgreSQL portfolio persistence with optimistic account-version checks, including initial portfolio initialization and stale-write rejection.
+- Converted the paper application service to an injected asynchronous repository boundary so durable and in-memory persistence share the same application workflow.
+- Added explicit `PAPER_PERSISTENCE=postgres` API startup mode backed by `DATABASE_URL`; development remains deterministic/in-memory by default and production defaults to PostgreSQL with fail-fast configuration.
+- Added PostgreSQL adapter contract tests for account mapping, portfolio concurrency, transaction commit, rollback, and error preservation.
+
+## 2026-09-07
 - Added a PostgreSQL paper-trading repository adapter using an injected pool/transaction boundary, optimistic order/account updates, idempotent fill/ledger/audit writes, and account-scoped reads.
 - Added a PostgreSQL migration runner with ordered, transactional migration application and a schema-migrations ledger.
 - Added migration `002_paper_positions.sql` so position snapshots survive process restart alongside paper account state.
