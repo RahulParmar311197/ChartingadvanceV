@@ -42,36 +42,38 @@ Phase 6 — Screener/fundamentals application integration in progress; chart cor
 - Regression coverage for cancellation, replacement, terminal-order protection, audit ordering, user isolation, and bounded audit reads.
 - Paper portfolio application valuation now marks every held symbol to the deterministic quote, updates unrealized P&L and equity without mutating cash, and exposes valuation through the existing portfolio response.
 - Trading-engine valuation regression coverage verifies long-position marking and safe behavior for positions without a current mark.
-- Trading Panel now surfaces open paper orders from bounded audit state and provides Cancel/Replace controls wired to the paper lifecycle API.
-- Browser lifecycle client regression coverage verifies URL encoding, HTTP methods, identity propagation, and API error propagation.
-- Durable paper persistence boundary documented with account/order/fill/ledger/audit aggregates, repository operations, transactional invariants, optimistic concurrency, idempotency, authorization separation, and migration strategy.
+- Durable paper persistence boundary documented with account/order/fill/ledger/audit aggregates, repository operations, transactional invariants, optimistic concurrency, authorization separation, and migration strategy.
 - In-memory repository adapter added to exercise the durable contract without coupling the trading engine to storage infrastructure; repository tests cover account version conflicts, account-scoped order IDs, stale order transitions, and idempotent audit appends.
+- Paper application state migrated from direct service Maps to the repository adapter; terminal orders remain queryable and lifecycle transitions are validated against stored status.
+- Canonical `GET /v1/paper/orders` endpoint and browser order-list client method added; Trading Panel now derives open orders from canonical order records rather than a bounded audit reconstruction.
+- CORS now explicitly permits the paper-order `DELETE` method.
+- Versioned workspace persistence contract added with schema version, owner binding, monotonic revisions, authorization checks, and regression coverage.
 
 ## Not production-ready
 The market-data and fundamentals implementations are deterministic demo data. No licensed live exchange/fundamentals feeds, durable production market database, authenticated user system, production WebSocket gateway, alerts worker, or real order execution exists.
 
-The workspace API remains intentionally in-memory and demo-only. Drawing state remains browser-session state until a versioned authorized workspace schema is implemented.
+The workspace API remains intentionally in-memory and demo-only. Drawing state remains browser-session state until the versioned workspace repository is integrated with authenticated identity and durable storage.
 
-Paper trading and backtesting are simulation/domain logic only. They do not claim broker execution, margin, exchange microstructure, historical-data completeness, or real-money guarantees. The current paper application uses deterministic demo quotes with bid/ask equal to the generated demo last price, a fixed demo fee rate, a bounded notional/position policy, and no short selling. Paper order lifecycle/audit state is still in-memory demo state and is not durable across process restart. Mark-to-market valuation is likewise based on the deterministic demo quote and is not a live valuation feed.
+Paper trading and backtesting are simulation/domain logic only. They do not claim broker execution, margin, exchange microstructure, historical-data completeness, or real-money guarantees. The current paper application uses deterministic demo quotes with bid/ask equal to the generated demo last price, a fixed demo fee rate, a bounded notional/position policy, and no short selling. Paper order state is now behind an application repository boundary but the active adapter remains in-memory and is not durable across process restart. Mark-to-market valuation is likewise based on the deterministic demo quote and is not a live valuation feed.
 
 The screener API has a pagination contract but the deterministic demo provider currently has no additional pages and therefore returns no next cursor. This is intentional; no fake pagination state is exposed.
 
 ## Verification
 - Previous CI run 168 passed package typecheck, all tests, and the production Vite build.
 - CI run 176 completed the substantive install, package typecheck, full test suite, and production build successfully for the previous project-state transition.
-- Latest paper-trading commits require fresh CI verification; GitHub currently reports no workflow status checks for the recent main commits.
+- Fresh CI verification is still required for the repository-backed paper and workspace persistence changes; no current green status is being claimed.
 
 ## Current risks / gaps
 - Backtest Sharpe annualization currently assumes 252 periods/year; interval-aware annualization remains future work.
 - Backtest benchmark comparison is deterministic buy-and-hold over supplied benchmark candles; durable application-level integration remains future work.
 - Backtest execution is candle-level and does not model intrabar ordering, queue position, partial fills, borrow fees, margin calls, or corporate actions.
 - Screener needs a real fundamentals provider, durable provider pagination, and freshness/completeness policy before production use.
-- Drawing handles, rays, richer geometry, and versioned server persistence remain future work.
+- Drawing handles, rays, richer geometry, and durable server persistence remain future work.
 - Realtime stream currently sends an initial quote snapshot only; candle streaming, heartbeats, provider failover, rate limits, and observability remain future work.
-- Paper service migration from direct Maps to the repository interface and a concrete durable database adapter remain future work.
-- Versioned authorized workspace persistence remains future work.
+- Paper service still needs a concrete durable database adapter/schema, restart/recovery tests, and transaction/concurrency verification.
+- Versioned workspace repository integration, authenticated authorization, and durable storage remain future work.
 - Alerts still need persistence, scheduler/worker delivery, webhook/notification adapters, idempotency, and application/UI integration.
 - Dedicated script runtime, community, authentication, durable persistence, deployment, and production security remain planned.
 
 ## Next implementation slice
-Migrate the paper application service from direct Maps to the repository interface while preserving behavior, then add the concrete durable database schema/adapter.
+Add the concrete durable paper database schema/adapter and restart/concurrency verification, then integrate versioned workspace persistence into the API.
