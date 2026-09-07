@@ -18,8 +18,8 @@ describe("RSI oscillator adapter", () => {
       label: "RSI 3",
       points: [
         { time: 103, value: 66.66666666666666 },
-        { time: 104, value: 80 },
-        { time: 105, value: 57.14285714285714 },
+        { time: 104, value: 83.33333333333333 },
+        { time: 105, value: 60.6060606060606 },
       ],
     });
   });
