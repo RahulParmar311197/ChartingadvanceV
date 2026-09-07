@@ -28,7 +28,15 @@ describe('fundamentals application boundary', () => {
     expect(calls).toEqual([expect.objectContaining({ cursor: 'page:2', limit: 1 })]);
     expect(result.items.map(item => item.snapshot.symbolId)).toEqual(['NYSE:BBB']);
     expect(result.nextCursor).toBe('page:3');
+    expect(result.completeness).toEqual({ status: 'partial', reason: 'provider-pagination' });
     expect(result.freshness).toEqual({ asOf: 100, staleAt: undefined, stale: false });
+  });
+
+  it('marks an exhausted provider page complete', async () => {
+    const provider: FundamentalsProvider = { async getFundamentals() { return { items: snapshots, asOf: 100 }; } };
+    await expect(runScreener(provider, {}, 150)).resolves.toMatchObject({
+      completeness: { status: 'complete', reason: 'provider-exhausted' },
+    });
   });
 
   it('marks a page stale only at or after staleAt', async () => {
@@ -61,6 +69,14 @@ describe('fundamentals application boundary', () => {
         return { items: snapshots, asOf: 100, nextCursor: 42 as unknown as string };
       },
     };
-    await expect(runScreener(provider, {})).rejects.toThrow('provider nextCursor must be a string');
+    await expect(runScreener(provider, {})).rejects.toThrow('provider nextCursor must be a non-empty string');
+  });
+
+  it('rejects empty provider cursors and empty request cursors', async () => {
+    const provider: FundamentalsProvider = {
+      async getFundamentals() { return { items: snapshots, asOf: 100, nextCursor: '' }; },
+    };
+    await expect(runScreener(provider, {})).rejects.toThrow('provider nextCursor must be a non-empty string');
+    await expect(runScreener(provider, { cursor: '' })).rejects.toThrow('cursor must be a non-empty string');
   });
 });
