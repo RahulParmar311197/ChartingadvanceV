@@ -3,7 +3,7 @@
 Updated: 2026-09-07
 
 ## Status
-Phase 1 — Chart Core foundation in progress; historical API, quote API, demo realtime transport, demo workspace state, web workspace lifecycle, indicator overlays, validation boundaries, and chart interaction primitives are implemented.
+Phase 1 — Chart Core foundation in progress; historical API, quote API, demo realtime transport, demo workspace state, web workspace lifecycle, indicator overlays, validation boundaries, and chart viewport controls are implemented.
 
 ## Implemented
 - React/Vite TradingView-inspired workspace shell with Lightweight Charts candlestick/volume rendering.
@@ -22,6 +22,8 @@ Phase 1 — Chart Core foundation in progress; historical API, quote API, demo r
 - SMA 20 and EMA 50 can be toggled and are rendered as Lightweight Charts line series.
 - Pure market-request and realtime subscription validation boundaries with Vitest coverage.
 - Chart interaction primitives for supported interval cycling, interval validation, and bounded visible-bar state.
+- Chart UI timeframe selection is wired to chart data reloads.
+- Chart viewport controls now maintain a bounded visible-bar window and expose zoom-in/zoom-out controls in the chart toolbar.
 - CI runs `npm install`, `npm test`, and `npm run build`.
 
 ## Not production-ready
@@ -31,7 +33,8 @@ The workspace API is intentionally in-memory and `x-demo-user-id` is not authent
 
 ## Verification
 - GitHub Actions run 85 passed the complete `npm install`, `npm run test`, and `npm run build` gate after the CI cache fix.
-- The subsequent chart-interaction commits require a new CI run before being treated as fully verified.
+- GitHub Actions run 88 passed the complete `npm install`, `npm run test`, and `npm run build` gate for the chart-interaction slice.
+- The viewport-control commit now requires its own CI run before being treated as fully verified.
 - Local execution verification was attempted previously, but this environment could not resolve `github.com`; CI remains the authoritative verification path.
 
 ## Current risks / gaps
@@ -43,4 +46,4 @@ The workspace API is intentionally in-memory and `x-demo-user-id` is not authent
 - News, screener, Pine runtime, strategy testing, alerts, paper trading, and community systems remain planned rather than implemented.
 
 ## Next implementation slice
-Verify the chart-interaction test/build gate, then wire the interaction primitives into the chart UI and establish the workspace/package build graph. Keep all market outputs explicitly simulated until a licensed provider is integrated.
+Verify the viewport-control test/build gate, then add chart-engine viewport invariants and begin the package build graph. Keep all market outputs explicitly simulated until a licensed provider is integrated.
