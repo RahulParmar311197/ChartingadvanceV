@@ -76,6 +76,8 @@ export function productionConfigErrors(env = process.env) {
   if (env.AUTH_MODE !== "authenticated") errors.push("AUTH_MODE=authenticated is required for production; demo identity is not accepted");
   if (env.MARKET_DATA_MODE !== "live") errors.push("MARKET_DATA_MODE=live is required for production");
   if (env.FUNDAMENTALS_DATA_MODE !== "live") errors.push("FUNDAMENTALS_DATA_MODE=live is required for production");
+  if (env.MARKET_DATA_PROVIDER !== "configured") errors.push("MARKET_DATA_PROVIDER=configured is required; a real provider adapter must be installed before production");
+  if (env.FUNDAMENTALS_DATA_PROVIDER !== "configured") errors.push("FUNDAMENTALS_DATA_PROVIDER=configured is required; a real provider adapter must be installed before production");
   if (env.PAPER_PERSISTENCE !== "postgres") errors.push("PAPER_PERSISTENCE=postgres is required for production");
   if (!env.DATABASE_URL) errors.push("DATABASE_URL is required for production");
   if (!env.SCREENER_CURSOR_ENCRYPTION_KEY) errors.push("SCREENER_CURSOR_ENCRYPTION_KEY is required for production");
