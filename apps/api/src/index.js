@@ -33,6 +33,12 @@ function candles(symbol, interval, from, to) {
   }
   return result;
 }
+function quote(symbol) {
+  const seed = hashSymbol(symbol);
+  const last = 100 + (seed % 500);
+  const changePercent = ((seed % 1000) - 500) / 100;
+  return { symbol, last, change: last * changePercent / 100, changePercent, timestamp: Date.now() };
+}
 function json(res, status, body) {
   res.writeHead(status, { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "access-control-allow-origin": "*" });
   res.end(JSON.stringify(body));
@@ -45,7 +51,12 @@ function parseNumber(value) {
 const server = createServer((req, res) => {
   if (req.method === "OPTIONS") return json(res, 204, null);
   const url = new URL(req.url ?? "/", `http://${req.headers.host ?? "localhost"}`);
-  if (url.pathname === "/health") return json(res, 200, { ok: true, provider: PROVIDER });
+  if (url.pathname === "/health") return json(res, 200, { ok: true, provider: PROVIDER, simulated: true });
+  if (url.pathname === "/v1/market/quote") {
+    const symbol = url.searchParams.get("symbol");
+    if (!symbol || !symbol.includes(":")) return json(res, 400, { error: { code: "INVALID_SYMBOL", message: "symbol must use EXCHANGE:TICKER format" } });
+    return json(res, 200, { data: quote(symbol), meta: { provider: PROVIDER, simulated: true } });
+  }
   if (url.pathname !== "/v1/market/candles") return json(res, 404, { error: { code: "NOT_FOUND", message: "Route not found" } });
 
   const symbol = url.searchParams.get("symbol");
