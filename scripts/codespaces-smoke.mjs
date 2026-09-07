@@ -13,6 +13,7 @@ function start(command, args) {
   const child = spawn(command, args, { env, stdio: ["ignore", "pipe", "pipe"] });
   child.stdout.on("data", (chunk) => process.stdout.write(`[${command}] ${chunk}`));
   child.stderr.on("data", (chunk) => process.stderr.write(`[${command}] ${chunk}`));
+  child.on("error", (error) => process.stderr.write(`[${command}] failed to start: ${error.message}\n`));
   children.push(child);
   return child;
 }
@@ -63,7 +64,9 @@ try {
   await assertJson("/v1/market/quote?symbol=NASDAQ%3AAAPL", (body) => { if (!body.data?.symbol || body.meta?.simulated !== true) throw new Error("quote contract mismatch"); });
   await assertJson("/v1/market/candles?symbol=NASDAQ%3AAAPL&interval=1D&from=1700000000&to=1710000000", (body) => { if (!Array.isArray(body.data) || body.data.length === 0) throw new Error("candle contract mismatch"); });
   await assertJson("/v1/screener/fundamentals?query=%7B%22filters%22%3A%5B%5D%2C%22groups%22%3A%5B%5D%7D&limit=10", (body) => { if (!Array.isArray(body.data?.items)) throw new Error("screener contract mismatch"); });
-  await assertJson("/v1/paper/portfolio", (body) => { if (!body.data?.cash || body.meta?.execution !== "paper-only") throw new Error("paper portfolio contract mismatch"); });
+  await assertJson("/v1/paper/portfolio", (body) => {
+    if (!Number.isFinite(body.data?.account?.cash) || body.meta?.execution !== "paper-only") throw new Error("paper portfolio contract mismatch");
+  });
   await assertJson("/v1/paper/orders", (body) => { if (!Array.isArray(body.data)) throw new Error("paper orders contract mismatch"); });
   await assertJson("/v1/paper/audit", (body) => { if (!Array.isArray(body.data)) throw new Error("paper audit contract mismatch"); });
   await assertJson("/v1/workspace", (body) => { if (!Array.isArray(body.data?.watchlist)) throw new Error("workspace contract mismatch"); });
