@@ -1,37 +1,17 @@
-# MEMORY.md — Durable Project Memory
+# Project Memory
 
-> Mandatory: update this file when durable project knowledge changes.
+## Current truth
+The repository contains a React/Vite TradingView-inspired starter and the project operating system. The chart currently uses generated demo data; it is not a production market-data feed.
 
-## Current identity
-- Project: TradingView Clone
-- Repository: `RahulParmar311197/ChartingadvanceV`
-- Default branch: `main`
-- Current stage: Phase 0 foundation
+## Stable decisions
+- TypeScript is the target language for new production modules.
+- Market-data providers are accessed through adapters.
+- Paper trading is the first trading mode.
+- Pine compatibility is a dedicated subsystem and is not implemented by evaluating arbitrary JavaScript.
+- Persistence and server-side jobs are required for alerts and durable user state.
 
-## Technology baseline
-- React 19
-- Vite 6
-- Lightweight Charts 5
-- Lucide React
-- JavaScript/JSX for the current frontend
+## Working principles
+Prefer small composable packages, explicit interfaces, deterministic calculations, UTC timestamps internally, and user-localized display formatting.
 
-## Current implementation
-- `src/App.jsx` contains the initial workspace shell and demo interactions.
-- `src/styles.css` contains the initial dark charting-workspace styling.
-- Chart data is generated locally for demonstration; it is NOT live market data.
-- Watchlist/search/timeframe UI is functional at the demo level.
-
-## Important constraints
-- No secrets in source control.
-- Paper trading only until a separately approved brokerage architecture exists.
-- External market-data providers must be accessed through an abstraction layer.
-- Preserve the project blueprint/agent documentation on every iteration.
-
-## Decisions to remember
-- Use Lightweight Charts as the initial chart rendering engine.
-- Keep UI code independent from future market-data vendors.
-- Prefer feature/domain boundaries as the codebase grows.
-
-## Agent notes
-- Read `AGENTS.md` before modifying the project.
-- Update this memory when a future agent discovers a durable fact, changes architecture, changes an API contract, or makes a significant product decision.
+## Known gaps
+Realtime data, historical storage, indicator engine, drawing persistence, alert workers, screener, trading simulator, backtesting, authentication, billing, community, observability, and production deployment are not yet implemented.

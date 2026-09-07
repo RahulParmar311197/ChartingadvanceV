@@ -1,46 +1,31 @@
 # Roadmap
 
-## Foundation
-- [x] React/Vite shell
-- [x] Demo chart
-- [x] Watchlist/search/timeframes
-- [x] Agent/project operating system
+## Phase 0 — Project OS
+Blueprint, agent rules, memory, architecture, ADRs, state tracking, CI and test conventions.
 
-## Market data
-- [ ] Provider interface
-- [ ] Mock provider implementing the interface
-- [ ] Historical data service
-- [ ] WebSocket subscription service
-- [ ] Reconnect/backoff strategy
-- [ ] Session/timezone normalization
+## Phase 1 — Chart Core
+TypeScript domain contracts, realtime/historical data adapters, symbol service, chart engine, workspace layouts, watchlists.
 
-## Charting
-- [ ] Feature-module split
-- [ ] Multiple chart types
-- [ ] Drawing object model
-- [ ] Indicator registry
-- [ ] Indicator calculations
-- [ ] Multiple panes
-- [ ] Chart/layout persistence
+## Phase 2 — Analysis
+Indicator registry/calculator, drawing engine, multi-pane charts, templates and technical analysis UI.
 
-## Research
-- [ ] Screener domain and UI
-- [ ] News service
-- [ ] Symbol details
-- [ ] Financial data
-- [ ] Alerts
+## Phase 3 — Alerts
+Condition DSL, server-side scheduler/worker, persistence, deduplication, webhooks and notifications.
 
-## Trading
-- [ ] Paper account model
-- [ ] Order lifecycle
-- [ ] Risk engine
-- [ ] Position/P&L engine
-- [ ] Replay/backtest engine
+## Phase 4 — Paper Trading
+Account ledger, order lifecycle, fills, positions, fees, risk, portfolio and audit trail.
 
-## Platform
-- [ ] Authentication
-- [ ] User persistence
-- [ ] Cloud layouts
-- [ ] CI/CD
-- [ ] Observability
-- [ ] Security review
+## Phase 5 — Backtesting
+Strategy interface, deterministic simulator, slippage/fees, metrics, equity curve and report export.
+
+## Phase 6 — Screener/Fundamentals
+Normalized fundamentals, query/filter engine, ranking, saved screens and worker infrastructure.
+
+## Phase 7 — Script Runtime
+Lexer/parser, AST, series semantics, standard library, strategy API and sandboxed execution.
+
+## Phase 8 — Community
+Ideas, scripts, profiles, follows, comments, search, publishing and moderation.
+
+## Phase 9 — Production
+Security, rate limits, observability, disaster recovery, load testing, deployment, billing and compliance review.

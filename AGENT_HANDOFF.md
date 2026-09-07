@@ -1,35 +1,23 @@
 # Agent Handoff
 
-> Copy this template into the task/PR description when handing work to another agent.
+## Required handoff format
+### Objective
+What was requested and why.
 
-## Context
-What was being built and why?
+### Changed
+Files/modules changed and key behavior.
 
-## Completed
-- 
+### Contracts
+New or modified interfaces, schemas, events, or APIs.
 
-## Changed files
-- 
+### Verification
+Commands/tests run and results.
 
-## Contracts / APIs changed
-- 
+### Risks
+Known defects, assumptions, performance/security concerns.
 
-## Validation
-- Build:
-- Tests:
-- Manual:
+### Next action
+The smallest recommended next implementation step.
 
-## Durable discoveries
-- 
-
-## Known limitations
-- 
-
-## Next action
-- 
-
-## Documentation status
-- [ ] MEMORY.md
-- [ ] PROJECT_STATE.md
-- [ ] DECISIONS.md
-- [ ] CHANGELOG.md
+## Continuity rule
+The receiving agent must read the blueprint, agent rules, memory, project state and relevant ADRs before editing.

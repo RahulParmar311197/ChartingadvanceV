@@ -1,32 +1,29 @@
 # Feature Template
 
-## Feature
+## Goal
 
-## User outcome
+## User stories
 
-## Requirements
-- 
+## Domain contract
 
-## Non-goals
-- 
+## UI states
+- loading
+- empty
+- success
+- error
+- stale/offline
 
-## Architecture impact
-- UI:
-- Domain:
-- Data:
-- Persistence:
+## API/data requirements
 
-## Acceptance criteria
-- [ ]
+## Security considerations
 
 ## Tests
-- [ ] Unit
-- [ ] Component
-- [ ] Integration
-- [ ] E2E (if critical flow)
+- unit
+- integration
+- e2e
 
-## Documentation
-- [ ] MEMORY reviewed
-- [ ] PROJECT_STATE updated
-- [ ] DECISIONS updated if needed
-- [ ] CHANGELOG updated
+## Observability
+
+## Rollout / migration
+
+## Acceptance criteria

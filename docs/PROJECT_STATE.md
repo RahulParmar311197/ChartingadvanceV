@@ -1,37 +1,19 @@
 # Project State
 
+Updated: 2026-09-07
+
 ## Status
-**Phase 0 — Foundation**
+Phase 0 complete; Phase 1 scaffold in progress.
 
-## Completed
-- React/Vite project scaffold
-- TradingView-inspired dark workspace
-- Candlestick and volume demo chart
-- Symbol search modal
-- Watchlist interactions
-- Timeframe controls
-- Responsive shell
-- Mandatory agent/project documentation
+## Implemented
+- React/Vite starter
+- Lightweight candlestick/volume demo chart
+- Symbol search and watchlist UI
+- TradingView-inspired workspace shell
+- Project governance and agent documentation
 
-## In progress
-- None formally assigned.
+## Not production-ready
+The current chart uses synthetic data. No live exchange feed, authenticated API, persistent database, alerts worker, paper brokerage simulator, or real order execution exists.
 
-## Next priorities
-1. Split `App.jsx` into feature modules.
-2. Introduce typed domain models (or JSDoc contracts if staying in JS).
-3. Add market-data provider interfaces and mock provider.
-4. Add chart state store and persistence.
-5. Add automated tests.
-6. Add CI build validation.
-
-## Known limitations
-- Demo data is generated locally.
-- No authentication.
-- No persistence.
-- No real alerts.
-- No real brokerage integration.
-- No screener backend.
-- Drawing/indicator controls are currently UI shells.
-
-## Update rule
-Update this document whenever work starts, completes, is blocked, or changes the next priority order.
+## Next implementation slice
+Create `packages/market-domain`, `packages/chart-engine`, `packages/shared-types`, `apps/market-data`, and `apps/api`; wire historical/realtime adapter interfaces into the existing web workspace.
