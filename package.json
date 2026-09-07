@@ -12,6 +12,7 @@
     "api": "node apps/api/src/index.js",
     "realtime": "node apps/api/src/realtime.js",
     "build": "vite build",
+    "typecheck:packages": "tsc --noEmit -p tsconfig.packages.json",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest"
@@ -25,6 +26,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.7.2",
     "vite": "^6.0.5",
     "vitest": "^3.2.4"
   }
