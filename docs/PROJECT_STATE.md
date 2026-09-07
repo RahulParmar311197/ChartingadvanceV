@@ -38,8 +38,9 @@ Phase 6 — Screener/fundamentals application integration in progress; chart cor
 - Browser screener client regression coverage for query encoding, cursor continuation, repeated cursors, reset behavior, and response metadata shape.
 - Fundamentals snapshot `asOf`/`staleAt` timestamps are now canonical Unix epoch seconds, matching the market-domain candle timestamp convention.
 - Demo fundamentals fixtures and freshness tests use the canonical epoch-second convention.
-- Provider-neutral HTTP fundamentals adapter now translates symbols/cursor/limit into transport parameters, delegates provider response normalization explicitly, and propagates upstream HTTP failures without fabricating data.
-- Deterministic HTTP adapter regression coverage verifies pagination/query translation, canonical timestamp mapping, and upstream error propagation.
+- Provider-neutral HTTP fundamentals adapter now translates symbols/cursor/limit into transport parameters, delegates provider response normalization explicitly, propagates upstream HTTP failures without fabricating data, bounds transport page size/cursors, and aborts hung upstream requests after a configurable timeout.
+- The HTTP fundamentals adapter is exported as an explicit package subpath so application infrastructure can consume it without importing provider internals.
+- Deterministic HTTP adapter regression coverage verifies pagination/query translation, canonical timestamp mapping, upstream error propagation, request bounds, and timeout cancellation.
 - Paper-trading application service with isolated demo paper accounts, risk admission, order lifecycle, deterministic execution, fills, and portfolio retrieval.
 - Paper-only HTTP portfolio/order endpoints with explicit simulated metadata and no brokerage execution path.
 - Browser paper-trading client and workspace Trading Panel with simulation disclosure.
@@ -71,7 +72,7 @@ The backtest API accepts only registered built-in strategies and never evaluates
 - CI run 34109685837 passed PostgreSQL provisioning, package typecheck, full tests, and production build for the screener freshness-state slice.
 - CI run 34111239978 passed package typecheck, full tests, and production build for the browser screener continuation slice at commit `1d70192`.
 - CI run 34112051500 passed package typecheck, full tests, and production build for timestamp-unit hardening.
-- HTTP fundamentals adapter tests were added in commit `c8580a4`; its CI run will verify the new test file.
+- HTTP fundamentals adapter tests were added in commit `c8580a4`; its PR-triggered workflow lookup returned no run, so that commit is not treated as independently verified.
 
 ## Current risks / gaps
 - Demo identity must be bound to authenticated identity before production user isolation.
