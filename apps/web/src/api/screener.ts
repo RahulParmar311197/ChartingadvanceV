@@ -46,7 +46,7 @@ export interface ScreenerResult {
   };
 }
 
-interface ScreenerEnvelope {
+export interface ScreenerEnvelope {
   data: ScreenerResult;
   meta: { provider: string; simulated: boolean };
 }
@@ -89,24 +89,34 @@ export interface ScreenerPageState {
   loading: boolean;
 }
 
+const emptyState = (): ScreenerPageState => ({
+  items: [],
+  nextCursor: undefined,
+  freshness: { asOf: 0, stale: false, status: "unknown" },
+  completeness: { status: "complete", reason: "provider-exhausted" },
+  loading: false,
+});
+
 export function createScreenerPager(
   request: Omit<ScreenerRequest, "cursor"> = {},
   baseUrl?: string,
 ) {
   let cursor: string | undefined;
-  let state: ScreenerPageState = { items: [], nextCursor: undefined, freshness: { asOf: 0, stale: false, status: "unknown" }, completeness: { status: "complete", reason: "provider-exhausted" }, loading: false };
+  let exhausted = false;
+  let state: ScreenerPageState = emptyState();
 
   return {
     getState: () => state,
     async loadNext(): Promise<ScreenerPageState> {
       if (state.loading) throw new Error("Screener page load already in progress");
-      if (cursor === undefined && state.items.length > 0) throw new Error("Screener pager is exhausted");
+      if (exhausted) throw new Error("Screener pager is exhausted");
       state = { ...state, loading: true };
       try {
         const page = await runFundamentalsScreener({ ...request, cursor }, baseUrl);
         const previousCursor = cursor;
         cursor = page.data.nextCursor;
         if (previousCursor !== undefined && cursor === previousCursor) throw new Error("Screener pagination cursor did not advance");
+        exhausted = cursor === undefined;
         state = {
           items: [...state.items, ...page.data.items],
           nextCursor: cursor,
@@ -122,7 +132,8 @@ export function createScreenerPager(
     },
     reset() {
       cursor = undefined;
-      state = { items: [], nextCursor: undefined, freshness: { asOf: 0, stale: false, status: "unknown" }, completeness: { status: "complete", reason: "provider-exhausted" }, loading: false };
+      exhausted = false;
+      state = emptyState();
     },
   };
 }
