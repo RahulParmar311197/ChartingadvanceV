@@ -27,6 +27,7 @@ Phase 6 — Screener/fundamentals application integration in progress; chart cor
 - Fundamentals provider/application contract with freshness metadata and bounded pagination contract.
 - Provider-boundary validation for finite freshness timestamps, staleAt ordering, page shape, and bounded pagination cursors.
 - Screener pagination now has explicit completeness semantics: a provider next cursor means partial coverage; absence of a cursor means provider-exhausted/complete coverage.
+- Screener provider pages cannot claim continuation with an empty item set, preventing cursor loops that make no progress.
 - Application-level screener pagination/freshness regression coverage using a synthetic multi-page provider; the demo provider still exposes no fabricated pages.
 - Canonical TypeScript screener runtime consumed through `tsx`; duplicated JavaScript screener implementation removed.
 - Demo fundamentals screener API endpoint with symbol selection, full query/filter/group parsing, centralized request validation, and explicit stale/simulated metadata.
@@ -72,4 +73,4 @@ The backtest API accepts only registered built-in strategies and never evaluates
 - Dedicated script runtime, community, authentication, deployment, and production security remain planned.
 
 ## Next implementation slice
-Verify the screener completeness changes, then add provider-independent cursor integrity/continuation safeguards before wiring a real fundamentals provider.
+Verify the screener completeness/cursor changes, then add provider-independent cursor integrity/continuation safeguards before wiring a real fundamentals provider.
