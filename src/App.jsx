@@ -52,35 +52,51 @@ function Chart({ symbol, interval, indicators, visibleBars, drawings, onDrawings
       if (!param?.time || !param?.point) { publishChartCrosshair("primary", null); return; }
       const price = series.coordinateToPrice?.(param.point.y);
       publishChartCrosshair("primary", Number.isFinite(price) ? { time: param.time, price } : { time: param.time });
-      const sourceEvent = param.sourceEvent;
-      if (drawingTypeForTool(activeTool) || !sourceEvent || !param.point) return;
-      if (sourceEvent.type === "mousedown" && sourceEvent.button === 0 && !drawingDrag.current) {
-        const candidates = drawings.filter((drawing) => drawing.visible !== false && !drawing.locked && drawing.points.length > 0);
-        let selectedDrag = null;
-        for (const drawing of candidates) {
-          const pointIndex = hitTestDrawingPoint(chart, series, drawing, param.point.x, param.point.y);
-          if (pointIndex == null) continue;
-          const drag = createDrawingDrag(drawing, pointIndex);
-          if (drag) { selectedDrag = drag; break; }
-        }
-        if (selectedDrag) { drawingDrag.current = selectedDrag; onSelectDrawing(selectedDrag.drawingId); sourceEvent.preventDefault?.(); }
-      }
-      const drag = drawingDrag.current;
-      if (!drag) return;
-      if (sourceEvent.type === "mousemove") {
-        const point = drawingPointFromCoordinates(chart, series, param.point.x, param.point.y);
-        if (!point) return;
-        const updated = updateDrawingDrag(drag, point);
-        drawingDrag.current = updated;
-        const line = drawingSeriesRef.current.get(updated.drawingId);
-        if (line && updated.previewDrawing.points.length >= 2) line.setData(updated.previewDrawing.points);
-      } else if (sourceEvent.type === "mouseup" || sourceEvent.type === "pointerup") {
-        const finished = finishDrawingDrag(drag);
-        drawingDrag.current = null;
-        if (finished) onDrawingsChange((current) => updateDrawing(current, finished.id, { points: finished.points }));
-      }
     };
     chart.subscribeCrosshairMove(handleCrosshair);
+    const toChartPoint = (event) => { const rect = el.getBoundingClientRect(); return { x: event.clientX - rect.left, y: event.clientY - rect.top }; };
+    const handlePointerDown = (event) => {
+      if (drawingTypeForTool(activeTool) || event.button !== 0 || drawingDrag.current) return;
+      const point = toChartPoint(event);
+      const candidates = drawings.filter((drawing) => drawing.visible !== false && !drawing.locked && drawing.points.length > 0);
+      for (const drawing of candidates) {
+        const pointIndex = hitTestDrawingPoint(chart, series, drawing, point.x, point.y);
+        if (pointIndex == null) continue;
+        const drag = createDrawingDrag(drawing, pointIndex);
+        if (!drag) continue;
+        drawingDrag.current = drag;
+        onSelectDrawing(drag.drawingId);
+        el.setPointerCapture?.(event.pointerId);
+        event.preventDefault();
+        return;
+      }
+    };
+    const handlePointerMove = (event) => {
+      const drag = drawingDrag.current;
+      if (!drag) return;
+      const point = toChartPoint(event);
+      const timePrice = drawingPointFromCoordinates(chart, series, point.x, point.y);
+      if (!timePrice) return;
+      const updated = updateDrawingDrag(drag, timePrice);
+      drawingDrag.current = updated;
+      const line = drawingSeriesRef.current.get(updated.drawingId);
+      if (line && updated.previewDrawing.points.length >= 2) line.setData(updated.previewDrawing.points);
+    };
+    const handlePointerUp = (event) => {
+      const drag = drawingDrag.current;
+      if (!drag) return;
+      const point = toChartPoint(event);
+      const timePrice = drawingPointFromCoordinates(chart, series, point.x, point.y);
+      const finished = timePrice ? finishDrawingDrag(updateDrawingDrag(drag, timePrice)) : finishDrawingDrag(drag);
+      drawingDrag.current = null;
+      el.releasePointerCapture?.(event.pointerId);
+      if (finished) onDrawingsChange((current) => updateDrawing(current, finished.id, { points: finished.points }));
+    };
+    const handlePointerCancel = () => { drawingDrag.current = null; };
+    el.addEventListener("pointerdown", handlePointerDown);
+    el.addEventListener("pointermove", handlePointerMove);
+    el.addEventListener("pointerup", handlePointerUp);
+    el.addEventListener("pointercancel", handlePointerCancel);
     const handleClick = (param) => {
       const type = drawingTypeForTool(activeTool);
       if (!type || !param?.point) return;
@@ -114,7 +130,7 @@ function Chart({ symbol, interval, indicators, visibleBars, drawings, onDrawings
     };
     chart.subscribeClick(handleDrawingClick);
     const resize = () => chart.applyOptions({ width: el.clientWidth, height: el.clientHeight }); window.addEventListener("resize", resize);
-    return () => { disposed = true; drawingDrag.current = null; drawingSeriesRef.current = new Map(); chart.timeScale().unsubscribeVisibleLogicalRangeChange(handleRange); chart.unsubscribeCrosshairMove(handleCrosshair); chart.unsubscribeClick(handleClick); chart.unsubscribeClick(handleDrawingClick); chartRef.current = null; window.removeEventListener("resize", resize); overlaySeries.forEach((line) => chart.removeSeries(line)); drawingSeries.forEach((line) => chart.removeSeries(line)); chart.remove(); };
+    return () => { disposed = true; drawingDrag.current = null; drawingSeriesRef.current = new Map(); el.removeEventListener("pointerdown", handlePointerDown); el.removeEventListener("pointermove", handlePointerMove); el.removeEventListener("pointerup", handlePointerUp); el.removeEventListener("pointercancel", handlePointerCancel); chart.timeScale().unsubscribeVisibleLogicalRangeChange(handleRange); chart.unsubscribeCrosshairMove(handleCrosshair); chart.unsubscribeClick(handleClick); chart.unsubscribeClick(handleDrawingClick); chartRef.current = null; window.removeEventListener("resize", resize); overlaySeries.forEach((line) => chart.removeSeries(line)); drawingSeries.forEach((line) => chart.removeSeries(line)); chart.remove(); };
   }, [symbol, interval, indicators, drawings, activeTool, selectedDrawingId, onDrawingsChange, onSelectDrawing]);
   useEffect(() => { const chart = chartRef.current; if (!chart) return; const range = chart.timeScale().getVisibleLogicalRange(); if (!range) return; chart.timeScale().setVisibleLogicalRange({ from: range.to - visibleBars + 1, to: range.to }); }, [visibleBars]);
   return <div className="chart-canvas" ref={ref} />;
@@ -158,7 +174,7 @@ export default function App() {
   useEffect(() => { let cancelled = false; Promise.all(watchlist.map(async (item) => { try { const q = API_URL ? await fetchQuote(item.symbol) : await MARKET_DATA.getQuote(item.symbol); return [item.symbol, q]; } catch { return [item.symbol, null]; } })).then((entries) => { if (!cancelled) setQuotes((current) => ({ ...current, ...Object.fromEntries(entries.filter(([, q]) => q)) })); }); return () => { cancelled = true; }; }, [watchlist]);
   useEffect(() => { if (!WS_URL) { setStreamStatus("disconnected"); return undefined; } return connectMarketStream({ url: WS_URL, symbols: watchlist.map((x) => x.symbol), onStatus: setStreamStatus, onEvent: (event) => { if (event.type === "quote") setQuotes((current) => ({ ...current, [event.quote.symbol]: event.quote })); } }); }, [watchlist]);
   useEffect(() => { const handleKeyDown = (event) => { if (event.key === "Escape") { setActiveTool("crosshair"); setSelectedDrawingId(null); } if ((event.key === "Delete" || event.key === "Backspace") && selectedDrawingId) { setDrawings((current) => removeDrawing(current, selectedDrawingId)); setSelectedDrawingId(null); } }; window.addEventListener("keydown", handleKeyDown); return () => window.removeEventListener("keydown", handleKeyDown); }, [selectedDrawingId]);
-  const currentQuote = quotes[symbol.symbol]; const last = currentQuote?.last ?? 0; const changePercent = currentQuote?.changePercent ?? 0; const statusText = WS_URL ? `Realtime ${streamStatus}` : API_URL ? "API / demo fallback" : "Demo data"; const toggleIndicator = (kind) => setIndicators((current) => current.map((indicator) => indicator.kind === kind ? { ...indicator, enabled: !indicator.enabled } : indicator));
+  const currentQuote = quotes[symbol.symbol]; const last = currentQuote?.last ?? 0; const changePercent = currentQuote?.changePercent ?? 0; const statusText = WS_URL ? `Realtime ${streamStatus}` : API_URL ? "API / demo fallback" : "Demo data";
   return (
     <div className="app-shell">
       <header className="topbar"><div className="brand">ChartingAdvance<span>V</span></div><div className="symbol-picker"><button onClick={() => setSearchOpen((value) => !value)}><Search size={15}/>{symbol.symbol}<ChevronDown size={14}/></button>{searchOpen && <div className="search-popover"><input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search symbol" />{filtered.map((item) => <button key={item.symbol} onClick={() => { setSymbol(item); setSearchOpen(false); setQuery(""); }}>{item.symbol}<span>{item.name}</span></button>)}</div>}</div><div className="quote"><strong>{formatQuoteValue(last)}</strong><span className={changePercent >= 0 ? "positive" : "negative"}>{changePercent >= 0 ? "+" : ""}{changePercent.toFixed(2)}%</span></div><div className="top-actions"><button><Star size={16}/></button><button><Bell size={16}/></button><button><Settings size={16}/></button><button className="avatar"><UserRound size={15}/></button></div></header>
