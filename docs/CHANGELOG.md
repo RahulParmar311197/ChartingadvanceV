@@ -1,6 +1,13 @@
 # Changelog
 
 ## 2026-09-07
+- Added deterministic alert evaluation for threshold and crossing operators, disabled rules, cooldowns, invalid values, and stable delivery IDs.
+- Added unit coverage for alert triggering, crossing semantics, cooldown blocking, and invalid inputs.
+- Added deterministic paper-trading execution primitives for market, limit, stop, and stop-limit orders using explicit bid/ask inputs.
+- Added paper-order validation, fee calculation, rejected/accepted/filled lifecycle outcomes, deterministic fill IDs, and position fill accounting with realized P&L.
+- Added unit coverage for order validation, trigger semantics, fills, invalid execution inputs, and realized P&L.
+
+## 2026-09-07
 - Added drawing drag lifecycle primitives for validating editable endpoints, creating unlocked drag state, producing immutable preview drawings, and finalizing a preview for persistence through the chart-engine update contract.
 - Added unit coverage for locked endpoint rejection, invalid endpoint rejection, immutable drag previews, and invalid preview coordinates.
 
