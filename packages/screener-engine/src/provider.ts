@@ -61,6 +61,9 @@ export async function runScreener(
 
   const page = await provider.getFundamentals({ ...request, limit });
   validateProviderPage(page);
+  if (request.cursor != null && page.nextCursor === request.cursor) {
+    throw new Error('provider nextCursor must advance beyond the request cursor');
+  }
   const query: ScreenerQuery = { ...request.query, limit };
   const items = screenFundamentals(page.items, query);
   const stale = page.staleAt != null && now >= page.staleAt;
