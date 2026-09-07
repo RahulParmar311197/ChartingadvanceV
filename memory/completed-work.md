@@ -42,3 +42,4 @@
 - Screener freshness states `fresh`/`stale`/`unknown` added and verified.
 - Browser screener API client added with typed application-contract DTOs, query/symbol/limit/cursor encoding, runtime envelope validation, and explicit simulation metadata.
 - Browser screener continuation pager added to accumulate pages, preserve opaque cursors, prevent concurrent loads, reject repeated cursors, track freshness/completeness, and reset safely; CI run 34111239978 verified typecheck, full tests, and production build.
+- Fundamentals `asOf`/`staleAt` timestamps canonicalized to Unix epoch seconds, matching the market-domain candle convention; demo fixtures and API regression coverage updated accordingly.
