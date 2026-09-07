@@ -19,3 +19,7 @@
 - SMA 20 and EMA 50 overlay controls now render through the Lightweight Charts series API.
 - Market-request validation extracted from the HTTP server and covered by Vitest.
 - Realtime subscription normalization extracted and covered by Vitest; malformed messages now produce an explicit degraded status event.
+- Chart viewport controls and chart-engine viewport invariants now provide bounded zoom state with unit coverage.
+- Root npm workspace graph and explicit manifests for existing domain/API packages are established; CI run 100 verified install, tests, and build.
+- RSI 14 oscillator adapter added with warmup/timestamp and range tests.
+- RSI 14 rendered as a dedicated secondary Lightweight Charts pane with fixed 0–100 scale and 70/30 reference levels.
