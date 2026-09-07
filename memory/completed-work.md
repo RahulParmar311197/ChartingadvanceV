@@ -48,13 +48,11 @@
 - Browser screener client regression tests added.
 - Paper-trading application service added with isolated demo-user accounts, risk admission, order lifecycle submission, deterministic demo execution, fill application, and portfolio retrieval.
 - Paper-only HTTP portfolio and order-submission endpoints added with explicit simulated metadata and no brokerage execution path.
-- Paper-trading application regression coverage added for successful fills, account isolation, risk rejection, short-sale rejection, and untriggered limit orders.
-- Browser paper-trading API client added with explicit configuration failure instead of silent simulation.
-- Workspace Trading Panel integrated with market/limit/stop/stop-limit controls, portfolio summary, positions, order-result messaging, and explicit paper-only disclosure.
-- Browser paper-trading client regression coverage added for configuration errors, demo identity propagation, order serialization, and API error propagation.
-- Paper-trading application cancellation/replacement workflows added using the shared lifecycle contract, with accepted-order-only mutation semantics, terminal-order protection, per-user isolation, and deterministic lifecycle audit events.
-- Paper-only HTTP cancellation (`DELETE /v1/paper/orders/:id`), replacement (`PUT /v1/paper/orders/:id`), and bounded audit (`GET /v1/paper/audit`) endpoints added; no brokerage execution path was introduced.
-- Browser paper-trading lifecycle API methods added for audit reads, cancellation, and replacement.
-- Regression coverage added for cancellation, replacement, terminal-order protection, audit ordering, user isolation, and bounded audit reads.
-- Paper portfolio mark-to-market valuation added to the application workflow; deterministic demo quotes now update unrealized P&L and equity without changing cash.
-- Trading-engine valuation regression coverage added for marked long positions and unmarked-position preservation.
+- Browser paper-trading API client and Trading Panel added with order-type controls, portfolio summary, positions, and simulation disclosure.
+- Paper-trading cancellation/replacement/audit workflows added with shared lifecycle semantics and regression coverage.
+- Paper portfolio mark-to-market valuation added with deterministic quote marks and regression coverage.
+- Durable paper persistence boundary documented, including transactional invariants, idempotency, optimistic concurrency, and migration strategy.
+- In-memory paper repository adapter added with account/order/fill/ledger/audit storage semantics and invariant tests.
+- Paper application state migrated from direct service Maps to the repository adapter; terminal orders remain queryable and lifecycle transitions are validated against canonical stored status.
+- Canonical paper order-list HTTP endpoint and browser client method added; Trading Panel now derives open orders from stored order status rather than bounded audit reconstruction.
+- Versioned workspace persistence contract added with schema version, owner binding, monotonic revisions, authorization checks, and regression coverage.
