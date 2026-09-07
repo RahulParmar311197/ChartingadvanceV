@@ -22,6 +22,13 @@ describe("PostgresPaperRepository", () => {
     await expect(repository.getAccount("paper:u1")).resolves.toEqual({ id: "paper:u1", currency: "USD", cash: 99000.5, buyingPower: 99000.5, equity: 100001.25, version: 3 });
   });
 
+  it("uses idempotent insert semantics for concurrent account initialization", async () => {
+    const pool = poolWithQuery(async () => ({ rowCount: 0, rows: [] }));
+    const repository = new PostgresPaperRepository(pool);
+    await expect(repository.createAccount({ id: "paper:u1", currency: "USD", cash: 100, buyingPower: 100, equity: 100, version: 0 }, "u1")).resolves.toBeNull();
+    expect(pool.query.mock.calls[0][0]).toContain("ON CONFLICT (account_id) DO NOTHING");
+  });
+
   it("uses optimistic concurrency when saving a portfolio", async () => {
     const pool = poolWithQuery(async () => ({ rowCount: 1, rows: [{ account_id: "paper:u1", currency: "USD", cash: "99000", buying_power: "99000", equity: "100000", version: "4", positions: [] }] }));
     const repository = new PostgresPaperRepository(pool);
