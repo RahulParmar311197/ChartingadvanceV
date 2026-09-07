@@ -22,6 +22,13 @@ export function createPaperTradingService(repository, { transactional = false } 
   }
   async function audit(accountId, action, orderId, timestamp, reason) { await repository.appendAuditEvent({ id: `${orderId}:${action}:${timestamp}`, accountId, action, timestamp, orderId, ...(reason ? { reason } : {}) }); }
   async function atomic(work) { return repository.runTransaction ? repository.runTransaction(work) : work(repository); }
+  async function insertOrderIfAbsent(order) {
+    if (typeof repository.insertOrderIfAbsent === "function") return repository.insertOrderIfAbsent(order);
+    try { return { inserted: true, order: await repository.insertOrder(order) }; } catch (error) {
+      if (error?.code === "23505" || String(error?.message).toLowerCase().includes("duplicate order id")) return { inserted: false, order: await repository.getOrder(order.accountId, order.id) };
+      throw error;
+    }
+  }
 
   const service = {
     async submitPaperOrder(userId, input, now = Date.now()) {
@@ -30,7 +37,9 @@ export function createPaperTradingService(repository, { transactional = false } 
       const portfolio = await accountFor(userId);
       const order = { id: typeof input?.id === "string" && input.id ? input.id : `paper-order:${now}:${(await repository.listOrders(portfolio.account.id)).length + 1}`, accountId: portfolio.account.id, symbolId: input?.symbolId, side: input?.side, type: input?.type ?? "market", quantity: Number(input?.quantity), ...(input?.limitPrice !== undefined ? { limitPrice: Number(input.limitPrice) } : {}), ...(input?.stopPrice !== undefined ? { stopPrice: Number(input.stopPrice) } : {}), status: "pending", createdAt: now };
       if (await repository.getOrder(portfolio.account.id, order.id)) { await audit(portfolio.account.id, "order_rejected", order.id, now, "duplicate order id"); return { order: { ...order, status: "rejected" }, fill: null, portfolio, risk: { allowed: false, reason: "duplicate order id", estimatedNotional: 0 }, simulated: true }; }
-      await repository.insertOrder(order); await audit(portfolio.account.id, "order_submitted", order.id, now);
+      const inserted = await insertOrderIfAbsent(order);
+      if (!inserted.inserted) { await audit(portfolio.account.id, "order_rejected", order.id, now, "duplicate order id"); return { order: { ...order, status: "rejected" }, fill: null, portfolio, risk: { allowed: false, reason: "duplicate order id", estimatedNotional: 0 }, simulated: true }; }
+      await audit(portfolio.account.id, "order_submitted", order.id, now);
       const referenceQuote = executionQuote(order.symbolId); const risk = assessOrderRisk(portfolio.account, portfolio.positions, order, referenceQuote.last, { allowShort: false, maxOrderNotional: 50_000, maxPositionQuantity: 10_000 });
       if (!risk.allowed) { const rejected = transitionOrder(order, "reject", now); await repository.transitionOrder(portfolio.account.id, order.id, "pending", rejected); await audit(portfolio.account.id, "order_rejected", order.id, now, risk.reason); return { order: rejected, fill: null, portfolio, risk, simulated: true }; }
       const accepted = transitionOrder(order, "submit", now); await repository.transitionOrder(portfolio.account.id, order.id, "pending", accepted); await audit(portfolio.account.id, "order_accepted", accepted.id, now);
@@ -51,9 +60,11 @@ export function createPaperTradingService(repository, { transactional = false } 
       if (!transactional && repository.runTransaction) return atomic((tx) => createPaperTradingService(tx, { transactional: true }).replacePaperOrder(userId, orderId, request, now));
       if (!Number.isFinite(now)) throw new Error("invalid replacement timestamp");
       const portfolio = await accountFor(userId); const order = await repository.getOrder(portfolio.account.id, orderId); if (!order) throw new Error("open paper order not found");
-      const newOrderId = typeof request?.id === "string" && request.id ? request.id : `${orderId}:replace:${now}`; if (await repository.getOrder(portfolio.account.id, newOrderId)) throw new Error("duplicate replacement order id");
+      const newOrderId = typeof request?.id === "string" && request.id ? request.id : `${orderId}:replace:${now}`;
       const pair = replaceOrder(order, { quantity: request.quantity === undefined ? undefined : Number(request.quantity), limitPrice: request.limitPrice === undefined ? undefined : Number(request.limitPrice), stopPrice: request.stopPrice === undefined ? undefined : Number(request.stopPrice), createdAt: now }, newOrderId);
-      const cancelled = await repository.transitionOrder(portfolio.account.id, orderId, "accepted", pair.cancelled); await repository.insertOrder(pair.replacement);
+      const cancelled = await repository.transitionOrder(portfolio.account.id, orderId, "accepted", pair.cancelled);
+      const inserted = await insertOrderIfAbsent(pair.replacement);
+      if (!inserted.inserted) throw new Error("duplicate replacement order id");
       const referenceQuote = executionQuote(pair.replacement.symbolId); const risk = assessOrderRisk(portfolio.account, portfolio.positions, pair.replacement, referenceQuote.last, { allowShort: false, maxOrderNotional: 50_000, maxPositionQuantity: 10_000 });
       await audit(portfolio.account.id, "order_cancelled", orderId, now, "replaced"); await audit(portfolio.account.id, "order_replaced", orderId, now); await audit(portfolio.account.id, "order_submitted", newOrderId, now);
       if (!risk.allowed) { const rejected = transitionOrder(pair.replacement, "reject", now); const storedRejected = await repository.transitionOrder(portfolio.account.id, newOrderId, "pending", rejected); await audit(portfolio.account.id, "order_rejected", newOrderId, now, risk.reason); return { replaced: true, cancelled, replacement: storedRejected, order: cancelled, portfolio: await service.getPaperPortfolio(userId), risk, simulated: true }; }
