@@ -72,7 +72,7 @@ The backtest API intentionally accepts only a registered built-in strategy and n
 - CI run 34100697084 on commit `2a57f6c` passed package typecheck, the full test suite, and production Vite build.
 - PostgreSQL integration CI run 34101299681 completed successfully for the PostgreSQL-enabled integration slice.
 - CI run 34103300368 on commit `631f686` passed package typecheck, the full test suite, and production Vite build.
-- Atomic duplicate-order hardening commits `6bd29ff`, `2e753bd`, `0b89741`, `6c42f38`, and `5423869` require fresh CI verification.
+- CI run 34104366664 on commit `4901bb1` passed PostgreSQL provisioning, package typecheck, the full test suite, and production build, including the concurrent duplicate-order race integration test.
 
 ## Current risks / gaps
 - Demo identity must be bound to authenticated identity before production user isolation.
@@ -84,4 +84,4 @@ The backtest API intentionally accepts only a registered built-in strategy and n
 - Dedicated script runtime, community, authentication, deployment, and production security remain planned.
 
 ## Next implementation slice
-Verify the PostgreSQL atomic duplicate-order race end-to-end in CI, then expand the strategy runtime boundary.
+Expand the strategy runtime boundary with a second deterministic, allowlisted strategy while preserving the no-arbitrary-code contract, then add interval-aware performance annualization.
