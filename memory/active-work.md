@@ -1,7 +1,7 @@
 # Active Work
 
 ## Current milestone
-Phase 4 — Paper Trading foundation.
+Phase 6 — Screener/fundamentals application integration.
 
 ## Completed in this slice
 - Shared deterministic demo market core for API and provider consistency.
@@ -18,14 +18,18 @@ Phase 4 — Paper Trading foundation.
 - Primary logical-range and crosshair synchronization are wired between primary/RSI chart panes.
 - Immutable drawing state, line/trendline creation, selection/deletion, series conversion, and drag lifecycle primitives are implemented and tested.
 - Deterministic alert evaluator is implemented and tested.
-- Paper-trading execution primitives are implemented and tested for order validation, market/limit/stop/stop-limit triggers, deterministic fills/fees, and realized P&L.
+- Paper-trading execution primitives, portfolio ledger, risk checks, and realized P&L accounting are implemented and tested.
+- Deterministic candle-based backtesting with short-position policy, realized P&L, equity/drawdown, and performance metrics is implemented and tested.
+- Deterministic fundamentals screener domain contracts, operators, groups, ranking, limits, provider/application boundary, freshness metadata, and demo API adapter are implemented and tested.
+- Screener HTTP request parsing now validates the full filter/group/query contract centrally, including symbols, numeric operators, ranges, limits, and cursor shape.
 
 ## Immediate tasks
-- Build durable paper-trading ledger state and audit-event contracts without connecting to real-money brokers.
-- Add cash/buying-power/risk validation, cancellation/replacement lifecycle, portfolio valuation, and application/API boundary.
-- Add browser drawing endpoint drag wiring and versioned workspace persistence once the chart interaction boundary is clean.
-- Build deterministic backtesting simulator from normalized candles and paper execution semantics.
-- Continue with screener/fundamentals, dedicated script runtime, community, authentication/persistence, and production hardening in roadmap order.
+- Add screener browser application client and UI integration using the normalized API contract; clearly expose stale/demo freshness.
+- Add TypeScript/JavaScript runtime conformance tests so the Node API screener cannot diverge from the typed domain semantics.
+- Define real provider pagination semantics only when a real provider contract exists; do not manufacture demo pages.
+- Continue drawing endpoint drag wiring and versioned workspace persistence once the chart interaction boundary is clean.
+- Continue paper-trading application/API/UI integration without enabling real-money brokerage execution.
+- Continue backtesting application integration, then dedicated script runtime, community, authentication/persistence, and production hardening in roadmap order.
 
 ## Rule
 When a task is completed, move it to `memory/completed-work.md` and update `docs/PROJECT_STATE.md`.
