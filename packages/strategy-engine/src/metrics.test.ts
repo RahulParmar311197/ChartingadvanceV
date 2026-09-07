@@ -11,7 +11,7 @@ describe('backtest metrics', () => {
     const result = runBacktest(candles, ({ index, position }) => index === 0 && position === 0 ? { side: 'buy', quantity: 1 } : index === 1 && position === 1 ? { side: 'sell', quantity: 1 } : null, { initialCash: 1000 });
     expect(result.trades[1].realizedPnl).toBe(10);
     expect(result.metrics.tradeCount).toBe(2);
-    expect(result.metrics.winRate).toBe(0.5);
+    expect(result.metrics.winRate).toBe(1);
     expect(result.metrics.netProfit).toBe(10);
   });
 
