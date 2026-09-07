@@ -3,7 +3,7 @@
 Updated: 2026-09-07
 
 ## Status
-Phase 1 — Chart Core foundation in progress; historical API, quote API, demo realtime transport, demo workspace state, web workspace lifecycle, indicator overlays, validation boundaries, chart viewport controls, and chart-engine viewport invariants are implemented.
+Phase 1 — Chart Core foundation in progress; historical API, quote API, demo realtime transport, demo workspace state, web workspace lifecycle, indicator overlays, validation boundaries, chart viewport controls, chart-engine viewport invariants, and the initial package workspace graph are implemented.
 
 ## Implemented
 - React/Vite TradingView-inspired workspace shell with Lightweight Charts candlestick/volume rendering.
@@ -25,6 +25,8 @@ Phase 1 — Chart Core foundation in progress; historical API, quote API, demo r
 - Chart UI timeframe selection is wired to chart data reloads.
 - Chart viewport controls now maintain a bounded visible-bar window and expose zoom-in/zoom-out controls in the chart toolbar.
 - Chart-engine viewport operations now provide tested clamping, zoom, and bounded pan invariants.
+- Root `package.json` now declares npm workspaces for `apps/*` and `packages/*`.
+- Existing API and domain packages now have explicit package manifests, establishing package ownership without moving runtime imports yet.
 - CI runs `npm install`, `npm test`, and `npm run build`.
 
 ## Not production-ready
@@ -35,11 +37,11 @@ The workspace API is intentionally in-memory and `x-demo-user-id` is not authent
 ## Verification
 - GitHub Actions run 85 passed the complete `npm install`, `npm run test`, and `npm run build` gate after the CI cache fix.
 - GitHub Actions run 88 passed the complete `npm install`, `npm run test`, and `npm run build` gate for the chart-interaction slice.
-- The viewport-control commit now has a new CI run in progress; it must complete before this slice is marked fully verified.
-- Local execution verification was attempted previously, but this environment could not resolve `github.com`; CI remains the authoritative verification path.
+- GitHub Actions run 89 passed the complete `npm install`, `npm run test`, and `npm run build` gate for the viewport-control implementation.
+- The package workspace graph is now committed; its CI verification is pending and will be treated as the next gate.
 
 ## Current risks / gaps
-- Root project is still a Vite application rather than the planned full workspace/package build graph.
+- The root Vite application still owns the browser build; package manifests establish boundaries but package-specific build/typecheck scripts are not yet wired.
 - No durable persistence or authenticated session boundary exists.
 - Realtime stream currently sends an initial quote snapshot only; candle streaming, heartbeats, provider failover, rate limits, and observability remain future work.
 - Indicator configuration is intentionally limited to SMA 20 and EMA 50 controls; the RSI engine is not yet rendered in a pane.
@@ -47,4 +49,4 @@ The workspace API is intentionally in-memory and `x-demo-user-id` is not authent
 - News, screener, Pine runtime, strategy testing, alerts, paper trading, and community systems remain planned rather than implemented.
 
 ## Next implementation slice
-Verify the viewport-control test/build gate, then add the package build graph without moving domain invariants into React. After that, render RSI as a separate chart pane.
+Verify the package workspace graph with CI, then wire package-level entrypoints/build scripts without moving domain invariants into React. After that, render RSI as a separate chart pane.
