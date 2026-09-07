@@ -35,9 +35,11 @@ Phase 6 — Screener/fundamentals application integration in progress; chart cor
 - Demo fundamentals screener API endpoint with symbol selection, full query/filter/group parsing, centralized request validation, and explicit stale/simulated metadata.
 - Browser screener API client and workspace-integrated fundamentals screener panel with filter controls, deterministic results, score display, freshness state, and explicit simulated-data warning.
 - Browser screener client now has an explicit continuation pager that accumulates application results, forwards opaque cursors, prevents concurrent loads, rejects repeated cursors, and resets safely.
-- Browser screener client regression coverage for query encoding, cursor continuation, repeated-cursor protection, reset behavior, and response metadata shape.
+- Browser screener client regression coverage for query encoding, cursor continuation, repeated cursors, reset behavior, and response metadata shape.
 - Fundamentals snapshot `asOf`/`staleAt` timestamps are now canonical Unix epoch seconds, matching the market-domain candle timestamp convention.
 - Demo fundamentals fixtures and freshness tests use the canonical epoch-second convention.
+- Provider-neutral HTTP fundamentals adapter now translates symbols/cursor/limit into transport parameters, delegates provider response normalization explicitly, and propagates upstream HTTP failures without fabricating data.
+- Deterministic HTTP adapter regression coverage verifies pagination/query translation, canonical timestamp mapping, and upstream error propagation.
 - Paper-trading application service with isolated demo paper accounts, risk admission, order lifecycle, deterministic execution, fills, and portfolio retrieval.
 - Paper-only HTTP portfolio/order endpoints with explicit simulated metadata and no brokerage execution path.
 - Browser paper-trading client and workspace Trading Panel with simulation disclosure.
@@ -68,7 +70,8 @@ The backtest API accepts only registered built-in strategies and never evaluates
 - CI run 34108387596 on commit `299a2d4` passed PostgreSQL provisioning, package typecheck, full tests, and production build for the screener cursor-validation slice.
 - CI run 34109685837 passed PostgreSQL provisioning, package typecheck, full tests, and production build for the screener freshness-state slice.
 - CI run 34111239978 passed package typecheck, full tests, and production build for the browser screener continuation slice at commit `1d70192`.
-- Timestamp-unit hardening is committed and awaits its own CI verification.
+- CI run 34112051500 passed package typecheck, full tests, and production build for timestamp-unit hardening.
+- HTTP fundamentals adapter tests were added in commit `c8580a4`; its CI run will verify the new test file.
 
 ## Current risks / gaps
 - Demo identity must be bound to authenticated identity before production user isolation.
@@ -81,4 +84,4 @@ The backtest API accepts only registered built-in strategies and never evaluates
 - Dedicated script runtime, community, authentication, deployment, and production security remain planned.
 
 ## Next implementation slice
-Prepare the first external fundamentals-provider adapter behind `FundamentalsProvider`, using an explicit provider-neutral configuration boundary and deterministic normalization tests. Provider SDK response types, pagination tokens, credentials, and transport details must remain outside the browser and screener-engine contracts.
+Select and integrate a documented real fundamentals provider adapter only when provider credentials/API terms are available; until then, keep the transport/normalization seam provider-neutral and prevent demo data from being represented as live coverage.
