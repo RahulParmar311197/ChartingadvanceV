@@ -14,3 +14,6 @@ Status: accepted. Real brokerage connectivity is blocked until the paper-trading
 
 ## ADR-005 — Dedicated script runtime
 Status: accepted. Pine-compatible behavior is implemented by a dedicated parser/runtime/sandbox rather than arbitrary code execution.
+
+## ADR-006 — Fail-closed production runtime
+Status: accepted. Production API/runtime startup must fail closed unless authenticated identity, real market/fundamentals provider configuration, PostgreSQL persistence, encrypted screener continuation keys, and explicit CORS origins are configured. Demo providers and demo identity are development/demo capabilities only. Runtime hardening includes security headers, request limits, liveness/readiness endpoints, bounded WebSocket payload/connections, heartbeat liveness, and graceful shutdown. Process-local limits are not treated as a substitute for an edge/shared production limiter.
