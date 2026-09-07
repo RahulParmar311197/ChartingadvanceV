@@ -23,3 +23,5 @@
 - Root npm workspace graph and explicit manifests for existing domain/API packages are established; CI run 100 verified install, tests, and build.
 - RSI 14 oscillator adapter added with warmup/timestamp and range tests.
 - RSI 14 rendered as a dedicated secondary Lightweight Charts pane with fixed 0–100 scale and 70/30 reference levels.
+- Package source entrypoints added for chart, indicator, market-domain, alert, and trading packages.
+- Dedicated production-package TypeScript typecheck configuration and CI gate added; CI run 120 verified typecheck, tests, and production build.
