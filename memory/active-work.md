@@ -15,14 +15,16 @@ Phase 6 — Screener/fundamentals provider hardening and application workflows.
 - PostgreSQL portfolio saves now use optimistic account-version checks, including initial durable portfolio initialization.
 - Paper application service now has an injected asynchronous repository boundary, allowing the same application workflow to use memory or PostgreSQL without provider-specific branching.
 - API startup now supports explicit `PAPER_PERSISTENCE=postgres` with `DATABASE_URL`; development defaults remain deterministic in-memory, while `NODE_ENV=production` defaults to PostgreSQL and fails fast if `DATABASE_URL` is absent.
-- Added PostgreSQL adapter contract tests for row mapping, optimistic portfolio writes, stale writes, commit, and rollback behavior.
+- Added PostgreSQL adapter contract tests for optimistic portfolio writes, stale writes, transaction commit, rollback, and error preservation.
 - Wired the versioned PostgreSQL workspace repository/application service into the API durable mode while preserving the legacy in-memory demo workspace mode.
 - Added workspace ETag/revision metadata and 409 optimistic-concurrency handling for durable updates.
 - Restored workspace application validation at the persistence boundary and aligned the TypeScript workspace contract with the actual application state shape.
+- Wrapped paper order submission, cancellation, and replacement in the repository transaction boundary when available, making PostgreSQL order/fill/portfolio/ledger/audit mutation sequences atomic.
+- Added application regression coverage proving lifecycle mutations enter the transaction boundary.
 
 ## Immediate tasks
 - Add real-database restart/recovery and concurrent lifecycle integration tests, plus migration smoke coverage against PostgreSQL.
-- Audit paper-service mutation sequences for transaction wrapping so order lifecycle, fills, ledger, audit, and portfolio snapshots commit atomically in PostgreSQL mode.
+- Harden concurrent durable account initialization so first-use races cannot produce duplicate-account failures.
 - Continue backtesting application integration, then dedicated script runtime, community, authentication, and production hardening in roadmap order.
 
 ## Rule
