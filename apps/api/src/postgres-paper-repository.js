@@ -1,5 +1,3 @@
-import { randomUUID } from "node:crypto";
-
 function number(value) { return Number(value); }
 function accountRow(row) {
   if (!row) return null;
@@ -44,10 +42,11 @@ export class PostgresPaperRepository {
     const ledgerResult = await this.pool.query("SELECT ledger_id,account_id,entry_type,amount,currency,timestamp,reference_id FROM paper_ledger_entries WHERE account_id=$1 ORDER BY timestamp,ledger_id", [accountId]);
     return { account, positions: structuredClone(accountResult.rows[0].positions ?? []), ledger: ledgerResult.rows.map(ledgerRow) };
   }
-  async savePortfolio(portfolio, now = new Date()) {
-    const result = await this.pool.query("UPDATE paper_accounts SET cash=$2,buying_power=$3,equity=$4,positions=$5::jsonb,version=version+1,updated_at=$6 WHERE account_id=$1 RETURNING version", [portfolio.account.id, portfolio.account.cash, portfolio.account.buyingPower, portfolio.account.equity, JSON.stringify(portfolio.positions), now]);
-    if (!result.rowCount) throw new Error("account not found");
-    return structuredClone({ ...portfolio, account: { ...portfolio.account, version: Number(result.rows[0].version) } });
+  async savePortfolio(portfolio, expectedVersion = portfolio.account.version, now = new Date()) {
+    const result = await this.pool.query("UPDATE paper_accounts SET cash=$2,buying_power=$3,equity=$4,positions=$5::jsonb,version=version+1,updated_at=$6 WHERE account_id=$1 AND version=$7 RETURNING account_id,currency,cash,buying_power,equity,version,positions", [portfolio.account.id, portfolio.account.cash, portfolio.account.buyingPower, portfolio.account.equity, JSON.stringify(portfolio.positions), now, expectedVersion]);
+    if (!result.rowCount) throw new Error("account version conflict");
+    const row = result.rows[0];
+    return structuredClone({ ...portfolio, account: accountRow(row), positions: structuredClone(row.positions ?? portfolio.positions) });
   }
   async getOrder(accountId, orderId) {
     const result = await this.pool.query("SELECT account_id,order_id,symbol_id,side,order_type,quantity,limit_price,stop_price,status,created_at,updated_at,version,replacement_of FROM paper_orders WHERE account_id=$1 AND order_id=$2", [accountId, orderId]);
@@ -98,7 +97,7 @@ export class PostgresPaperRepository {
       await client.query("COMMIT");
       return result;
     } catch (error) {
-      await client.query("ROLLBACK");
+      try { await client.query("ROLLBACK"); } catch { /* preserve original failure */ }
       throw error;
     } finally { client.release(); }
   }
@@ -110,5 +109,3 @@ export async function createPostgresPoolFromEnv() {
   const { Pool } = await import("pg");
   return new Pool({ connectionString, max: Number(process.env.DB_POOL_MAX ?? 10), application_name: "chartingadvancev-api" });
 }
-
-export const persistenceInstanceId = randomUUID;
