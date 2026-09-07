@@ -15,8 +15,9 @@ export function screenerRequestFingerprint(request) {
   return createHash("sha256").update(stableJson({ symbols: request.symbols ?? [], query: request.query ?? undefined, limit: request.limit ?? request.query?.limit ?? 25 })).digest("hex");
 }
 
-export function createScreenerApplication({ provider, providerName = DEFAULT_PROVIDER, continuationRepository = new InMemoryScreenerContinuationRepository(), ttlSeconds = DEFAULT_TTL_SECONDS }) {
+export function createScreenerApplication({ provider, providerName = DEFAULT_PROVIDER, continuationRepository = new InMemoryScreenerContinuationRepository(), ttlSeconds = DEFAULT_TTL_SECONDS, cursorProtector = null }) {
   if (!provider || typeof provider.getFundamentals !== "function") throw new Error("fundamentals provider is required");
+  if (cursorProtector && (typeof cursorProtector.protect !== "function" || typeof cursorProtector.unprotect !== "function")) throw new Error("cursorProtector must expose protect and unprotect");
 
   return {
     async run(request = {}) {
@@ -26,20 +27,17 @@ export function createScreenerApplication({ provider, providerName = DEFAULT_PRO
       if (request.cursor !== undefined) {
         const continuation = await continuationRepository.consume({ continuationId: request.cursor, ownerId, requestFingerprint: fingerprint, providerName });
         if (!continuation) throw new Error("invalid or expired screener cursor");
-        providerCursor = continuation.providerCursor;
+        try { providerCursor = cursorProtector ? cursorProtector.unprotect(continuation.providerCursor) : continuation.providerCursor; }
+        catch { throw new Error("invalid or expired screener cursor"); }
       }
 
       const { ownerId: _ownerId, ...providerRequest } = request;
       const result = await runScreener(provider, { ...providerRequest, cursor: providerCursor });
       if (result.nextCursor === undefined) return { ...result, nextCursor: undefined };
 
-      const storedId = await continuationRepository.create({
-        ownerId,
-        requestFingerprint: fingerprint,
-        providerName,
-        providerCursor: result.nextCursor,
-        ttlSeconds,
-      });
+      let storedProviderCursor = result.nextCursor;
+      if (cursorProtector) storedProviderCursor = cursorProtector.protect(storedProviderCursor);
+      const storedId = await continuationRepository.create({ ownerId, requestFingerprint: fingerprint, providerName, providerCursor: storedProviderCursor, ttlSeconds });
       return { ...result, nextCursor: storedId };
     },
   };
