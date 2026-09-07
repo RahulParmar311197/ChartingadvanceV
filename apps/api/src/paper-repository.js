@@ -1,6 +1,7 @@
 export class InMemoryPaperRepository {
   constructor() {
     this.accounts = new Map();
+    this.portfolios = new Map();
     this.orders = new Map();
     this.fills = new Map();
     this.ledger = new Map();
@@ -25,8 +26,16 @@ export class InMemoryPaperRepository {
     this.accounts.set(this.accountKey(account.id), next);
     return structuredClone(next);
   }
+  getPortfolio(accountId) { return this.portfolios.get(this.accountKey(accountId)) ?? null; }
+  savePortfolio(portfolio) {
+    this.portfolios.set(this.accountKey(portfolio.account.id), structuredClone(portfolio));
+    return structuredClone(portfolio);
+  }
 
   getOrder(accountId, orderId) { return this.orders.get(this.orderKey(accountId, orderId)) ?? null; }
+  listOrders(accountId) {
+    return structuredClone([...this.orders.values()].filter((order) => order.accountId === accountId));
+  }
   insertOrder(order) {
     const key = this.orderKey(order.accountId, order.id);
     if (this.orders.has(key)) throw new Error("duplicate order id");
@@ -65,9 +74,7 @@ export class InMemoryPaperRepository {
     return structuredClone(filtered.slice(-bounded));
   }
 
-  async runTransaction(work) {
-    return work(this);
-  }
+  async runTransaction(work) { return work(this); }
 }
 
 export function createPaperRepository() { return new InMemoryPaperRepository(); }
