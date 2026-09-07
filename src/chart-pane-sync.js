@@ -28,8 +28,7 @@ export function subscribeChartRange(channel, listener) {
 }
 
 export function publishChartCrosshair(channel, payload) {
-  if (!payload) return;
-  (crosshairListeners.get(channel) ?? []).forEach((listener) => listener({ ...payload }));
+  (crosshairListeners.get(channel) ?? []).forEach((listener) => listener(payload ? { ...payload } : null));
 }
 
 export function subscribeChartCrosshair(channel, listener) {
