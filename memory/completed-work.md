@@ -30,3 +30,6 @@
 - Immutable chart-engine drawing state added with validation, add/update/remove, visibility, locking, and invariant tests.
 - Drawing interaction primitives added with coordinate conversion and two-click draft/commit tests.
 - Primary chart line/trendline tools now create actual two-point drawing series through the chart-engine state contract; selected drawings can be deleted from the toolbar or with Delete/Backspace.
+- Drawing drag lifecycle primitives added with immutable previews and endpoint validation.
+- Deterministic alert evaluator added with threshold/crossing semantics, cooldowns, disabled-rule handling, and tests.
+- Paper-trading execution primitives added for market/limit/stop/stop-limit orders, explicit bid/ask execution, deterministic fees/fill IDs, validation, and realized P&L position accounting.
