@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { rangesEqual, syncLogicalRange } from "./chart-pane-sync.js";
+import { publishChartCrosshair, rangesEqual, subscribeChartCrosshair, syncLogicalRange } from "./chart-pane-sync.js";
 
 function chartWithRange(range) {
   return { timeScale: () => ({ getVisibleLogicalRange: () => range }) };
@@ -27,5 +27,15 @@ describe("chart pane synchronization", () => {
     const target = { timeScale: () => ({ setVisibleLogicalRange }) };
     expect(syncLogicalRange(source, target, range)).toEqual(range);
     expect(setVisibleLogicalRange).not.toHaveBeenCalled();
+  });
+
+  it("publishes crosshair payloads to subscribers and cleans up", () => {
+    const listener = vi.fn();
+    const unsubscribe = subscribeChartCrosshair("primary", listener);
+    publishChartCrosshair("primary", { time: 123, price: 456 });
+    expect(listener).toHaveBeenCalledWith({ time: 123, price: 456 });
+    unsubscribe();
+    publishChartCrosshair("primary", { time: 124, price: 457 });
+    expect(listener).toHaveBeenCalledTimes(1);
   });
 });
