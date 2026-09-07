@@ -3,7 +3,7 @@
 Updated: 2026-09-07
 
 ## Status
-Phase 1 — Chart Core foundation in progress; historical API, quote API, demo realtime transport, demo workspace state, web workspace lifecycle, indicator overlays, viewport controls, synchronized chart panes/crosshair, package graph/typecheck, and interactive drawing foundations are implemented.
+Phase 4 — Paper Trading foundation in progress; Phase 1 chart core, Phase 2 indicator/drawing foundations, and deterministic alert evaluation are implemented. Paper-order execution and position accounting primitives are now implemented as pure domain logic.
 
 ## Implemented
 - React/Vite TradingView-inspired workspace shell with Lightweight Charts candlestick/volume rendering.
@@ -24,37 +24,34 @@ Phase 1 — Chart Core foundation in progress; historical API, quote API, demo r
 - Primary logical-range changes propagate to the RSI pane through a browser-local synchronization bus.
 - Primary crosshair movement propagates to RSI using the installed Lightweight Charts v5 crosshair APIs, with clear-on-leave handling.
 - Chart-engine drawing state provides immutable add/update/remove operations plus visibility/locking controls and finite-point validation.
-- Line and trendline toolbar tools now convert chart coordinates into two-point domain drawings and render them as chart line series.
+- Line and trendline toolbar tools convert chart coordinates into two-point domain drawings and render them as chart line series.
 - Drawings can be selected by clicking their rendered series and deleted with the toolbar or Delete/Backspace. Escape exits drawing/selection mode.
-- Drawing interaction primitives have unit coverage for tool mapping, coordinate conversion, draft progression, commit thresholds, and IDs.
-- Root `package.json` declares npm workspaces for `apps/*` and `packages/*`; package manifests expose source entrypoints for chart, indicator, market-domain, alert, and trading domains.
-- Root `typecheck:packages` validates production package contracts without moving domain logic into React.
-- CI runs package typecheck, tests, and the browser build.
+- Drawing interaction primitives have unit coverage for tool mapping, coordinate conversion, draft progression, commit thresholds, IDs, and drag lifecycle state.
+- Drawing-series conversion sorts render-only copies without mutating domain drawings.
+- Deterministic alert evaluation supports threshold/crossing operators, disabled rules, cooldowns, invalid-input rejection, and stable delivery IDs.
+- Paper-trading execution supports market/limit/stop/stop-limit trigger evaluation, explicit bid/ask pricing, fee calculation, order validation, accepted/filled/rejected outcomes, deterministic fill IDs, and position realized-P&L accounting.
+- Root npm workspace graph/typecheck and CI test/build gates are established.
 
 ## Not production-ready
-The current market-data implementation is deterministic demo data. No licensed live exchange feed, historical market database, authenticated API, durable user state, production market WebSocket gateway, alerts worker, paper brokerage simulator, or real order execution exists.
+The current market-data implementation is deterministic demo data. No licensed live exchange feed, historical market database, authenticated API, durable user state, production market WebSocket gateway, alerts worker, paper brokerage service, or real order execution exists.
 
 The workspace API is intentionally in-memory and `x-demo-user-id` is not authentication. The realtime gateway is a local/demo transport and is not an exchange connection.
 
 Drawing persistence is currently React/browser-session state only. It is intentionally not added to the server workspace contract until a versioned workspace schema and authorization boundary are defined.
 
+Paper trading is currently a pure deterministic domain foundation; it is not connected to real-money brokerage APIs and does not represent broker execution guarantees, margin rules, or exchange microstructure.
+
 ## Verification
-- GitHub Actions run 85 passed the complete `npm install`, `npm run test`, and `npm run build` gate after the CI cache fix.
-- GitHub Actions run 88 passed the complete chart-interaction gate.
-- GitHub Actions run 89 passed the viewport-control gate.
-- GitHub Actions run 100 passed the workspace package graph gate.
-- GitHub Actions run 120 passed package typecheck, all Vitest tests, and the production Vite build after package-entrypoint/typecheck changes.
-- The first RSI CI run exposed incorrect expected Wilder-RSI values; the test was corrected and the full gate subsequently passed.
-- GitHub Actions run 135 passed package typecheck, all Vitest tests, and the production Vite build for synchronized viewport changes.
-- GitHub Actions run 148 passed package typecheck, all Vitest tests, and the production Vite build for crosshair bus changes.
-- The current drawing interaction commit triggered CI run 153; verification is in progress and must pass before this slice is considered green.
+- GitHub Actions run 168 passed package typecheck, all tests, and the production Vite build for the drawing drag lifecycle documentation state.
+- Alert and paper-trading changes have been committed with unit tests; their new CI run must pass before those slices are marked green.
 
 ## Current risks / gaps
-- The root Vite application still owns the browser build; production package publishing/build artifacts are not configured.
-- Drawing rendering currently uses Lightweight Charts line series rather than a dedicated chart primitive layer; point dragging, handles, rays, and richer drawing geometry remain future work.
+- Drawing rendering currently uses Lightweight Charts line series rather than a dedicated chart primitive layer; point-drag UI wiring, handles, rays, and richer geometry remain future work.
 - Drawing state is not yet part of the server workspace contract, so drawings are not durable across devices.
 - Realtime stream currently sends an initial quote snapshot only; candle streaming, heartbeats, provider failover, rate limits, and observability remain future work.
-- News, screener, Pine runtime, strategy testing, alerts, paper trading, and community systems remain planned rather than implemented.
+- Paper trading still needs a durable ledger, cash/buying-power risk checks, order cancellation/replacement lifecycle, audit events, portfolio valuation, and application/API/UI integration.
+- Alerts still need persistence, scheduler/worker delivery, webhook/notification adapters, idempotency, and application/UI integration.
+- Backtesting, screener/fundamentals, script runtime, community systems, authentication, production persistence, and deployment hardening remain planned.
 
 ## Next implementation slice
-Add selected-drawing point editing/drag handles through the chart-engine update contract, then design a versioned workspace schema for safe drawing persistence. Keep real-money trading and live-provider integration behind explicit authorization/licensing boundaries.
+Complete the paper-trading ledger/risk/audit domain and API boundary, then build the deterministic backtesting simulator on top of the same execution contracts. Keep real-money brokerage integration blocked behind explicit authorization, risk, audit, and security gates.
