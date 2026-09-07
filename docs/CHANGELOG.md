@@ -1,6 +1,12 @@
 # Changelog
 
 ## 2026-09-07
+- Added migration `003_screener_continuations.sql` for durable screener continuation state.
+- Added in-memory and PostgreSQL continuation repositories with owner/query/provider scoping, single-use atomic consumption, expiry, and expired-row cleanup.
+- Kept provider cursors infrastructure-only; continuation identifiers exposed to application callers are independently generated opaque IDs.
+- Added regression coverage for scope isolation, expiry, single-use consumption, PostgreSQL query shape, and cleanup.
+
+## 2026-09-07
 - Hardened the provider-neutral fundamentals HTTP adapter with page-size and cursor bounds, configurable timeout cancellation, and upstream error propagation without fabricated fallback data.
 - Exported the HTTP adapter through the screener-engine package subpath so application infrastructure can consume the transport seam without provider-specific imports.
 - Added regression coverage for request-bound enforcement, timeout cancellation, invalid timeout configuration, query translation, timestamp mapping, and upstream HTTP failures.
