@@ -32,4 +32,17 @@ describe("paper persistence repository", () => {
     repository.appendAuditEvent(event);
     expect(repository.listAuditEvents("paper:a")).toEqual([event]);
   });
+
+  it("rolls back all in-memory aggregate stores when a transaction fails", async () => {
+    const repository = createPaperRepository();
+    await expect(repository.runTransaction(async (tx) => {
+      tx.createAccount({ id: "paper:a", currency: "USD", cash: 100, buyingPower: 100, equity: 100, version: 0 });
+      tx.insertOrder({ id: "order-1", accountId: "paper:a", status: "accepted" });
+      tx.appendAuditEvent({ id: "event-1", accountId: "paper:a", action: "order_submitted", timestamp: 1 });
+      throw new Error("atomic failure");
+    })).rejects.toThrow("atomic failure");
+    expect(repository.getAccount("paper:a")).toBeNull();
+    expect(repository.getOrder("paper:a", "order-1")).toBeNull();
+    expect(repository.listAuditEvents("paper:a")).toEqual([]);
+  });
 });
