@@ -1,9 +1,7 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { assertProductionConfig, createRateLimiter, createSecurityHeaders, parseCorsOrigins, productionConfigErrors } from "./runtime-security.js";
 
 describe("runtime security", () => {
-  afterEach(() => vi.restoreAllMocks());
-
   it("rate-limits within a fixed window and exposes retry timing", () => {
     const limiter = createRateLimiter({ limit: 2, windowMs: 1000 });
     expect(limiter.check("client", 0)).toMatchObject({ allowed: true, remaining: 1 });
@@ -36,22 +34,26 @@ describe("runtime security", () => {
     expect(createSecurityHeaders({ production: false })).not.toHaveProperty("strict-transport-security");
   });
 
-  it("blocks production startup until real identity, data, persistence, and CORS are configured", () => {
+  it("blocks production startup until real identity, providers, persistence, and CORS are configured", () => {
     const env = { NODE_ENV: "production", PAPER_PERSISTENCE: "postgres", DATABASE_URL: "postgresql://example", SCREENER_CURSOR_ENCRYPTION_KEY: "configured", CORS_ORIGINS: "https://app.example.com" };
     expect(productionConfigErrors(env)).toEqual([
       "AUTH_MODE=authenticated is required for production; demo identity is not accepted",
       "MARKET_DATA_MODE=live is required for production",
       "FUNDAMENTALS_DATA_MODE=live is required for production",
+      "MARKET_DATA_PROVIDER=configured is required; a real provider adapter must be installed before production",
+      "FUNDAMENTALS_DATA_PROVIDER=configured is required; a real provider adapter must be installed before production",
     ]);
     expect(() => assertProductionConfig(env)).toThrow("Production configuration invalid");
   });
 
-  it("accepts a fully specified production configuration", () => {
+  it("accepts the non-provider portion of a production configuration", () => {
     const env = {
       NODE_ENV: "production",
       AUTH_MODE: "authenticated",
       MARKET_DATA_MODE: "live",
       FUNDAMENTALS_DATA_MODE: "live",
+      MARKET_DATA_PROVIDER: "configured",
+      FUNDAMENTALS_DATA_PROVIDER: "configured",
       PAPER_PERSISTENCE: "postgres",
       DATABASE_URL: "postgresql://example",
       SCREENER_CURSOR_ENCRYPTION_KEY: "configured",
