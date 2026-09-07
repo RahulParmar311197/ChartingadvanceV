@@ -60,7 +60,9 @@ export function productionConfigErrors(env = process.env) {
   if (env.MARKET_DATA_MODE !== "live") errors.push("MARKET_DATA_MODE=live is required for production");
   if (env.FUNDAMENTALS_DATA_MODE !== "live") errors.push("FUNDAMENTALS_DATA_MODE=live is required for production");
   if (env.MARKET_DATA_PROVIDER !== "configured") errors.push("MARKET_DATA_PROVIDER=configured is required; a real provider adapter must be installed before production");
+  else errors.push("production market provider adapter is not implemented in this build");
   if (env.FUNDAMENTALS_DATA_PROVIDER !== "configured") errors.push("FUNDAMENTALS_DATA_PROVIDER=configured is required; a real provider adapter must be installed before production");
+  else errors.push("production fundamentals provider adapter is not implemented in this build");
   if (env.PAPER_PERSISTENCE !== "postgres") errors.push("PAPER_PERSISTENCE=postgres is required for production");
   if (!env.DATABASE_URL) errors.push("DATABASE_URL is required for production");
   if (!env.SCREENER_CURSOR_ENCRYPTION_KEY && !env.SCREENER_CURSOR_ENCRYPTION_KEYS) errors.push("SCREENER_CURSOR_ENCRYPTION_KEY or SCREENER_CURSOR_ENCRYPTION_KEYS is required for production");
