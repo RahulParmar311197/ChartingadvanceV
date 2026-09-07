@@ -42,30 +42,30 @@ Phase 6 — Screener/fundamentals application integration in progress; chart cor
 - Trading Panel Cancel/Replace controls backed by canonical stored order state rather than bounded audit reconstruction.
 - Durable paper persistence boundary documented with account/order/fill/ledger/audit aggregates, repository operations, transactional invariants, optimistic concurrency, idempotency, authorization separation, and migration strategy.
 - In-memory repository adapter and regression coverage for account versions, account-scoped order identity, stale order transitions, and idempotent audit appends.
-- Versioned workspace persistence contract with schema version, owner binding, monotonic revisions, authorization checks, and regression coverage.
+- Versioned workspace persistence contract with schema version, owner binding, monotonic revisions, validation, and regression coverage.
 - PostgreSQL paper repository adapter with injected pool/transaction support, optimistic account/order mutation, idempotent fill/ledger/audit writes, account-scoped reads, and optimistic portfolio snapshot saves.
 - PostgreSQL migration runner with ordered transactional migrations and a schema-migrations ledger.
 - Position snapshot migration for durable paper portfolio recovery across process restarts.
 - Asynchronous repository-injected paper application service shared by memory and PostgreSQL implementations.
 - Explicit `PAPER_PERSISTENCE=postgres` API startup mode backed by `DATABASE_URL`; development remains deterministic/in-memory by default and `NODE_ENV=production` defaults to PostgreSQL with fail-fast configuration.
 - PostgreSQL adapter contract tests for mapping, optimistic portfolio writes, stale-write rejection, transaction commit, rollback, and error preservation.
+- PostgreSQL-backed versioned workspace service wired into the API when durable persistence is enabled, with owner-scoped reads, schema-version metadata, ETag revision responses, optimistic revision conflicts, and compatibility-preserving in-memory demo mode.
 
 ## Not production-ready
 The market-data and fundamentals implementations are deterministic demo data. No licensed live exchange/fundamentals feeds, durable production market database, authenticated user system, production WebSocket gateway, alerts worker, or real order execution exists.
 
-The workspace API remains intentionally in-memory and demo-only. Drawing state remains browser-session state until the versioned workspace repository is integrated with authenticated identity and durable storage.
-
-Paper trading and backtesting are simulation/domain logic only. They do not claim broker execution, margin, exchange microstructure, historical-data completeness, or real-money guarantees. The current paper application uses deterministic demo quotes with bid/ask equal to the generated demo last price, a fixed demo fee rate, a bounded notional/position policy, and no short selling. PostgreSQL persistence is now selectable, but it remains persistence for the simulation and does not turn the application into a brokerage system. The `x-demo-user-id` identity boundary is not an authenticated production identity mechanism. Mark-to-market valuation is based on the deterministic demo quote and is not a live valuation feed.
+Paper trading and backtesting are simulation/domain logic only. They do not claim broker execution, margin, exchange microstructure, historical-data completeness, or real-money guarantees. The current paper application uses deterministic demo quotes with bid/ask equal to the generated demo last price, a fixed demo fee rate, a bounded notional/position policy, and no short selling. PostgreSQL persistence is selectable, but it remains persistence for the simulation and does not turn the application into a brokerage system. The `x-demo-user-id` identity boundary is not an authenticated production identity mechanism. Mark-to-market valuation is based on the deterministic demo quote and is not a live valuation feed.
 
 The screener API has a pagination contract but the deterministic demo provider currently has no additional pages and therefore returns no next cursor. This is intentional; no fake pagination state is exposed.
 
+The durable PostgreSQL workspace path is wired, but it still uses the demo identity header and requires authenticated identity binding before production user isolation can be claimed. Real database restart/recovery, concurrency, and migration-smoke verification are still required.
+
 ## Verification
-- Previous CI run 168 passed package typecheck, all tests, and the production Vite build.
-- CI run 176 completed the substantive install, package typecheck, full test suite, and production build successfully for the previous project-state transition.
-- Fresh CI verification is required for the asynchronous paper service, PostgreSQL wiring, dependency, and adapter tests; no current green status is being claimed yet.
+- CI run 34099627805 on commit `601421f` passed package typecheck, the full test suite, and the production Vite build.
+- The subsequent workspace persistence commits require a fresh CI run before their verification status is claimed.
 
 ## Current risks / gaps
-- PostgreSQL mutation sequences are not yet wrapped as one application-level transaction; order state, fills, audit, and portfolio snapshots can still require coordinated atomicity before durable mode is considered production-grade.
+- PostgreSQL paper mutation sequences are not yet wrapped as one application-level transaction; order state, fills, ledger, audit, and portfolio snapshots still require coordinated atomicity before durable mode is production-grade.
 - PostgreSQL adapter needs real-database integration tests, restart/recovery verification, and migration smoke coverage.
 - The demo identity header must be replaced/bound to authenticated identity before production user data isolation is claimed.
 - Backtest Sharpe annualization currently assumes 252 periods/year; interval-aware annualization remains future work.
@@ -74,9 +74,8 @@ The screener API has a pagination contract but the deterministic demo provider c
 - Screener needs a real fundamentals provider, durable provider pagination, and freshness/completeness policy before production use.
 - Drawing handles, rays, richer geometry, and durable server persistence remain future work.
 - Realtime stream currently sends an initial quote snapshot only; candle streaming, heartbeats, provider failover, rate limits, and observability remain future work.
-- Versioned workspace repository integration and authenticated authorization remain future work.
 - Alerts still need persistence, scheduler/worker delivery, webhook/notification adapters, idempotency, and application/UI integration.
 - Dedicated script runtime, community, authentication, durable persistence, deployment, and production security remain planned.
 
 ## Next implementation slice
-Wrap PostgreSQL paper order/fill/ledger/audit/portfolio mutations in application-level transactions, add real-database restart/concurrency/migration smoke tests, then integrate versioned workspace persistence into the API.
+Add real PostgreSQL restart/recovery, concurrent lifecycle, and migration smoke tests; then make paper order/fill/ledger/audit/portfolio mutations transactionally atomic before continuing the backtesting application integration.
