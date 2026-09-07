@@ -27,6 +27,9 @@ Phase 6 — Screener/fundamentals application integration in progress; chart cor
 - Fundamentals provider/application contract with freshness metadata and bounded pagination contract.
 - Demo fundamentals screener API endpoint with symbol selection, full query/filter/group parsing, centralized request validation, and explicit stale/simulated metadata.
 - Screener request validation regression coverage for fields, operators, groups, symbols, ranges, limits, and cursor shape.
+- Browser screener API client with preflight validation and normalized query serialization.
+- Workspace-integrated fundamentals screener panel with filter controls, deterministic results, score display, freshness state, and explicit simulated-data warning.
+- Browser screener client regression coverage and TypeScript/JavaScript runtime conformance coverage.
 - Root npm workspace graph/typecheck and CI test/build gates.
 
 ## Not production-ready
@@ -47,8 +50,8 @@ The screener API has a pagination contract but the deterministic demo provider c
 - Backtest Sharpe annualization currently assumes 252 periods/year; interval-aware annualization remains future work.
 - Backtest benchmark comparison is deterministic buy-and-hold over supplied benchmark candles; durable application-level integration remains future work.
 - Backtest execution is candle-level and does not model intrabar ordering, queue position, partial fills, borrow fees, margin calls, or corporate actions.
-- Screener still needs browser UI integration, a real fundamentals provider, durable provider pagination, and freshness/completeness policy before production use.
-- The screener TypeScript core and Node runtime currently have parallel implementations; shared conformance coverage should be added before a production build pipeline is selected.
+- Screener needs a real fundamentals provider, durable provider pagination, and freshness/completeness policy before production use.
+- The screener TypeScript core and Node runtime currently have parallel implementations; conformance tests now cover representative filters/groups, but architectural consolidation remains future work.
 - Drawing point-drag UI wiring, handles, rays, and richer geometry remain future work.
 - Realtime stream currently sends an initial quote snapshot only; candle streaming, heartbeats, provider failover, rate limits, and observability remain future work.
 - Paper trading still needs application/API/UI integration, cancellation/replacement lifecycle, audit-event persistence, portfolio mark-to-market valuation, and durable storage.
@@ -56,4 +59,4 @@ The screener API has a pagination contract but the deterministic demo provider c
 - Dedicated script runtime, community, authentication, durable persistence, deployment, and production security remain planned.
 
 ## Next implementation slice
-Integrate the screener into the existing browser workspace through a dedicated application client/UI boundary, preserving the normalized API contract and explicit demo freshness state. Then add runtime conformance tests so the Node adapter cannot silently diverge from the TypeScript screener semantics.
+Harden the screener provider boundary and runtime conformance, then move into real-provider pagination semantics and application-level screener workflows. In parallel, continue drawing endpoint drag wiring and paper-trading application integration without enabling real-money brokerage execution.
