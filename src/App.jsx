@@ -3,6 +3,7 @@ import { Bell, BarChart3, ChevronDown, Clock3, Crosshair, Grid2X2, LineChart, Me
 import { createChart, CandlestickSeries, HistogramSeries, LineSeries } from "lightweight-charts";
 import { DeterministicDemoMarketDataProvider } from "../packages/market-domain/src/demo-provider.ts";
 import { createMovingAverageOverlay } from "../packages/indicator-engine/src/overlay.ts";
+import { createRsiSeries } from "../packages/indicator-engine/src/oscillator.ts";
 import { clampVisibleBars } from "./chart-interaction.js";
 import { fetchQuote, formatQuoteValue } from "./market.js";
 import { connectMarketStream } from "./realtime.js";
@@ -34,7 +35,7 @@ async function loadCandles(symbol, interval, from, to) {
   return MARKET_DATA.getHistoricalCandles({ symbol, interval, from, to });
 }
 
-function Chart({ symbol, interval, indicators, visibleBars, onVisibleBarsChange }) {
+function Chart({ symbol, interval, indicators, visibleBars }) {
   const ref = useRef(null);
   const chartRef = useRef(null);
   useEffect(() => {
@@ -69,11 +70,50 @@ function Chart({ symbol, interval, indicators, visibleBars, onVisibleBarsChange 
   return <div className="chart-canvas" ref={ref} />;
 }
 
+function RsiPane({ symbol, interval, visibleBars }) {
+  const ref = useRef(null);
+  const chartRef = useRef(null);
+  useEffect(() => {
+    const el = ref.current; if (!el) return undefined;
+    const chart = createChart(el, {
+      layout: { background: { color: "#131722" }, textColor: "#9aa4b2" },
+      grid: { vertLines: { color: "#1e2430" }, horzLines: { color: "#1e2430" } },
+      rightPriceScale: { borderColor: "#2a2f3a", scaleMargins: { top: 0.08, bottom: 0.08 } },
+      timeScale: { borderColor: "#2a2f3a", visible: false },
+      crosshair: { mode: 0 }, width: el.clientWidth, height: el.clientHeight,
+    });
+    chartRef.current = chart;
+    const rsiLine = chart.addSeries(LineSeries, { lineWidth: 1, title: "RSI 14", priceLineVisible: false, lastValueVisible: true, autoscaleInfoProvider: () => ({ priceRange: { minValue: 0, maxValue: 100 } }) });
+    rsiLine.createPriceLine({ price: 70, title: "70", lineWidth: 1, lineStyle: 2, axisLabelVisible: true, lineVisible: true });
+    rsiLine.createPriceLine({ price: 30, title: "30", lineWidth: 1, lineStyle: 2, axisLabelVisible: true, lineVisible: true });
+    let disposed = false;
+    const step = intervalSeconds(interval); const to = Math.floor(Date.now() / 1000); const from = to - step * 180;
+    loadCandles(symbol, interval, from, to).then((candles) => {
+      if (disposed || !candles.length) return;
+      const rsi = createRsiSeries(candles, 14);
+      rsiLine.setData(rsi.points);
+      chart.timeScale().setVisibleLogicalRange({ from: Math.max(0, candles.length - visibleBars), to: candles.length - 1 });
+    });
+    const resize = () => chart.applyOptions({ width: el.clientWidth, height: el.clientHeight }); window.addEventListener("resize", resize);
+    return () => { disposed = true; chartRef.current = null; window.removeEventListener("resize", resize); chart.remove(); };
+  }, [symbol, interval]);
+
+  useEffect(() => {
+    const chart = chartRef.current; if (!chart) return;
+    const range = chart.timeScale().getVisibleLogicalRange();
+    if (!range) return;
+    chart.timeScale().setVisibleLogicalRange({ from: range.to - visibleBars + 1, to: range.to });
+  }, [visibleBars]);
+
+  return <div className="rsi-pane"><div className="rsi-pane-header"><strong>RSI 14</strong><span>Relative Strength Index</span></div><div className="rsi-chart" ref={ref} /></div>;
+}
+
 export default function App() {
   const [symbol, setSymbol] = useState(DEFAULT_WATCHLIST[0]);
   const [interval, setIntervalValue] = useState("1D"); const [searchOpen, setSearchOpen] = useState(false); const [query, setQuery] = useState("");
   const [watchlist, setWatchlist] = useState(DEFAULT_WATCHLIST); const [quotes, setQuotes] = useState({}); const [streamStatus, setStreamStatus] = useState("disconnected");
   const [indicators, setIndicators] = useState([{ kind: "sma", period: 20, enabled: true }, { kind: "ema", period: 50, enabled: false }]);
+  const [rsiEnabled, setRsiEnabled] = useState(true);
   const [visibleBars, setVisibleBars] = useState(120);
   const [workspaceReady, setWorkspaceReady] = useState(!API_URL); const hydrating = useRef(true); const saveTimer = useRef(null);
   const [activeTool, setActiveTool] = useState("crosshair"); const [bottom, setBottom] = useState("Trading Panel");
@@ -101,7 +141,7 @@ export default function App() {
     clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
       saveWorkspace({ watchlist: watchlist.map((item) => item.symbol), activeSymbol: symbol.symbol, interval }, API_URL, DEMO_USER_ID)
-        .catch((error) => console.warn("Workspace save failed; local state remains active.", error));
+        .catch((error) => console.warn("Workspace save failed; local workspace remains active.", error));
     }, 400);
     return () => clearTimeout(saveTimer.current);
   }, [watchlist, symbol, interval, workspaceReady]);
@@ -128,12 +168,12 @@ export default function App() {
     <header className="topbar"><div className="brand"><div className="brand-mark">TV</div><span>TradingView</span></div>
       <button className="symbol-button" onClick={() => setSearchOpen(true)}><span className="ticker">{symbol.symbol.split(":")[1]}</span><span className="exchange">{symbol.symbol.split(":")[0]}</span><ChevronDown size={15}/></button>
       <button className="icon-btn"><Clock3 size={17}/></button><button className="interval-btn">{interval}<ChevronDown size={13}/></button>
-      <div className="indicator-control"><button className="toolbar-btn"><BarChart3 size={16}/> Indicators</button><div className="indicator-menu"><button onClick={() => toggleIndicator("sma")}>SMA 20 <span>{indicators[0].enabled ? "✓" : ""}</span></button><button onClick={() => toggleIndicator("ema")}>EMA 50 <span>{indicators[1].enabled ? "✓" : ""}</span></button></div></div>
+      <div className="indicator-control"><button className="toolbar-btn"><BarChart3 size={16}/> Indicators</button><div className="indicator-menu"><button onClick={() => toggleIndicator("sma")}>SMA 20 <span>{indicators[0].enabled ? "✓" : ""}</span></button><button onClick={() => toggleIndicator("ema")}>EMA 50 <span>{indicators[1].enabled ? "✓" : ""}</span></button><button onClick={() => setRsiEnabled((enabled) => !enabled)}>RSI 14 <span>{rsiEnabled ? "✓" : ""}</span></button></div></div>
       <button className="toolbar-btn"><Bell size={16}/> Alert</button><button className="icon-btn"><Settings size={17}/></button><div className="top-spacer"/><button className="top-btn"><Grid2X2 size={16}/> Layout</button><button className="top-btn"><UserRound size={16}/> Sign in</button><button className="blue-btn">Get started</button><button className="icon-btn"><Menu size={18}/></button>
     </header>
     <main className="workspace"><aside className="left-toolbar">{[["crosshair",Crosshair],["line",Minus],["trend",TrendingUp],["text",Type],["zoom",ZoomIn]].map(([id,Icon])=><button key={id} className={activeTool===id?"tool active":"tool"} onClick={()=>setActiveTool(id)}><Icon size={18}/></button>)}<div className="tool-divider"/><button className="tool"><Pencil size={17}/></button><button className="tool"><Trash2 size={17}/></button></aside>
       <section className="chart-area"><div className="chart-header"><div><strong>{symbol.symbol}</strong><span className="muted"> · {interval}</span><span className="status-dot"/><span className="muted">{statusText}</span></div><div className="ohlc"><span>Last {formatQuoteValue(last)}</span><span>Δ {currentQuote ? formatQuoteValue(currentQuote.change) : "—"}</span><span>Bid/ask not provided</span><span className={changePercent>=0?"positive":"negative"}>{changePercent>=0?"+":""}{changePercent.toFixed(2)}%</span></div></div>
-        <div className="mini-toolbar">{INTERVALS.map(x=><button key={x} className={interval===x?"time active":"time"} onClick={()=>setIntervalValue(x)}>{x}</button>)}<span className="separator"/><button className="time" title="Zoom in" onClick={()=>adjustVisibleBars(-20)}><ZoomIn size={15}/></button><button className="time" title="Zoom out" onClick={()=>adjustVisibleBars(20)}><Search size={14}/></button><span className="visible-bars">{visibleBars} bars</span><button className="time"><LineChart size={15}/></button><button className="time"><Settings size={15}/></button></div><Chart symbol={symbol.symbol} interval={interval} indicators={indicators} visibleBars={visibleBars} onVisibleBarsChange={setVisibleBars}/><div className="chart-footer"><button className="time">Auto</button><button className="time">%</button><div className="footer-spacer"/><button className="time"><Plus size={14}/> Add alert</button><button className="time"><MoreHorizontal size={15}/></button></div>
+        <div className="mini-toolbar">{INTERVALS.map(x=><button key={x} className={interval===x?"time active":"time"} onClick={()=>setIntervalValue(x)}>{x}</button>)}<span className="separator"/><button className="time" title="Zoom in" onClick={()=>adjustVisibleBars(-20)}><ZoomIn size={15}/></button><button className="time" title="Zoom out" onClick={()=>adjustVisibleBars(20)}><Search size={14}/></button><span className="visible-bars">{visibleBars} bars</span><button className="time"><LineChart size={15}/></button><button className="time"><Settings size={15}/></button></div><Chart symbol={symbol.symbol} interval={interval} indicators={indicators} visibleBars={visibleBars}/>{rsiEnabled&&<RsiPane symbol={symbol.symbol} interval={interval} visibleBars={visibleBars}/>}<div className="chart-footer"><button className="time">Auto</button><button className="time">%</button><div className="footer-spacer"/><button className="time"><Plus size={14}/> Add alert</button><button className="time"><MoreHorizontal size={15}/></button></div>
       </section>
       <aside className="right-panel"><div className="panel-tabs"><strong>Watchlist</strong><button className="icon-btn"><Plus size={16}/></button></div><div className="watch-head"><span>Symbol</span><span>Last</span><span>Chg%</span></div><div className="watchlist">{watchlist.map((item)=>{const q=quotes[item.symbol]; const value=q?.last; const change=q?.changePercent ?? 0; return <button key={item.symbol} className={item.symbol===symbol.symbol?"watch-row selected":"watch-row"} onClick={()=>setSymbol(item)}><div className="watch-name"><Star size={12}/><div><strong>{item.symbol.split(":")[1]}</strong><small>{item.symbol.split(":")[0]}</small></div></div><span>{formatQuoteValue(value)}</span><span className={change>=0?"positive":"negative"}>{q ? `${change>=0?"+":""}${change.toFixed(2)}%` : "—"}</span><span className="remove" onClick={(e)=>{e.stopPropagation();setWatchlist((w)=>w.filter((x)=>x.symbol!==item.symbol));}}><X size={12}/></span></button>})}</div>
         <div className="news"><div className="panel-tabs"><strong>News</strong><button className="text-btn">All</button></div>{["Markets open higher as tech leads gains","AI infrastructure stocks remain in focus","Dollar index retreats from recent highs"].map((n,i)=><article key={i}><small>Demo · Market News</small><p>{n}</p></article>)}</div></aside>
