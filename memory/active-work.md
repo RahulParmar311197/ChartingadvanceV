@@ -1,20 +1,17 @@
 # Active Work
 
 ## Current milestone
-Phase 6 — Screener/fundamentals provider hardening and application workflows.
+Phase 6 — Screener/fundamentals application integration in progress.
 
 ## Completed in this slice
-- Durable paper persistence boundary documented with transactional, idempotency, optimistic-concurrency, and authorization invariants.
-- PostgreSQL paper persistence, workspace persistence, migrations, restart recovery, and transaction boundaries implemented and covered.
-- PostgreSQL duplicate client-order races now use atomic repository-level insert-if-absent semantics and real concurrent integration coverage.
-- Deterministic application backtest boundary and Strategy Tester UI implemented.
-- Second allowlisted deterministic Candle Direction strategy added without introducing arbitrary-code execution.
-- Strategy-engine Sharpe annualization is now interval-aware for intraday, daily, weekly, and monthly intervals.
-- Backtest API exposes the exact annualization period assumption used for Sharpe.
+- Hardened the backtest application boundary with strict candle timestamp chronology and OHLC/volume validation.
+- Applied the same validation to optional benchmark candle input.
+- Added regression coverage for duplicate/non-monotonic timestamps, invalid OHLC relationships, malformed timestamps, invalid volume, and invalid benchmark candles.
 
 ## Immediate tasks
-- Harden backtest input semantics at the application boundary: validate chronological candle timestamps and OHLC relationships, reject malformed/non-monotonic series, and add regression coverage.
-- Verify the fresh CI run for the interval-aware metrics commits before advancing the runtime boundary.
+- Verify the fresh CI run covering interval-aware Sharpe annualization and candle-semantics validation.
+- After CI is green, add defensive candle invariants at the strategy-engine boundary for non-HTTP callers without duplicating application-specific request limits.
+- Keep exchange/calendar-aware annualization explicitly separate from the current equity-session assumption.
 
 ## Rule
 When a task is completed, move it to `memory/completed-work.md` and update `docs/PROJECT_STATE.md`.
