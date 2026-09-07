@@ -4,7 +4,7 @@ export type ScreenerCompleteness = "complete" | "partial";
 export interface FundamentalMatch {
   snapshot: {
     symbolId: string;
-    asOf: number;
+    asOf: number; // Unix epoch seconds, UTC.
     marketCap?: number;
     peRatio?: number;
     priceToBook?: number;
@@ -35,8 +35,8 @@ export interface ScreenerResult {
   items: readonly FundamentalMatch[];
   nextCursor?: string;
   freshness: {
-    asOf: number;
-    staleAt?: number;
+    asOf: number; // Unix epoch seconds, UTC.
+    staleAt?: number; // Unix epoch seconds, UTC.
     stale: boolean;
     status: ScreenerFreshnessStatus;
   };
