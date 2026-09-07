@@ -4,7 +4,8 @@ const DEFAULT_TTL_SECONDS = 15 * 60;
 const MAX_OWNER_LENGTH = 256;
 const MAX_PROVIDER_LENGTH = 128;
 const MAX_FINGERPRINT_LENGTH = 256;
-const MAX_CURSOR_LENGTH = 4096;
+// Provider cursors are bounded at 4096 characters. Encrypted envelopes add metadata and authentication bytes.
+const MAX_CURSOR_LENGTH = 8192;
 
 function validateString(value, label, maxLength) {
   if (typeof value !== "string" || value.length === 0 || value.length > maxLength) {
