@@ -33,6 +33,9 @@ Phase 6 — Screener/fundamentals application integration in progress; chart cor
 - Browser screener API client with preflight validation and normalized query serialization.
 - Workspace-integrated fundamentals screener panel with filter controls, deterministic results, score display, freshness state, and explicit simulated-data warning.
 - Browser screener client regression coverage.
+- Paper-trading application service with isolated demo-user paper accounts, risk admission, order lifecycle submission, deterministic demo execution, fill application, and portfolio retrieval.
+- Paper-only HTTP portfolio and order-submission endpoints with explicit simulated metadata and no brokerage execution path.
+- Paper-trading application regression coverage for fills, user isolation, risk rejection, short-sale rejection, and untriggered limit orders.
 - Root npm workspace graph/typecheck and CI test/build gates.
 
 ## Not production-ready
@@ -40,14 +43,14 @@ The market-data and fundamentals implementations are deterministic demo data. No
 
 The workspace API remains intentionally in-memory and demo-only. Drawing state remains browser-session state until a versioned authorized workspace schema is implemented.
 
-Paper trading and backtesting are simulation/domain logic only. They do not claim broker execution, margin, exchange microstructure, historical-data completeness, or real-money guarantees. Short backtests are intentionally cash-accounting simulations and do not model broker margin requirements.
+Paper trading and backtesting are simulation/domain logic only. They do not claim broker execution, margin, exchange microstructure, historical-data completeness, or real-money guarantees. The current paper application uses deterministic demo quotes with bid/ask equal to the generated demo last price, a fixed demo fee rate, a bounded notional/position policy, and no short selling. These are explicitly simulated application policies.
 
 The screener API has a pagination contract but the deterministic demo provider currently has no additional pages and therefore returns no next cursor. This is intentional; no fake pagination state is exposed.
 
 ## Verification
 - Previous CI run 168 passed package typecheck, all tests, and the production Vite build.
 - CI run 176 completed the substantive install, package typecheck, full test suite, and production build successfully for the previous project-state transition.
-- Screener commits after those runs require fresh CI verification before being marked green; GitHub currently reports no workflow run for the recent main commits.
+- Paper-trading application commits require fresh CI verification; GitHub currently reports no workflow status checks for the recent main commits.
 
 ## Current risks / gaps
 - Backtest Sharpe annualization currently assumes 252 periods/year; interval-aware annualization remains future work.
@@ -56,9 +59,9 @@ The screener API has a pagination contract but the deterministic demo provider c
 - Screener needs a real fundamentals provider, durable provider pagination, and freshness/completeness policy before production use.
 - Drawing point-drag UI wiring, handles, rays, and richer geometry remain future work.
 - Realtime stream currently sends an initial quote snapshot only; candle streaming, heartbeats, provider failover, rate limits, and observability remain future work.
-- Paper trading still needs application/API/UI integration, cancellation/replacement lifecycle, audit-event persistence, portfolio mark-to-market valuation, and durable storage.
+- Paper trading still needs web Trading Panel integration, cancellation/replacement lifecycle at the application boundary, audit-event persistence, portfolio mark-to-market valuation, and durable storage.
 - Alerts still need persistence, scheduler/worker delivery, webhook/notification adapters, idempotency, and application/UI integration.
 - Dedicated script runtime, community, authentication, durable persistence, deployment, and production security remain planned.
 
 ## Next implementation slice
-Continue drawing endpoint drag wiring, then paper-trading application/API/UI integration without enabling real-money brokerage execution.
+Integrate the paper-trading portfolio/order state into the web Trading Panel while keeping all execution explicitly paper-only, then add cancellation/replacement and audit contracts before moving to durable persistence.
