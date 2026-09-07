@@ -1,4 +1,4 @@
-import { runScreener } from '../../../packages/screener-engine/src/provider.ts';
+import { screenFundamentals } from '../../../packages/screener-engine/src/runtime.js';
 
 const DEMO_SNAPSHOTS = [
   { symbolId: 'NYSE:AAPL', asOf: 1725667200000, marketCap: 3_400_000_000_000, peRatio: 31, revenueGrowth: 0.06, profitMargin: 0.26, returnOnEquity: 1.5, debtToEquity: 1.8, dividendYield: 0.004 },
@@ -11,11 +11,17 @@ export function createDemoFundamentalsProvider() {
     async getFundamentals(request) {
       const symbols = request.symbols?.length ? new Set(request.symbols) : null;
       const filtered = symbols ? DEMO_SNAPSHOTS.filter(item => symbols.has(item.symbolId)) : DEMO_SNAPSHOTS;
-      return { items: filtered, asOf: 1725667200000, staleAt: 1725753600000, nextCursor: undefined };
+      return { items: filtered, asOf: 1725667200000, staleAt: 1725753600000 };
     },
   };
 }
 
 export async function executeDemoScreener(request, now = Date.now()) {
-  return runScreener(createDemoFundamentalsProvider(), request, now);
+  if (!Number.isFinite(now)) throw new Error('now must be finite');
+  const limit = request.limit ?? request.query?.limit ?? 25;
+  if (!Number.isInteger(limit) || limit < 1 || limit > 100) throw new Error('limit must be an integer from 1 to 100');
+  if (request.cursor != null && request.cursor.length > 512) throw new Error('cursor is too long');
+  const page = await createDemoFundamentalsProvider().getFundamentals(request);
+  const items = screenFundamentals(page.items, { ...request.query, limit });
+  return { items, freshness: { asOf: page.asOf, staleAt: page.staleAt, stale: now >= page.staleAt }, nextCursor: undefined };
 }
