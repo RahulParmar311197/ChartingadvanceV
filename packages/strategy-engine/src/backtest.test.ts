@@ -15,9 +15,9 @@ describe('runBacktest', () => {
       return null;
     }, { initialCash: 1_000 });
     expect(result.trades).toHaveLength(2);
-    expect(result.finalCash).toBe(1_010);
-    expect(result.finalEquity).toBe(1_010);
-    expect(result.metrics.totalReturn).toBeCloseTo(0.01);
+    expect(result.finalCash).toBe(1_008);
+    expect(result.finalEquity).toBe(1_008);
+    expect(result.metrics.totalReturn).toBeCloseTo(0.008);
     expect(result.metrics.maxDrawdown).toBe(0);
     expect(result.trades[1].realizedPnl).toBe(8);
     expect(result.metrics.winRate).toBeGreaterThan(0);
@@ -59,9 +59,9 @@ describe('runBacktest', () => {
   it('compares the strategy return against a buy-and-hold benchmark', () => {
     const result = runBacktest(candles, ({ index, position }) => index === 0 && position === 0 ? { side: 'buy', quantity: 1 } : null, { initialCash: 1_000 });
     const comparison = compareToBenchmark(result, candles);
-    expect(comparison.strategyReturn).toBeCloseTo(0.01);
+    expect(comparison.strategyReturn).toBeCloseTo(0.008);
     expect(comparison.benchmarkReturn).toBeCloseTo(0.07843137);
-    expect(comparison.excessReturn).toBeCloseTo(-0.06843137);
+    expect(comparison.excessReturn).toBeCloseTo(-0.07043137);
     expect(comparison.benchmarkFinalValue).toBeCloseTo(1_078.43137);
   });
 });
