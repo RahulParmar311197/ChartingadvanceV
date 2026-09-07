@@ -14,8 +14,9 @@ export function createPaperTradingService(repository, { transactional = false } 
     let portfolio = await repository.getPortfolio(id);
     if (!portfolio) {
       const account = createPaperAccount(id, "USD", 100_000);
-      await repository.createAccount(account, typeof userId === "string" && userId.trim() ? userId.trim() : "anonymous");
-      portfolio = await repository.savePortfolio({ account, positions: [], ledger: [] }, account.version);
+      const created = await repository.createAccount(account, typeof userId === "string" && userId.trim() ? userId.trim() : "anonymous");
+      if (!created) return repository.getPortfolio(id);
+      portfolio = await repository.savePortfolio({ account: created, positions: [], ledger: [] }, created.version);
     }
     return portfolio;
   }
