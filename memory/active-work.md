@@ -12,9 +12,10 @@ Phase 1 — Chart Core foundation.
 - Root API/realtime scripts and `ws` runtime dependency.
 - Web workspace lifecycle now loads normalized state from the demo workspace API and debounces state saves.
 - SMA 20 and EMA 50 overlay controls are now wired into the Lightweight Charts rendering path.
+- Pure market-request validation extracted from the HTTP server and covered by Vitest.
 
 ## Immediate tasks
-- Add route-level/API and realtime integration tests that do not require external services.
+- Add realtime subscription validation tests that do not require an external service.
 - Improve chart interaction primitives: cursor, zoom/pan, symbol/timeframe state, and indicator configuration.
 - Establish the workspace/package build graph before expanding into alerts, screeners, Pine, or trading.
 - Replace the demo market boundary only with a licensed provider and authenticated/durable production services.
