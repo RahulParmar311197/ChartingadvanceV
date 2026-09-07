@@ -11,7 +11,7 @@ export interface TradingAuditEvent {
 
 export function createTradingAuditEvent(accountId: string, action: TradingAuditAction, orderId: string, timestamp: number, reason?: string): TradingAuditEvent {
   if (!accountId || !orderId || !Number.isFinite(timestamp)) throw new Error('invalid audit event');
-  return { id: `${orderId}:${action}:${timestamp}`, accountId, action, timestamp, ...(reason ? { reason } : {}) };
+  return { id: `${orderId}:${action}:${timestamp}`, accountId, action, timestamp, orderId, ...(reason ? { reason } : {}) };
 }
 
 export function appendAuditEvent(events: readonly TradingAuditEvent[], event: TradingAuditEvent): readonly TradingAuditEvent[] {
