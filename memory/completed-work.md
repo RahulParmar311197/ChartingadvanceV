@@ -60,3 +60,9 @@
 - PostgreSQL migration runner and position-snapshot migration added for restart-safe paper persistence.
 - Versioned PostgreSQL workspace repository adapter and application service added with owner-scoped reads, schema-version enforcement, and optimistic revision updates.
 - Backtest regression expectations corrected to match the engine's deterministic open-price execution and realized-P&L semantics.
+- Paper lifecycle submission, cancellation, and replacement now execute through the repository transaction boundary when supported, making durable order/fill/portfolio/ledger/audit mutations atomic.
+- In-memory paper transactions now provide rollback semantics so development behavior matches the atomic repository contract.
+- PostgreSQL account initialization now uses conflict-safe insertion, and the application re-reads the durable portfolio when another concurrent initializer wins the race.
+- Migration runner now exposes a reusable `migrateDatabase(pool)` function and uses filesystem-safe URL conversion.
+- Real PostgreSQL integration coverage added for idempotent migrations, restart/recovery through a new pool, and concurrent optimistic portfolio writes.
+- CI now provisions PostgreSQL 16 and runs the real integration suite with the normal typecheck/test/build gates.
