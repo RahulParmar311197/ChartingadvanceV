@@ -1,6 +1,11 @@
 # Changelog
 
 ## 2026-09-07
+- Added an application-level transaction boundary around paper order submission, cancellation, and replacement when the repository supports transactions.
+- PostgreSQL lifecycle mutations now commit order transitions, fills, portfolio snapshots, ledger writes, and audit events atomically through the transaction-scoped repository.
+- Added regression coverage proving accepted paper lifecycle mutations enter the transaction boundary.
+
+## 2026-09-07
 - Wired the versioned PostgreSQL workspace repository/application service into the durable API mode while preserving deterministic in-memory demo mode.
 - Added owner-scoped workspace reads, schema-version metadata, ETag revision responses, and optimistic-concurrency conflict handling.
 - Restored workspace watchlist/symbol/interval validation at the application persistence boundary and aligned the TypeScript persistence contract with the actual workspace state.
