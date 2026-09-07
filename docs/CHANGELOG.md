@@ -1,6 +1,12 @@
 # Changelog
 
 ## 2026-09-07
+- Replaced raw PostgreSQL duplicate-order exception handling with repository-level `insertOrderIfAbsent` semantics using `ON CONFLICT (account_id,order_id) DO NOTHING`.
+- Paper-order submission and replacement now consume the atomic insert result, so a concurrent duplicate cannot abort the active PostgreSQL transaction.
+- Added a real PostgreSQL integration race covering two concurrent submissions with the same client order ID and verifying exactly one fill, one deterministic duplicate rejection, one stored order, and a usable losing transaction.
+- Updated in-memory repository behavior and application regression coverage to match the atomic repository contract.
+
+## 2026-09-07
 - Added a browser strategy-tester client for the application backtest endpoint.
 - Added a Strategy Tester workspace panel with deterministic Buy & Hold controls, return/P&L/drawdown/trade metrics, equity visualization, and benchmark comparison display.
 - Strategy Tester loads the current symbol/interval candle window and sends it through the API application boundary; no arbitrary client-side strategy execution is exposed.
@@ -23,7 +29,7 @@
 
 ## 2026-09-07
 - Wired the versioned PostgreSQL workspace repository/application service into the durable API mode while preserving deterministic in-memory demo mode.
-- Added owner-scoped workspace reads, schema-version metadata, ETag revision responses, and optimistic-concurrency conflict handling.
+- Added owner-scoped workspace reads, schema-version metadata, ETag revision responses, and optimistic revision conflicts.
 - Restored workspace watchlist/symbol/interval validation at the application persistence boundary and aligned the TypeScript persistence contract with the actual workspace state.
 
 ## 2026-09-07
