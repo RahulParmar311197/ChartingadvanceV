@@ -11,5 +11,6 @@
 - Demo WebSocket market gateway added with normalized status/quote events and monotonic sequence numbers.
 - Web realtime client added with stale-event rejection and bounded reconnect/backoff.
 - Demo workspace GET/PUT API added with bounded JSON input and explicit non-authenticated identity semantics.
+- Workspace validation tests strengthened for symbol/interval validation and state isolation.
 - Root API/realtime scripts and `ws` dependency added.
 - CI configured to run tests and build.
