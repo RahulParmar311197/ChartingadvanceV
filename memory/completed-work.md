@@ -26,5 +26,7 @@
 - Package source entrypoints added for chart, indicator, market-domain, alert, and trading packages.
 - Dedicated production-package TypeScript typecheck configuration and CI gate added; CI run 120 verified typecheck, tests, and production build.
 - Primary logical-range changes now propagate to the RSI pane through a local chart-range synchronization bus; CI run 135 verified typecheck, tests, and production build for that synchronized viewport slice.
-- Crosshair synchronization bus primitives added with subscribe/publish lifecycle tests.
+- Crosshair synchronization bus added and wired between primary/RSI chart panes, including clear-on-leave behavior.
 - Immutable chart-engine drawing state added with validation, add/update/remove, visibility, locking, and invariant tests.
+- Drawing interaction primitives added with coordinate conversion and two-click draft/commit tests.
+- Primary chart line/trendline tools now create actual two-point drawing series through the chart-engine state contract; selected drawings can be deleted from the toolbar or with Delete/Backspace.
