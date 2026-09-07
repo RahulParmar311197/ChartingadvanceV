@@ -1,6 +1,12 @@
 # Changelog
 
 ## 2026-09-07
+- Added a paper-trading application service with isolated demo-user accounts, risk admission, order lifecycle submission, deterministic demo execution, fill application, and portfolio retrieval.
+- Added paper-only HTTP endpoints for portfolio reads and order submission, with explicit simulated metadata and no brokerage execution path.
+- Added application regression coverage for successful fills, user isolation, risk rejection, short-sale rejection, and untriggered limit orders.
+- Documented the demo execution policy: generated last price is used as both bid and ask, a fixed demo fee rate is applied, short selling is disabled, and order/position limits are enforced.
+
+## 2026-09-07
 - Replaced the duplicated JavaScript screener runtime with the canonical TypeScript screener implementation.
 - Added `tsx` as the Node runtime bridge so API/realtime entrypoints can execute TypeScript package contracts without a second implementation.
 - Removed the obsolete TypeScript/JavaScript runtime conformance test now that there is a single screener implementation.
@@ -58,18 +64,3 @@
 - Added a dedicated TypeScript package-contract typecheck configuration and CI gate.
 
 ## 2026-09-07
-- Wired the web workspace to load normalized state from the demo workspace API and debounce saves after user state changes.
-- Added SMA 20 and EMA 50 chart overlay controls backed by the indicator engine and Lightweight Charts.
-- Kept workspace identity explicitly demo-only and non-authenticated.
-
-## 2026-09-07 — Phase 1 transport and chart core
-- Advanced Phase 1 chart-core architecture with normalized realtime market-event contracts.
-- Repaired chart-engine dependency on the canonical market-domain Candle type.
-- Added deterministic SMA, EMA, and RSI calculation layer.
-- Added executable unit-test coverage for market-data invariants, realtime sequence ordering, and indicators.
-- Added shared deterministic demo market core, quote HTTP endpoint, demo WebSocket gateway, resilient web realtime client, and server-backed demo workspace boundary.
-- Kept demo-provider semantics explicit; no live-market guarantees are introduced.
-
-## 2026-09-07 — Project OS
-- Added project blueprint, rules, master prompt, agent roles, durable memory, architecture, roadmap, state, decisions, CI and contribution conventions.
-- Added initial React/Vite chart workspace and deterministic demo market-data boundary.
