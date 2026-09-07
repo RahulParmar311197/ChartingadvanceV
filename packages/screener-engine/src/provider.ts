@@ -53,7 +53,7 @@ function validateProviderPage(page: FundamentalsPage): void {
 export async function runScreener(
   provider: FundamentalsProvider,
   request: FundamentalsRequest,
-  now = Date.now(),
+  now = Math.floor(Date.now() / 1000),
 ): Promise<ScreenerApplicationResult> {
   if (!Number.isFinite(now)) throw new Error('now must be finite');
   const limit = request.limit ?? request.query?.limit ?? 25;
