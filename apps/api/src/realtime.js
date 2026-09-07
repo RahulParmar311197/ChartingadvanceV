@@ -1,5 +1,6 @@
 import { WebSocketServer } from "ws";
 import { generateQuote } from "../../../packages/market-domain/src/demo-core.js";
+import { normalizeSubscription } from "./realtime-validation.js";
 
 const port = Number(process.env.MARKET_WS_PORT ?? 8788);
 const wss = new WebSocketServer({ port });
@@ -14,8 +15,11 @@ wss.on("connection", (socket) => {
   socket.on("message", (raw) => {
     try {
       const message = JSON.parse(raw.toString());
-      if (message?.type !== "subscribe" || !Array.isArray(message.symbols)) return;
-      const symbols = [...new Set(message.symbols.filter((symbol) => typeof symbol === "string" && symbol.includes(":")).slice(0, 50))];
+      const symbols = normalizeSubscription(message);
+      if (!symbols) {
+        send(socket, { type: "status", sequence: ++sequence, timestamp: Date.now(), status: "degraded", provider: "demo", message: "Invalid subscription message" });
+        return;
+      }
       for (const symbol of symbols) {
         send(socket, { type: "quote", sequence: ++sequence, timestamp: Date.now(), quote: generateQuote(symbol) });
       }
