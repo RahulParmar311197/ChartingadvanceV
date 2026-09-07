@@ -3,14 +3,12 @@
   "private": true,
   "version": "0.4.0",
   "type": "module",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "workspaces": ["apps/*", "packages/*"],
   "scripts": {
     "dev": "vite",
     "api": "tsx apps/api/src/index.js",
     "realtime": "tsx apps/api/src/realtime.js",
+    "db:migrate": "tsx apps/api/src/migrate.js",
     "build": "vite build",
     "typecheck:packages": "tsc --noEmit -p tsconfig.packages.json",
     "preview": "vite preview",
@@ -20,13 +18,14 @@
   "dependencies": {
     "lightweight-charts": "^5.0.8",
     "lucide-react": "^0.468.0",
+    "pg": "^8.13.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "ws": "^8.18.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",
-    "tsx": "^4.19.2",
+    "@vitejs/plugin-react": "^4.3.4",
     "typescript": "^5.7.2",
     "vite": "^6.0.5",
     "vitest": "^3.2.4"
