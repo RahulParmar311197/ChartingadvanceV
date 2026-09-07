@@ -29,13 +29,14 @@ describe('fundamentals application boundary', () => {
     expect(result.items.map(item => item.snapshot.symbolId)).toEqual(['NYSE:BBB']);
     expect(result.nextCursor).toBe('page:3');
     expect(result.completeness).toEqual({ status: 'partial', reason: 'provider-pagination' });
-    expect(result.freshness).toEqual({ asOf: 100, staleAt: undefined, stale: false });
+    expect(result.freshness).toEqual({ asOf: 100, staleAt: undefined, stale: false, status: 'unknown' });
   });
 
   it('marks an exhausted provider page complete', async () => {
     const provider: FundamentalsProvider = { async getFundamentals() { return { items: snapshots, asOf: 100 }; } };
     await expect(runScreener(provider, {}, 150)).resolves.toMatchObject({
       completeness: { status: 'complete', reason: 'provider-exhausted' },
+      freshness: { status: 'unknown' },
     });
   });
 
@@ -47,10 +48,10 @@ describe('fundamentals application boundary', () => {
     };
 
     await expect(runScreener(provider, {}, 199)).resolves.toMatchObject({
-      freshness: { asOf: 100, staleAt: 200, stale: false },
+      freshness: { asOf: 100, staleAt: 200, stale: false, status: 'fresh' },
     });
     await expect(runScreener(provider, {}, 200)).resolves.toMatchObject({
-      freshness: { asOf: 100, staleAt: 200, stale: true },
+      freshness: { asOf: 100, staleAt: 200, stale: true, status: 'stale' },
     });
   });
 
