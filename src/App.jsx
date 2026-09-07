@@ -3,6 +3,7 @@ import { Bell, BarChart3, ChevronDown, Clock3, Crosshair, Grid2X2, LineChart, Me
 import { createChart, CandlestickSeries, HistogramSeries, LineSeries } from "lightweight-charts";
 import { DeterministicDemoMarketDataProvider } from "../packages/market-domain/src/demo-provider.ts";
 import { createMovingAverageOverlay } from "../packages/indicator-engine/src/overlay.ts";
+import { clampVisibleBars } from "./chart-interaction.js";
 import { fetchQuote, formatQuoteValue } from "./market.js";
 import { connectMarketStream } from "./realtime.js";
 import { loadWorkspace, normalizeWorkspace, saveWorkspace } from "./workspace.js";
@@ -33,11 +34,13 @@ async function loadCandles(symbol, interval, from, to) {
   return MARKET_DATA.getHistoricalCandles({ symbol, interval, from, to });
 }
 
-function Chart({ symbol, interval, indicators }) {
+function Chart({ symbol, interval, indicators, visibleBars, onVisibleBarsChange }) {
   const ref = useRef(null);
+  const chartRef = useRef(null);
   useEffect(() => {
     const el = ref.current; if (!el) return undefined;
     const chart = createChart(el, { layout: { background: { color: "#131722" }, textColor: "#9aa4b2" }, grid: { vertLines: { color: "#1e2430" }, horzLines: { color: "#1e2430" } }, rightPriceScale: { borderColor: "#2a2f3a" }, timeScale: { borderColor: "#2a2f3a", timeVisible: true }, crosshair: { mode: 0 }, width: el.clientWidth, height: el.clientHeight });
+    chartRef.current = chart;
     const series = chart.addSeries(CandlestickSeries, { upColor: "#26a69a", downColor: "#ef5350", borderVisible: false, wickUpColor: "#26a69a", wickDownColor: "#ef5350" });
     const volume = chart.addSeries(HistogramSeries, { priceFormat: { type: "volume" }, priceScaleId: "", scaleMargins: { top: 0.82, bottom: 0 } });
     const overlaySeries = [];
@@ -50,11 +53,19 @@ function Chart({ symbol, interval, indicators }) {
         const line = chart.addSeries(LineSeries, { lineWidth: 1, title: overlay.label, priceLineVisible: false, lastValueVisible: false });
         line.setData(overlay.points); overlaySeries.push(line);
       });
-      chart.timeScale().fitContent();
+      chart.timeScale().setVisibleLogicalRange({ from: Math.max(0, candles.length - visibleBars), to: candles.length - 1 });
     });
     const resize = () => chart.applyOptions({ width: el.clientWidth, height: el.clientHeight }); window.addEventListener("resize", resize);
-    return () => { disposed = true; window.removeEventListener("resize", resize); overlaySeries.forEach((line) => chart.removeSeries(line)); chart.remove(); };
+    return () => { disposed = true; chartRef.current = null; window.removeEventListener("resize", resize); overlaySeries.forEach((line) => chart.removeSeries(line)); chart.remove(); };
   }, [symbol, interval, indicators]);
+
+  useEffect(() => {
+    const chart = chartRef.current; if (!chart) return;
+    const range = chart.timeScale().getVisibleLogicalRange();
+    if (!range) return;
+    chart.timeScale().setVisibleLogicalRange({ from: range.to - visibleBars + 1, to: range.to });
+  }, [visibleBars]);
+
   return <div className="chart-canvas" ref={ref} />;
 }
 
@@ -63,6 +74,7 @@ export default function App() {
   const [interval, setIntervalValue] = useState("1D"); const [searchOpen, setSearchOpen] = useState(false); const [query, setQuery] = useState("");
   const [watchlist, setWatchlist] = useState(DEFAULT_WATCHLIST); const [quotes, setQuotes] = useState({}); const [streamStatus, setStreamStatus] = useState("disconnected");
   const [indicators, setIndicators] = useState([{ kind: "sma", period: 20, enabled: true }, { kind: "ema", period: 50, enabled: false }]);
+  const [visibleBars, setVisibleBars] = useState(120);
   const [workspaceReady, setWorkspaceReady] = useState(!API_URL); const hydrating = useRef(true); const saveTimer = useRef(null);
   const [activeTool, setActiveTool] = useState("crosshair"); const [bottom, setBottom] = useState("Trading Panel");
   const filtered = DEFAULT_WATCHLIST.filter((x) => `${x.symbol} ${x.name}`.toLowerCase().includes(query.toLowerCase()));
@@ -110,6 +122,7 @@ export default function App() {
   const last = currentQuote?.last ?? 0; const changePercent = currentQuote?.changePercent ?? 0;
   const statusText = WS_URL ? `Realtime ${streamStatus}` : API_URL ? "API / demo fallback" : "Demo data";
   const toggleIndicator = (kind) => setIndicators((current) => current.map((item) => item.kind === kind ? { ...item, enabled: !item.enabled } : item));
+  const adjustVisibleBars = (delta) => setVisibleBars((current) => clampVisibleBars(current + delta));
 
   return <div className="app">
     <header className="topbar"><div className="brand"><div className="brand-mark">TV</div><span>TradingView</span></div>
@@ -120,7 +133,7 @@ export default function App() {
     </header>
     <main className="workspace"><aside className="left-toolbar">{[["crosshair",Crosshair],["line",Minus],["trend",TrendingUp],["text",Type],["zoom",ZoomIn]].map(([id,Icon])=><button key={id} className={activeTool===id?"tool active":"tool"} onClick={()=>setActiveTool(id)}><Icon size={18}/></button>)}<div className="tool-divider"/><button className="tool"><Pencil size={17}/></button><button className="tool"><Trash2 size={17}/></button></aside>
       <section className="chart-area"><div className="chart-header"><div><strong>{symbol.symbol}</strong><span className="muted"> · {interval}</span><span className="status-dot"/><span className="muted">{statusText}</span></div><div className="ohlc"><span>Last {formatQuoteValue(last)}</span><span>Δ {currentQuote ? formatQuoteValue(currentQuote.change) : "—"}</span><span>Bid/ask not provided</span><span className={changePercent>=0?"positive":"negative"}>{changePercent>=0?"+":""}{changePercent.toFixed(2)}%</span></div></div>
-        <div className="mini-toolbar">{INTERVALS.map(x=><button key={x} className={interval===x?"time active":"time"} onClick={()=>setIntervalValue(x)}>{x}</button>)}<span className="separator"/><button className="time"><LineChart size={15}/></button><button className="time"><Settings size={15}/></button></div><Chart symbol={symbol.symbol} interval={interval} indicators={indicators}/><div className="chart-footer"><button className="time">Auto</button><button className="time">%</button><div className="footer-spacer"/><button className="time"><Plus size={14}/> Add alert</button><button className="time"><MoreHorizontal size={15}/></button></div>
+        <div className="mini-toolbar">{INTERVALS.map(x=><button key={x} className={interval===x?"time active":"time"} onClick={()=>setIntervalValue(x)}>{x}</button>)}<span className="separator"/><button className="time" title="Zoom in" onClick={()=>adjustVisibleBars(-20)}><ZoomIn size={15}/></button><button className="time" title="Zoom out" onClick={()=>adjustVisibleBars(20)}><Search size={14}/></button><span className="visible-bars">{visibleBars} bars</span><button className="time"><LineChart size={15}/></button><button className="time"><Settings size={15}/></button></div><Chart symbol={symbol.symbol} interval={interval} indicators={indicators} visibleBars={visibleBars} onVisibleBarsChange={setVisibleBars}/><div className="chart-footer"><button className="time">Auto</button><button className="time">%</button><div className="footer-spacer"/><button className="time"><Plus size={14}/> Add alert</button><button className="time"><MoreHorizontal size={15}/></button></div>
       </section>
       <aside className="right-panel"><div className="panel-tabs"><strong>Watchlist</strong><button className="icon-btn"><Plus size={16}/></button></div><div className="watch-head"><span>Symbol</span><span>Last</span><span>Chg%</span></div><div className="watchlist">{watchlist.map((item)=>{const q=quotes[item.symbol]; const value=q?.last; const change=q?.changePercent ?? 0; return <button key={item.symbol} className={item.symbol===symbol.symbol?"watch-row selected":"watch-row"} onClick={()=>setSymbol(item)}><div className="watch-name"><Star size={12}/><div><strong>{item.symbol.split(":")[1]}</strong><small>{item.symbol.split(":")[0]}</small></div></div><span>{formatQuoteValue(value)}</span><span className={change>=0?"positive":"negative"}>{q ? `${change>=0?"+":""}${change.toFixed(2)}%` : "—"}</span><span className="remove" onClick={(e)=>{e.stopPropagation();setWatchlist((w)=>w.filter((x)=>x.symbol!==item.symbol));}}><X size={12}/></span></button>})}</div>
         <div className="news"><div className="panel-tabs"><strong>News</strong><button className="text-btn">All</button></div>{["Markets open higher as tech leads gains","AI infrastructure stocks remain in focus","Dollar index retreats from recent highs"].map((n,i)=><article key={i}><small>Demo · Market News</small><p>{n}</p></article>)}</div></aside>
