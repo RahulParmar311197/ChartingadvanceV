@@ -1,6 +1,10 @@
 # Changelog
 
 ## 2026-09-07
+- Added a screener provider progress guard: pages may not advertise a continuation cursor while returning zero items.
+- Added regression coverage preventing empty-page cursor loops at the fundamentals application boundary.
+
+## 2026-09-07
 - Added explicit screener completeness semantics: a provider continuation cursor marks the returned coverage as partial, while an exhausted provider page is marked complete.
 - Hardened provider and request cursors to reject empty continuation tokens in addition to the existing length/type bounds.
 - Added regression coverage for partial/complete coverage and cursor invariants.
