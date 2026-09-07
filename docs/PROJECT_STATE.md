@@ -31,53 +31,38 @@ Phase 6 — Screener/fundamentals application integration in progress; chart cor
 - Demo fundamentals screener API endpoint with symbol selection, full query/filter/group parsing, centralized request validation, and explicit stale/simulated metadata.
 - Browser screener API client and workspace-integrated fundamentals screener panel with filter controls, deterministic results, score display, freshness state, and explicit simulated-data warning.
 - Browser screener client regression coverage.
-- Paper-trading application service with isolated demo-user paper accounts, risk admission, order lifecycle submission, deterministic demo execution, fill application, and portfolio retrieval.
-- Paper-only HTTP portfolio and order-submission endpoints with explicit simulated metadata and no brokerage execution path.
-- Browser paper-trading API client and workspace Trading Panel with market/limit/stop/stop-limit controls, portfolio summary, position display, and explicit simulation disclosure.
-- Browser paper-trading client regression coverage for configuration errors, identity headers, JSON order serialization, and API error propagation.
-- Paper-trading cancellation/replacement workflows using the shared order lifecycle contract, per-user order isolation, idempotent client order IDs, and lifecycle audit events.
-- Paper-only HTTP cancellation, replacement, bounded audit, and canonical order-list endpoints with explicit simulated metadata.
-- Portfolio mark-to-market valuation using deterministic demo quotes with unrealized P&L/equity updates and no cash mutation.
-- Trading Panel Cancel/Replace controls backed by canonical stored order state rather than bounded audit reconstruction.
-- Durable paper persistence boundary documented with account/order/fill/ledger/audit aggregates, repository operations, transactional invariants, optimistic concurrency, idempotency, authorization separation, and migration strategy.
-- In-memory repository adapter and regression coverage for account versions, account-scoped order identity, stale order transitions, and idempotent audit appends.
-- Versioned workspace persistence contract with schema version, owner binding, monotonic revisions, validation, and regression coverage.
-- PostgreSQL paper repository adapter with injected pool/transaction support, optimistic account/order mutation, idempotent fill/ledger/audit writes, account-scoped reads, and optimistic portfolio snapshot saves.
-- PostgreSQL migration runner with ordered transactional migrations and a schema-migrations ledger.
-- Position snapshot migration for durable paper portfolio recovery across process restarts.
-- Asynchronous repository-injected paper application service shared by memory and PostgreSQL implementations.
-- Explicit `PAPER_PERSISTENCE=postgres` API startup mode backed by `DATABASE_URL`; development remains deterministic/in-memory by default and `NODE_ENV=production` defaults to PostgreSQL with fail-fast configuration.
-- PostgreSQL adapter contract tests for mapping, optimistic portfolio writes, stale-write rejection, transaction commit, rollback, and error preservation.
-- PostgreSQL-backed versioned workspace service wired into the durable API mode, with owner-scoped reads, schema-version metadata, ETag revision responses, optimistic revision conflicts, and compatibility-preserving in-memory demo mode.
-- Paper lifecycle submission, cancellation, and replacement now enter the repository transaction boundary when available, keeping order transitions, fills, portfolio snapshots, ledger entries, and audit events atomic in PostgreSQL mode.
-- In-memory paper transactions now provide rollback semantics matching the repository atomicity contract.
-- PostgreSQL account initialization now uses conflict-safe insertion and the application re-reads the durable portfolio when another concurrent initializer wins the race.
-- PostgreSQL order insertion now uses an atomic `insertOrderIfAbsent` repository contract backed by `ON CONFLICT (account_id,order_id) DO NOTHING`; duplicate-order handling no longer raises a unique-key exception inside the active lifecycle transaction.
-- Real PostgreSQL integration coverage added for idempotent migrations, restart/recovery, concurrent optimistic portfolio writes, and concurrent duplicate client-order races.
-- CI provisions PostgreSQL 16 and runs the real integration suite alongside package typecheck, unit/integration tests, and production build.
-- Application-level backtest boundary with bounded candle input, allowlisted deterministic strategies, optional benchmark comparison, and explicit deterministic-simulation metadata.
-- `POST /v1/backtest` HTTP integration and browser API client.
-- Strategy Tester workspace panel with fixed allowlisted Buy & Hold and Candle Direction strategies, performance metrics, equity visualization, and explicit simulation limitations.
-- Browser strategy-tester regression coverage for successful requests and structured API errors, including the second built-in strategy.
+- Paper-trading application service with isolated demo paper accounts, risk admission, order lifecycle, deterministic execution, fills, and portfolio retrieval.
+- Paper-only HTTP portfolio/order endpoints with explicit simulated metadata and no brokerage execution path.
+- Browser paper-trading client and workspace Trading Panel with simulation disclosure.
+- Paper-trading cancellation/replacement workflows, canonical order-list endpoint, audit events, mark-to-market valuation, and regression coverage.
+- Durable paper persistence boundary with account/order/fill/ledger/audit aggregates, transactions, optimistic concurrency, idempotency, authorization separation, and migration strategy.
+- In-memory and PostgreSQL repository adapters with transaction support and restart-safe position snapshots.
+- Versioned PostgreSQL workspace persistence with owner-scoped reads, schema versions, ETags, and optimistic revision conflicts.
+- PostgreSQL account initialization and duplicate client-order insertion are conflict-safe; concurrent duplicate submissions use atomic repository-level `insertOrderIfAbsent` semantics.
+- Real PostgreSQL integration coverage for migrations, restart/recovery, optimistic portfolio writes, and concurrent duplicate client-order races.
+- CI provisions PostgreSQL 16 and runs typecheck, unit/integration tests, and production build.
+- Application backtest boundary with bounded candle input, allowlisted deterministic strategies, optional benchmark comparison, and explicit simulation metadata.
+- `POST /v1/backtest` and browser backtest client.
+- Strategy Tester workspace panel with fixed Buy & Hold and Candle Direction strategies, performance metrics, equity visualization, and simulation limitations.
+- Interval-aware Sharpe annualization using explicit assumptions: 252 trading days and 6.5 trading hours per trading day for intraday intervals; weekly and monthly frequencies use 52 and 12 periods/year.
+- Backtest API metadata now exposes the exact Sharpe annualization period assumption.
+- Regression coverage spans 1m, 5m, 15m, 1H, 4H, 1D, 1W, and 1M annualization factors plus API metadata.
 
 ## Not production-ready
 Market-data and fundamentals implementations are deterministic demo data. No licensed live exchange/fundamentals feeds, durable production market database, authenticated user system, production WebSocket gateway, alerts worker, or real order execution exists.
 
 Paper trading and backtesting are simulation/domain logic only. They do not claim broker execution, margin, exchange microstructure, historical-data completeness, or real-money guarantees. The `x-demo-user-id` identity boundary is not authenticated production identity. Mark-to-market valuation uses deterministic demo quotes.
 
-The backtest API intentionally accepts only registered built-in strategies and never evaluates arbitrary JavaScript/Pine/code. Current built-ins are Buy & Hold and Candle Direction. Candle-level execution does not model intrabar ordering, queue position, partial fills, borrow fees, margin calls, or corporate actions.
+The backtest API accepts only registered built-in strategies and never evaluates arbitrary JavaScript/Pine/code. Current built-ins are Buy & Hold and Candle Direction. Candle-level execution does not model intrabar ordering, queue position, partial fills, borrow fees, margin calls, or corporate actions. Annualization assumptions are equity-market session assumptions, not universal exchange calendars.
 
 ## Verification
-- CI run 34099627805 on commit `601421f` passed package typecheck, the full test suite, and production Vite build.
-- CI run 34100697084 on commit `2a57f6c` passed package typecheck, the full test suite, and production Vite build.
-- PostgreSQL integration CI run 34101299681 completed successfully for the PostgreSQL-enabled integration slice.
-- CI run 34103300368 on commit `631f686` passed package typecheck, the full test suite, and production Vite build.
-- CI run 34104366664 on commit `4901bb1` passed PostgreSQL provisioning, package typecheck, the full test suite, and production build, including the concurrent duplicate-order race integration test.
-- Strategy runtime expansion commits `3124545`, `88fc6dc`, and `ec08cec` require fresh CI verification.
+- CI run 34104366664 on commit `4901bb1` passed PostgreSQL provisioning, package typecheck, full tests, and production build, including the concurrent duplicate-order race integration test.
+- CI run 34104724580 on commit `3124545` passed PostgreSQL provisioning, package typecheck, full tests, and production build for the second allowlisted strategy.
+- Interval-aware annualization commits are now on `main` and require their own fresh CI verification.
 
 ## Current risks / gaps
 - Demo identity must be bound to authenticated identity before production user isolation.
-- Backtest Sharpe annualization assumes 252 periods/year; interval-aware annualization remains future work.
+- Intraday annualization uses a 6.5-hour/252-day equity-session assumption; exchange/calendar-aware annualization remains future work.
 - Screener needs a real fundamentals provider, durable pagination, and freshness/completeness policy.
 - Drawings need richer geometry and durable server persistence.
 - Realtime needs candle streaming, heartbeats, provider failover, rate limits, and observability.
@@ -85,4 +70,4 @@ The backtest API intentionally accepts only registered built-in strategies and n
 - Dedicated script runtime, community, authentication, deployment, and production security remain planned.
 
 ## Next implementation slice
-Add interval-aware performance annualization to the deterministic strategy engine, with explicit period assumptions in the API metadata and regression coverage across intraday, daily, weekly, and monthly intervals.
+Harden backtest data semantics next: validate candle chronology/price fields at the application boundary, reject non-monotonic timestamps and invalid OHLC relationships, and add regression coverage before expanding strategy breadth further.
