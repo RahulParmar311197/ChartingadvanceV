@@ -3,7 +3,7 @@
 Updated: 2026-09-07
 
 ## Status
-Phase 1 — Chart Core foundation in progress; historical API, quote API, demo realtime transport, demo workspace state, web workspace lifecycle, and indicator overlays are implemented.
+Phase 1 — Chart Core foundation in progress; historical API, quote API, demo realtime transport, demo workspace state, web workspace lifecycle, indicator overlays, validation boundaries, and chart interaction primitives are implemented.
 
 ## Implemented
 - React/Vite TradingView-inspired workspace shell with Lightweight Charts candlestick/volume rendering.
@@ -20,6 +20,8 @@ Phase 1 — Chart Core foundation in progress; historical API, quote API, demo r
 - Pure deterministic SMA, EMA, and RSI indicator calculations with Vitest coverage.
 - Moving-average overlay adapter mapping indicator output to chart timestamps, with tests.
 - SMA 20 and EMA 50 can be toggled and are rendered as Lightweight Charts line series.
+- Pure market-request and realtime subscription validation boundaries with Vitest coverage.
+- Chart interaction primitives for supported interval cycling, interval validation, and bounded visible-bar state.
 - CI runs `npm install`, `npm test`, and `npm run build`.
 
 ## Not production-ready
@@ -28,9 +30,9 @@ The current market-data implementation is deterministic demo data. No licensed l
 The workspace API is intentionally in-memory and `x-demo-user-id` is not authentication. The realtime gateway is a local/demo transport and is not an exchange connection.
 
 ## Verification
-- GitHub CI configuration includes test and build gates.
-- The latest feature commit did not yet have an associated workflow run when checked; do not treat the current head as CI-verified until a run completes successfully.
-- Local execution verification was attempted previously, but this environment could not resolve `github.com`; do not treat the current head as locally verified until CI produces a successful run.
+- GitHub Actions run 85 passed the complete `npm install`, `npm run test`, and `npm run build` gate after the CI cache fix.
+- The subsequent chart-interaction commits require a new CI run before being treated as fully verified.
+- Local execution verification was attempted previously, but this environment could not resolve `github.com`; CI remains the authoritative verification path.
 
 ## Current risks / gaps
 - Root project is still a Vite application rather than the planned full workspace/package build graph.
@@ -41,4 +43,4 @@ The workspace API is intentionally in-memory and `x-demo-user-id` is not authent
 - News, screener, Pine runtime, strategy testing, alerts, paper trading, and community systems remain planned rather than implemented.
 
 ## Next implementation slice
-Add pure API/realtime route validation tests, then strengthen chart interaction primitives and the workspace/package build graph. Keep all market outputs explicitly simulated until a licensed provider is integrated.
+Verify the chart-interaction test/build gate, then wire the interaction primitives into the chart UI and establish the workspace/package build graph. Keep all market outputs explicitly simulated until a licensed provider is integrated.
