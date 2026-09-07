@@ -26,7 +26,7 @@ Phase 6 — Screener/fundamentals provider hardening and application workflows.
 - Browser client regression tests are implemented.
 - Provider boundary validates provider page shape, freshness timestamps, staleAt ordering, and bounded pagination cursors.
 - Synthetic multi-page provider tests verify cursor/limit forwarding, next-cursor propagation, and freshness transitions without manufacturing demo pages.
-- Screener runtime now has a single canonical TypeScript implementation. Node API/realtime entrypoints use `tsx` to execute TypeScript package contracts, eliminating the duplicated JavaScript screener implementation.
+- Screener runtime now has a single canonical TypeScript implementation. Node API/realtime scripts use `tsx` to execute TypeScript package contracts, eliminating the duplicated JavaScript screener implementation.
 - Paper-trading application service now owns per-demo-user paper accounts, risk admission, order lifecycle submission, deterministic demo execution, fill application, and portfolio retrieval.
 - Paper-trading HTTP endpoints expose portfolio reads and paper-only order submission with explicit simulated metadata and no brokerage path.
 - Paper-trading application regression tests cover fills, user isolation, risk rejection, short-sale rejection, and untriggered limit orders.
@@ -36,11 +36,12 @@ Phase 6 — Screener/fundamentals provider hardening and application workflows.
 - Paper-trading cancellation/replacement workflows now use the shared order lifecycle contract, persist accepted orders in the application store, enforce terminal-order protection, preserve per-user isolation, and emit deterministic audit events.
 - Paper-only HTTP cancellation, replacement, and bounded audit-read endpoints are exposed without adding a brokerage path.
 - Browser paper-trading client now exposes audit, cancellation, and replacement methods.
+- Paper portfolio application valuation now marks held symbols to deterministic demo quotes, updates unrealized P&L/equity while preserving cash, and is covered by trading-engine and application regression tests.
 
 ## Immediate tasks
-- Add portfolio mark-to-market valuation to the paper-trading application workflow.
-- Add application/UI order-list lifecycle controls using the new cancellation/replacement endpoints.
+- Add application/UI order-list lifecycle controls using the cancellation/replacement endpoints.
 - Define versioned authorized workspace persistence for drawings and richer chart state.
+- Define durable persistence boundaries for paper accounts, orders, fills, ledger, and audit events.
 - Continue backtesting application integration, then dedicated script runtime, community, authentication/persistence, and production hardening in roadmap order.
 
 ## Rule
