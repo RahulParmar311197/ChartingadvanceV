@@ -66,3 +66,10 @@
 - Migration runner now exposes a reusable `migrateDatabase(pool)` function and uses filesystem-safe URL conversion.
 - Real PostgreSQL integration coverage added for idempotent migrations, restart/recovery through a new pool, and concurrent optimistic portfolio writes.
 - CI now provisions PostgreSQL 16 and runs the real integration suite with the normal typecheck/test/build gates.
+- PostgreSQL duplicate client-order races now use atomic repository-level insert-if-absent semantics with real concurrent integration coverage.
+- Deterministic application backtest boundary and Strategy Tester UI implemented with fixed Buy & Hold strategy controls and explicit simulation metadata.
+- Second allowlisted deterministic Candle Direction strategy added without introducing arbitrary-code execution.
+- Strategy-engine Sharpe annualization made interval-aware for 1m/5m/15m/1H/4H/1D/1W/1M with explicit equity-session assumptions.
+- Backtest API now exposes the exact Sharpe annualization assumption and regression coverage spans all supported intervals.
+- Backtest application input validation now enforces non-negative integer Unix epoch-second timestamps, strict chronological ordering, finite positive OHLC prices, valid high/low relationships, and finite non-negative volume when supplied, including benchmark candles.
+- CI run 34106083667 passed PostgreSQL provisioning, package typecheck, full tests, and production build for the interval-aware Sharpe and candle-semantics hardening slice.
