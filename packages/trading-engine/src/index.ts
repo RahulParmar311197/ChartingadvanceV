@@ -3,3 +3,4 @@ export * from './ledger';
 export * from './risk';
 export * from './audit';
 export * from './order-lifecycle';
+export * from './valuation';
