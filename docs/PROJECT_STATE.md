@@ -26,6 +26,7 @@ Phase 6 — Screener/fundamentals application integration in progress; chart cor
 - Deterministic fundamental screener contracts with typed financial fields, numeric operators, AND/OR groups, deterministic ranking, and bounded result limits.
 - Fundamentals provider/application contract with freshness metadata and bounded pagination contract.
 - Provider-boundary validation for finite freshness timestamps, staleAt ordering, page shape, and bounded pagination cursors.
+- Screener pagination now has explicit completeness semantics: a provider next cursor means partial coverage; absence of a cursor means provider-exhausted/complete coverage.
 - Application-level screener pagination/freshness regression coverage using a synthetic multi-page provider; the demo provider still exposes no fabricated pages.
 - Canonical TypeScript screener runtime consumed through `tsx`; duplicated JavaScript screener implementation removed.
 - Demo fundamentals screener API endpoint with symbol selection, full query/filter/group parsing, centralized request validation, and explicit stale/simulated metadata.
@@ -59,16 +60,16 @@ The backtest API accepts only registered built-in strategies and never evaluates
 
 ## Verification
 - CI run 34106083667 on commit `d67572a` passed PostgreSQL provisioning, package typecheck, full tests, and production build for interval-aware Sharpe and application candle-semantics validation.
-- Strategy-engine invariant changes are pending fresh CI verification.
+- Screener completeness/cursor changes are pending fresh CI verification.
 
 ## Current risks / gaps
 - Demo identity must be bound to authenticated identity before production user isolation.
 - Intraday annualization uses a 6.5-hour/252-day equity-session assumption; exchange/calendar-aware annualization remains future work.
-- Screener needs a real fundamentals provider, durable pagination, and freshness/completeness policy.
+- Screener needs a real fundamentals provider and durable production cursor storage/continuation policy.
 - Drawings need richer geometry and durable server persistence.
 - Realtime needs candle streaming, heartbeats, provider failover, rate limits, and observability.
 - Alerts need persistence, scheduler/worker delivery, adapters, idempotency, and UI integration.
 - Dedicated script runtime, community, authentication, deployment, and production security remain planned.
 
 ## Next implementation slice
-Verify the strategy-engine invariant change, then return to Phase 6 screener hardening: durable provider pagination and explicit freshness/completeness semantics before broadening screener capabilities.
+Verify the screener completeness changes, then add provider-independent cursor integrity/continuation safeguards before wiring a real fundamentals provider.
