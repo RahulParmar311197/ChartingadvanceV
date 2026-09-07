@@ -4,24 +4,19 @@
 Phase 1 — Chart Core foundation.
 
 ## Completed in this slice
-- Normalized symbol, quote, candle, interval, and historical request contracts.
-- Market-data provider adapter interface.
-- Deterministic demo provider implementation.
-- Web chart routed through the provider boundary.
-- Chart-engine Candle import repaired to use the shared market-domain contract.
-- Transport-neutral realtime subscription/event contract added.
-- Validated historical candle HTTP API added with explicit demo metadata.
-- Web chart wired to the HTTP API with explicit demo fallback.
-- Deterministic SMA, EMA, and RSI calculations added.
-- CI corrected to use `npm install` until a committed lockfile exists.
-- Added executable unit-test files for market-domain, realtime ordering, and indicator calculations.
+- Shared deterministic demo market core for API and provider consistency.
+- Runnable Node demo WebSocket gateway using `ws` without importing TypeScript directly.
+- Provider/API-backed watchlist quote state in the web workspace.
+- Monotonic-sequence filtering and bounded reconnect/backoff in the web realtime client.
+- Server-backed demo workspace GET/PUT boundary with bounded JSON input.
+- Root API/realtime scripts and `ws` runtime dependency.
+- Project state updated with explicit production gaps and verification limitations.
 
 ## Immediate tasks
-- Establish workspace/package build configuration and clean package boundaries.
-- Integrate package tests into a single reproducible test command.
-- Implement the first WebSocket market-event gateway using the realtime contract.
-- Replace static watchlist quote presentation with provider-backed state.
-- Add server-backed chart/watchlist persistence before user-account features.
+- Add route-level/API and realtime integration tests that do not require external services.
+- Add optional web workspace load/save against `/v1/workspace`, keeping demo identity explicitly non-authenticated.
+- Improve chart interaction primitives: cursor, zoom/pan, symbol/timeframe state, and indicator overlays.
+- Establish the workspace/package build graph before expanding into alerts, screeners, Pine, or trading.
 
 ## Rule
 When a task is completed, move it to `memory/completed-work.md` and update `docs/PROJECT_STATE.md`.
