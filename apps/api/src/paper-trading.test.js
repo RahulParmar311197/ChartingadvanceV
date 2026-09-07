@@ -36,14 +36,14 @@ describe("paper trading application service", () => {
   it("rejects duplicate client order ids without creating a second fill", async () => {
     const first = await submitPaperOrder("user-a", { id: "duplicate", symbolId: "NASDAQ:AAPL", side: "buy", type: "market", quantity: 1 }, 1_000); const second = await submitPaperOrder("user-a", { id: "duplicate", symbolId: "NASDAQ:AAPL", side: "buy", type: "market", quantity: 1 }, 2_000); expect(first.order.status).toBe("filled"); expect(second.order.status).toBe("rejected"); expect(second.risk.reason).toBe("duplicate order id"); expect((await getPaperPortfolio("user-a")).ledger).toHaveLength(1);
   });
-  it("converts a PostgreSQL unique-key race into a deterministic duplicate-order response", async () => {
+  it("uses the repository atomic insert result when a duplicate races the preflight check", async () => {
     const repository = createPaperRepository();
-    const originalInsert = repository.insertOrder.bind(repository);
+    const original = repository.insertOrderIfAbsent.bind(repository);
     const racedOrder = { id: "race", accountId: "paper:user-race", symbolId: "NASDAQ:AAPL", side: "buy", type: "market", quantity: 1, status: "filled", createdAt: 1_000, version: 1 };
-    const insertOrder = vi.spyOn(repository, "insertOrder").mockImplementationOnce(async () => { const error = new Error("duplicate key value violates unique constraint"); error.code = "23505"; await originalInsert(racedOrder); throw error; });
+    const insert = vi.spyOn(repository, "insertOrderIfAbsent").mockImplementationOnce(async () => { original(racedOrder); return { inserted: false, order: racedOrder }; });
     const service = createPaperTradingService(repository);
     const result = await service.submitPaperOrder("user-race", { id: "race", symbolId: "NASDAQ:AAPL", side: "buy", type: "market", quantity: 1 }, 2_000);
-    expect(insertOrder).toHaveBeenCalledTimes(1); expect(result.order.status).toBe("rejected"); expect(result.risk.reason).toBe("duplicate order id"); expect((await service.getPaperOrders("user-race"))).toHaveLength(1);
+    expect(insert).toHaveBeenCalledTimes(1); expect(result.order.status).toBe("rejected"); expect(result.risk.reason).toBe("duplicate order id"); expect(await service.getPaperOrders("user-race")).toHaveLength(1);
   });
   it("limits audit reads and keeps them isolated by user", async () => {
     await submitPaperOrder("user-a", { id: "one", symbolId: "NASDAQ:AAPL", side: "buy", type: "market", quantity: 1 }, 1_000); await submitPaperOrder("user-a", { id: "two", symbolId: "NASDAQ:MSFT", side: "buy", type: "market", quantity: 1 }, 2_000); expect(await getPaperAudit("user-a", 2)).toHaveLength(2); expect(await getPaperAudit("user-b")).toEqual([]);
