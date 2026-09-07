@@ -81,7 +81,7 @@ try {
   const candles = [
     { time: 1700000000, open: 100, high: 102, low: 99, close: 101, volume: 1000 },
     { time: 1700086400, open: 101, high: 103, low: 100, close: 102, volume: 1000 },
-    { time: 1700172800, open: 102, high: 104, low: 101, close: 100, volume: 1000 },
+    { time: 1700172800, open: 102, high: 104, low: 99, close: 100, volume: 1000 },
   ];
   const backtest = await fetch(`${apiBase}/v1/backtest`, {
     method: "POST",
