@@ -1,6 +1,11 @@
 # Changelog
 
 ## 2026-09-07
+- Added explicit screener freshness states: `fresh`, `stale`, and `unknown`; missing `staleAt` is no longer represented as confirmed freshness.
+- Added a provider continuation progress guard rejecting a `nextCursor` identical to the incoming request cursor.
+- Added regression coverage for non-advancing cursors and all freshness states.
+
+## 2026-09-07
 - Added a screener provider progress guard: pages may not advertise a continuation cursor while returning zero items.
 - Added regression coverage preventing empty-page cursor loops at the fundamentals application boundary.
 
