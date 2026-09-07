@@ -1,6 +1,11 @@
 # Changelog
 
 ## 2026-09-07
+- Wired the versioned PostgreSQL workspace repository/application service into the durable API mode while preserving deterministic in-memory demo mode.
+- Added owner-scoped workspace reads, schema-version metadata, ETag revision responses, and optimistic-concurrency conflict handling.
+- Restored workspace watchlist/symbol/interval validation at the application persistence boundary and aligned the TypeScript persistence contract with the actual workspace state.
+
+## 2026-09-07
 - Hardened PostgreSQL portfolio persistence with optimistic account-version checks, including initial portfolio initialization and stale-write rejection.
 - Converted the paper application service to an injected asynchronous repository boundary so durable and in-memory persistence share the same application workflow.
 - Added explicit `PAPER_PERSISTENCE=postgres` API startup mode backed by `DATABASE_URL`; development remains deterministic/in-memory by default and production defaults to PostgreSQL with fail-fast configuration.
