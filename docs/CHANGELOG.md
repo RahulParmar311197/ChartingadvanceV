@@ -1,6 +1,11 @@
 # Changelog
 
 ## 2026-09-07
+- Added explicit screener completeness semantics: a provider continuation cursor marks the returned coverage as partial, while an exhausted provider page is marked complete.
+- Hardened provider and request cursors to reject empty continuation tokens in addition to the existing length/type bounds.
+- Added regression coverage for partial/complete coverage and cursor invariants.
+
+## 2026-09-07
 - Added strategy-engine defensive candle validation for direct non-HTTP callers.
 - Centralized backtest candle invariants across application and strategy-engine boundaries without moving application request-size limits into the domain runtime.
 - Added direct-engine regression coverage for malformed chronology, OHLC relationships, non-finite prices, and invalid volume.
@@ -59,7 +64,7 @@
 - Added PostgreSQL adapter contract tests for account mapping, portfolio concurrency, transaction commit, rollback, and error preservation.
 
 ## 2026-09-07
-- Added a PostgreSQL paper-trading repository adapter using an injected pool/transaction boundary, optimistic order/account updates, idempotent fill/ledger/audit writes, and account-scoped reads.
+- Added a PostgreSQL paper-trading repository adapter using an injected pool/transaction boundary, optimistic order/account updates, idempotent fill/ledger/audit persistence, and account-scoped reads.
 - Added a PostgreSQL migration runner with ordered transactional migrations and a schema-migrations ledger.
 - Added migration `002_paper_positions.sql` so position snapshots survive process restart alongside paper account state.
 - Added the `pg` runtime dependency and explicit `db:migrate` script; normal API startup remains demo/in-memory unless durable wiring is enabled.
