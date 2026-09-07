@@ -33,3 +33,6 @@
 - Drawing drag lifecycle primitives added with immutable previews and endpoint validation.
 - Deterministic alert evaluator added with threshold/crossing semantics, cooldowns, disabled-rule handling, and tests.
 - Paper-trading execution primitives added for market/limit/stop/stop-limit orders, explicit bid/ask execution, deterministic fees/fill IDs, validation, and realized P&L position accounting.
+- Deterministic candle-based backtesting added with market/limit execution, fees, slippage, opt-in short positions, realized P&L, drawdown, win rate, profit factor, Sharpe-style metrics, and benchmark comparison.
+- Dedicated screener-engine package added with normalized fundamental snapshots, typed numeric operators, AND/OR filter groups, deterministic ranking, and bounded result limits.
+- Screener regression coverage added for operators, missing fundamentals, grouping, ranking, limits, and invalid inputs.
