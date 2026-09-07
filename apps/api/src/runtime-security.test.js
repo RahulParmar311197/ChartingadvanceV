@@ -11,10 +11,7 @@ describe("runtime security", () => {
   });
 
   it("parses and de-duplicates explicit CORS origins", () => {
-    expect(parseCorsOrigins("https://app.example.com, https://app.example.com,http://localhost:5173")).toEqual([
-      "https://app.example.com",
-      "http://localhost:5173",
-    ]);
+    expect(parseCorsOrigins("https://app.example.com, https://app.example.com,http://localhost:5173")).toEqual(["https://app.example.com", "http://localhost:5173"]);
   });
 
   it("rejects invalid production CORS configuration", () => {
@@ -22,13 +19,15 @@ describe("runtime security", () => {
     expect(() => parseCorsOrigins("javascript:alert(1)", { production: true })).toThrow("http(s)");
   });
 
-  it("emits browser security headers and HSTS only in production", () => {
+  it("emits browser security and CORS preflight headers", () => {
     expect(createSecurityHeaders({ origin: "https://app.example.com", production: true })).toMatchObject({
       "x-content-type-options": "nosniff",
       "x-frame-options": "DENY",
       "strict-transport-security": "max-age=31536000; includeSubDomains",
       "access-control-allow-origin": "https://app.example.com",
       "access-control-allow-credentials": "true",
+      "access-control-allow-methods": "GET,POST,PUT,DELETE,OPTIONS",
+      "access-control-allow-headers": expect.stringContaining("x-auth-signature"),
       vary: "Origin",
     });
     expect(createSecurityHeaders({ production: false })).not.toHaveProperty("strict-transport-security");
@@ -37,7 +36,8 @@ describe("runtime security", () => {
   it("blocks production startup until real identity, providers, persistence, and CORS are configured", () => {
     const env = { NODE_ENV: "production", PAPER_PERSISTENCE: "postgres", DATABASE_URL: "postgresql://example", SCREENER_CURSOR_ENCRYPTION_KEY: "configured", CORS_ORIGINS: "https://app.example.com" };
     expect(productionConfigErrors(env)).toEqual([
-      "AUTH_MODE=authenticated is required for production; demo identity is not accepted",
+      "AUTH_MODE=proxy-hmac is required for production until a first-party identity adapter is installed",
+      "AUTH_SHARED_SECRET must be at least 32 characters in production",
       "MARKET_DATA_MODE=live is required for production",
       "FUNDAMENTALS_DATA_MODE=live is required for production",
       "MARKET_DATA_PROVIDER=configured is required; a real provider adapter must be installed before production",
@@ -46,10 +46,11 @@ describe("runtime security", () => {
     expect(() => assertProductionConfig(env)).toThrow("Production configuration invalid");
   });
 
-  it("accepts the non-provider portion of a production configuration", () => {
+  it("fails closed even when provider configuration flags are present because demo providers remain the only implementation", () => {
     const env = {
       NODE_ENV: "production",
-      AUTH_MODE: "authenticated",
+      AUTH_MODE: "proxy-hmac",
+      AUTH_SHARED_SECRET: "s".repeat(32),
       MARKET_DATA_MODE: "live",
       FUNDAMENTALS_DATA_MODE: "live",
       MARKET_DATA_PROVIDER: "configured",
@@ -59,7 +60,9 @@ describe("runtime security", () => {
       SCREENER_CURSOR_ENCRYPTION_KEY: "configured",
       CORS_ORIGINS: "https://app.example.com",
     };
-    expect(productionConfigErrors(env)).toEqual([]);
-    expect(() => assertProductionConfig(env)).not.toThrow();
+    expect(productionConfigErrors(env)).toEqual([
+      "production market provider adapter is not implemented in this build",
+      "production fundamentals provider adapter is not implemented in this build",
+    ]);
   });
 });
