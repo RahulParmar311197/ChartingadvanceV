@@ -48,6 +48,7 @@ Phase 6 — Screener/fundamentals application integration in progress; chart cor
 - Backtest API metadata now exposes the exact Sharpe annualization period assumption.
 - Regression coverage spans 1m, 5m, 15m, 1H, 4H, 1D, 1W, and 1M annualization factors plus API metadata.
 - Backtest application input validation now enforces non-negative integer Unix epoch-second timestamps, strict chronological ordering, finite positive OHLC prices, valid high/low relationships, and finite non-negative volume when supplied, including benchmark candles.
+- Strategy-engine direct callers now receive the same candle semantic invariants through `validateBacktestCandles`; transport/request-size concerns remain at the application boundary.
 
 ## Not production-ready
 Market-data and fundamentals implementations are deterministic demo data. No licensed live exchange/fundamentals feeds, durable production market database, authenticated user system, production WebSocket gateway, alerts worker, or real order execution exists.
@@ -57,10 +58,8 @@ Paper trading and backtesting are simulation/domain logic only. They do not clai
 The backtest API accepts only registered built-in strategies and never evaluates arbitrary JavaScript/Pine/code. Current built-ins are Buy & Hold and Candle Direction. Candle-level execution does not model intrabar ordering, queue position, partial fills, borrow fees, margin calls, or corporate actions. Annualization assumptions are equity-market session assumptions, not universal exchange calendars.
 
 ## Verification
-- CI run 34104366664 on commit `4901bb1` passed PostgreSQL provisioning, package typecheck, full tests, and production build, including the concurrent duplicate-order race integration test.
-- CI run 34104724580 on commit `3124545` passed PostgreSQL provisioning, package typecheck, full tests, and production build for the second allowlisted strategy.
-- CI run 34106083667 on commit `d67572a` passed PostgreSQL provisioning, package typecheck, full tests, and production build for interval-aware Sharpe and candle-semantics validation.
-- Documentation-only state/memory commits after the verified implementation will receive normal CI validation.
+- CI run 34106083667 on commit `d67572a` passed PostgreSQL provisioning, package typecheck, full tests, and production build for interval-aware Sharpe and application candle-semantics validation.
+- Strategy-engine invariant changes are pending fresh CI verification.
 
 ## Current risks / gaps
 - Demo identity must be bound to authenticated identity before production user isolation.
@@ -72,4 +71,4 @@ The backtest API accepts only registered built-in strategies and never evaluates
 - Dedicated script runtime, community, authentication, deployment, and production security remain planned.
 
 ## Next implementation slice
-Add defensive candle invariants at the strategy-engine boundary for direct non-HTTP callers, keeping application request-size and transport validation in `apps/api` and avoiding duplicated architecture responsibilities.
+Verify the strategy-engine invariant change, then return to Phase 6 screener hardening: durable provider pagination and explicit freshness/completeness semantics before broadening screener capabilities.
