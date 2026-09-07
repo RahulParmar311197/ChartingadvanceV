@@ -77,10 +77,10 @@ export function cancelPaperOrder(userId, orderId, now = Date.now()) {
   const portfolio = accountFor(userId);
   const order = openOrders.get(portfolio.account.id)?.get(orderId);
   if (!order) throw new Error("open paper order not found");
-  const cancelled = transitionOrder(order, "cancel", now);
+  const cancelledOrder = transitionOrder(order, "cancel", now);
   openOrders.get(portfolio.account.id).delete(orderId);
   audit(portfolio.account.id, "order_cancelled", orderId, now);
-  return { order: cancelled, portfolio: getPaperPortfolio(userId), simulated: true };
+  return { cancelled: true, order: cancelledOrder, portfolio: getPaperPortfolio(userId), simulated: true };
 }
 
 export function replacePaperOrder(userId, orderId, request = {}, now = Date.now()) {
