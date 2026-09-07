@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { annualizationPeriodsPerYear, compareToBenchmark, runBacktest } from './index';
+import { annualizationPeriodsPerYear, compareToBenchmark, runBacktest, validateBacktestCandles } from './index';
 
 const candles = [
   { time: 1, open: 100, high: 105, low: 99, close: 102 },
@@ -40,5 +40,11 @@ describe('runBacktest', () => {
     const weekly = runBacktest(candles, strategy, { initialCash: 1_000, interval: '1W' });
     expect(daily.metrics.sharpeRatio).toBeGreaterThan(weekly.metrics.sharpeRatio);
     expect(daily.metrics.sharpeRatio / weekly.metrics.sharpeRatio).toBeCloseTo(Math.sqrt(252 / 52));
+  });
+  it('defensively rejects malformed candles for direct engine callers', () => {
+    expect(() => validateBacktestCandles([{ ...candles[0], time: 2 }, candles[1]])).toThrow('timestamps must be strictly increasing');
+    expect(() => validateBacktestCandles([{ ...candles[0], high: 98 }])).toThrow('high must be at least');
+    expect(() => validateBacktestCandles([{ ...candles[0], close: Number.NaN }])).toThrow('close must be a finite positive number');
+    expect(() => runBacktest([{ ...candles[0], volume: -1 }], () => null, { initialCash: 1_000 })).toThrow('volume must be a finite non-negative number');
   });
 });
