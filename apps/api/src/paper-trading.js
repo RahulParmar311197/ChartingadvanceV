@@ -7,7 +7,7 @@ function accountIdFor(userId) { const safeUserId = typeof userId === "string" &&
 function validSymbol(symbol) { return typeof symbol === "string" && /^[A-Z0-9_.-]+:[A-Z0-9_.-]+$/i.test(symbol); }
 function executionQuote(symbol) { if (!validSymbol(symbol)) throw new Error("symbol must use EXCHANGE:TICKER format"); const quote = generateQuote(symbol); return { bid: quote.last, ask: quote.last, last: quote.last }; }
 
-export function createPaperTradingService(repository) {
+export function createPaperTradingService(repository, { transactional = false } = {}) {
   if (!repository) throw new Error("paper repository is required");
   async function accountFor(userId) {
     const id = accountIdFor(userId);
@@ -20,9 +20,11 @@ export function createPaperTradingService(repository) {
     return portfolio;
   }
   async function audit(accountId, action, orderId, timestamp, reason) { await repository.appendAuditEvent({ id: `${orderId}:${action}:${timestamp}`, accountId, action, timestamp, orderId, ...(reason ? { reason } : {}) }); }
+  async function atomic(work) { return repository.runTransaction ? repository.runTransaction(work) : work(repository); }
 
   const service = {
     async submitPaperOrder(userId, input, now = Date.now()) {
+      if (!transactional && repository.runTransaction) return atomic((tx) => createPaperTradingService(tx, { transactional: true }).submitPaperOrder(userId, input, now));
       if (!Number.isFinite(now)) throw new Error("invalid execution timestamp");
       const portfolio = await accountFor(userId);
       const order = { id: typeof input?.id === "string" && input.id ? input.id : `paper-order:${now}:${(await repository.listOrders(portfolio.account.id)).length + 1}`, accountId: portfolio.account.id, symbolId: input?.symbolId, side: input?.side, type: input?.type ?? "market", quantity: Number(input?.quantity), ...(input?.limitPrice !== undefined ? { limitPrice: Number(input.limitPrice) } : {}), ...(input?.stopPrice !== undefined ? { stopPrice: Number(input.stopPrice) } : {}), status: "pending", createdAt: now };
@@ -38,12 +40,14 @@ export function createPaperTradingService(repository) {
       return { ...execution, order: filled, fill: storedFill, portfolio: savedPortfolio, risk, simulated: true };
     },
     async cancelPaperOrder(userId, orderId, now = Date.now()) {
+      if (!transactional && repository.runTransaction) return atomic((tx) => createPaperTradingService(tx, { transactional: true }).cancelPaperOrder(userId, orderId, now));
       if (!Number.isFinite(now)) throw new Error("invalid cancellation timestamp");
       const portfolio = await accountFor(userId); const order = await repository.getOrder(portfolio.account.id, orderId); if (!order) throw new Error("open paper order not found");
       const stored = await repository.transitionOrder(portfolio.account.id, orderId, "accepted", transitionOrder(order, "cancel", now)); await audit(portfolio.account.id, "order_cancelled", orderId, now);
       return { cancelled: true, order: stored, portfolio: await service.getPaperPortfolio(userId), simulated: true };
     },
     async replacePaperOrder(userId, orderId, request = {}, now = Date.now()) {
+      if (!transactional && repository.runTransaction) return atomic((tx) => createPaperTradingService(tx, { transactional: true }).replacePaperOrder(userId, orderId, request, now));
       if (!Number.isFinite(now)) throw new Error("invalid replacement timestamp");
       const portfolio = await accountFor(userId); const order = await repository.getOrder(portfolio.account.id, orderId); if (!order) throw new Error("open paper order not found");
       const newOrderId = typeof request?.id === "string" && request.id ? request.id : `${orderId}:replace:${now}`; if (await repository.getOrder(portfolio.account.id, newOrderId)) throw new Error("duplicate replacement order id");
