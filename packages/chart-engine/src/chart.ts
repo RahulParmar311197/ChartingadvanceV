@@ -1,3 +1,5 @@
+import type { Candle } from "../../market-domain/src/index";
+
 export interface ChartViewport { from: number; to: number; priceMin?: number; priceMax?: number; }
 export interface ChartPane { id: string; height: number; indicators: string[]; }
 export interface DrawingPoint { time: number; price: number; }
@@ -9,5 +11,5 @@ export interface IndicatorDefinition<TConfig = unknown> {
   name: string;
   overlay: boolean;
   defaults: TConfig;
-  calculate(input: { candles: import('./market').Candle[]; config: TConfig }): number[];
+  calculate(input: { candles: Candle[]; config: TConfig }): number[];
 }
