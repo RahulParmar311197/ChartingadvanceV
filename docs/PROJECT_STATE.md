@@ -34,7 +34,8 @@ Phase 6 — Screener/fundamentals application integration in progress; chart cor
 - Canonical TypeScript screener runtime consumed through `tsx`; duplicated JavaScript screener implementation removed.
 - Demo fundamentals screener API endpoint with symbol selection, full query/filter/group parsing, centralized request validation, and explicit stale/simulated metadata.
 - Browser screener API client and workspace-integrated fundamentals screener panel with filter controls, deterministic results, score display, freshness state, and explicit simulated-data warning.
-- Browser screener client regression coverage.
+- Browser screener client now has an explicit continuation pager that accumulates application results, forwards opaque cursors, prevents concurrent loads, rejects repeated cursors, and resets safely.
+- Browser screener client regression coverage for query encoding, cursor continuation, repeated-cursor protection, reset behavior, and response metadata shape.
 - Paper-trading application service with isolated demo paper accounts, risk admission, order lifecycle, deterministic execution, fills, and portfolio retrieval.
 - Paper-only HTTP portfolio/order endpoints with explicit simulated metadata and no brokerage execution path.
 - Browser paper-trading client and workspace Trading Panel with simulation disclosure.
@@ -63,16 +64,18 @@ The backtest API accepts only registered built-in strategies and never evaluates
 
 ## Verification
 - CI run 34108387596 on commit `299a2d4` passed PostgreSQL provisioning, package typecheck, full tests, and production build for the screener cursor-validation slice.
-- The freshness-state change is now committed and awaits its own CI run.
+- CI run 34109685837 passed PostgreSQL provisioning, package typecheck, full tests, and production build for the screener freshness-state slice.
+- CI run 34111239978 passed package typecheck, full tests, and production build for the browser screener continuation slice at commit `1d70192`.
 
 ## Current risks / gaps
 - Demo identity must be bound to authenticated identity before production user isolation.
 - Intraday annualization uses a 6.5-hour/252-day equity-session assumption; exchange/calendar-aware annualization remains future work.
 - Screener needs a real fundamentals provider and durable production cursor storage/continuation policy.
+- Fundamentals timestamp units must be made canonical at the application boundary before integrating an external provider; current demo snapshots use millisecond timestamps while market candles use Unix epoch seconds.
 - Drawings need richer geometry and durable server persistence.
 - Realtime needs candle streaming, heartbeats, provider failover, rate limits, and observability.
 - Alerts need persistence, scheduler/worker delivery, adapters, idempotency, and UI integration.
 - Dedicated script runtime, community, authentication, deployment, and production security remain planned.
 
 ## Next implementation slice
-Wire the screener's browser continuation state to the application cursor contract, then prepare a real fundamentals-provider adapter without embedding provider SDK semantics in the UI.
+Define the canonical fundamentals timestamp unit and build the first provider adapter behind the existing `FundamentalsProvider` boundary. The adapter must translate provider-specific pagination/freshness metadata into the application contract and must not leak provider SDK types into browser code.
