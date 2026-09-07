@@ -3,7 +3,7 @@
 Updated: 2026-09-07
 
 ## Status
-Phase 5 — Deterministic backtesting foundation in progress; chart core, analysis foundations, deterministic alert evaluation, paper execution/ledger/risk, and backtest simulation are implemented.
+Phase 6 — Screener/fundamentals domain foundation in progress; chart core, analysis foundations, deterministic alerts, paper trading primitives, and deterministic backtesting are implemented.
 
 ## Implemented
 - React/Vite TradingView-inspired workspace shell with Lightweight Charts candlestick/volume rendering.
@@ -23,6 +23,7 @@ Phase 5 — Deterministic backtesting foundation in progress; chart core, analys
 - Immutable paper portfolio ledger with idempotent fill application and account/symbol binding.
 - Deterministic paper risk checks for buying power, maximum order notional, maximum position size, and short-sale policy.
 - Deterministic candle-based backtesting with market/limit execution, fees, slippage, opt-in short positions, signed position accounting, realized P&L, equity curve, drawdown, win rate, profit factor, and Sharpe-style performance metrics.
+- Deterministic fundamental screener contracts with typed financial fields, numeric operators, AND/OR groups, deterministic ranking, and bounded result limits.
 - Root npm workspace graph/typecheck and CI test/build gates.
 
 ## Not production-ready
@@ -32,19 +33,23 @@ The workspace API remains intentionally in-memory and demo-only. Drawing state r
 
 Paper trading and backtesting are simulation/domain logic only. They do not claim broker execution, margin, exchange microstructure, historical-data completeness, or real-money guarantees. Short backtests are intentionally cash-accounting simulations and do not model broker margin requirements.
 
+Fundamental screening currently operates only on supplied normalized snapshots. No live fundamentals provider or data freshness/completeness guarantee is implemented.
+
 ## Verification
 - Previous CI run 168 passed package typecheck, all tests, and the production Vite build.
 - CI run 176 completed the substantive install, package typecheck, full test suite, and production build successfully for the previous project-state transition.
-- Backtesting commits after that run require fresh CI verification before being marked green.
+- Backtesting and screener commits after those runs require fresh CI verification before being marked green.
 
 ## Current risks / gaps
-- Backtest metrics currently use 252 periods/year for Sharpe annualization; interval-aware annualization and benchmark comparison remain future work.
+- Backtest Sharpe annualization currently assumes 252 periods/year; interval-aware annualization remains future work.
+- Backtest benchmark comparison is deterministic buy-and-hold over supplied benchmark candles; durable application-level integration remains future work.
 - Backtest execution is candle-level and does not model intrabar ordering, queue position, partial fills, borrow fees, margin calls, or corporate actions.
+- Screener needs a provider/application boundary, field freshness metadata, pagination, and UI integration before production use.
 - Drawing point-drag UI wiring, handles, rays, and richer geometry remain future work.
 - Realtime stream currently sends an initial quote snapshot only; candle streaming, heartbeats, provider failover, rate limits, and observability remain future work.
 - Paper trading still needs application/API/UI integration, cancellation/replacement lifecycle, audit-event persistence, portfolio mark-to-market valuation, and durable storage.
 - Alerts still need persistence, scheduler/worker delivery, webhook/notification adapters, idempotency, and application/UI integration.
-- Screener/fundamentals, script runtime, community, authentication, durable persistence, deployment, and production security remain planned.
+- Dedicated script runtime, community, authentication, durable persistence, deployment, and production security remain planned.
 
 ## Next implementation slice
-Add a stable backtest result/benchmark contract and application boundary, then begin screener/fundamentals domain contracts. Keep real-money brokerage integration blocked behind explicit authorization, risk, audit, and security gates.
+Define the screener provider/application contract around normalized fundamental snapshots, including freshness and pagination semantics, then integrate deterministic screening into an application boundary. Keep real-money brokerage integration blocked behind explicit authorization, risk, audit, and security gates.
