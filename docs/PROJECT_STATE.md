@@ -36,34 +36,30 @@ Phase 6 — Screener/fundamentals application integration in progress; chart cor
 - Paper-trading application regression coverage for fills, user isolation, risk rejection, short-sale rejection, and untriggered limit orders.
 - Browser paper-trading API client and workspace Trading Panel with market/limit/stop/stop-limit controls, portfolio summary, position display, and explicit simulation disclosure.
 - Browser paper-trading client regression coverage for configuration errors, identity headers, JSON order serialization, and API error propagation.
-- Paper-trading application cancellation and replacement workflows using the shared order lifecycle contract, with accepted-order-only mutation semantics, per-user order isolation, idempotent client order IDs, and explicit lifecycle audit events.
-- Paper-only HTTP cancellation (`DELETE /v1/paper/orders/:id`), replacement (`PUT /v1/paper/orders/:id`), and bounded audit (`GET /v1/paper/audit`) endpoints with explicit simulated metadata.
-- Browser paper-trading lifecycle API client methods for audit reads, cancellation, and replacement.
-- Regression coverage for cancellation, replacement, terminal-order protection, audit ordering, user isolation, and bounded audit reads.
-- Paper portfolio application valuation now marks every held symbol to the deterministic quote, updates unrealized P&L and equity without mutating cash, and exposes valuation through the existing portfolio response.
-- Trading-engine valuation regression coverage verifies long-position marking and safe behavior for positions without a current mark.
-- Trading Panel now surfaces open paper orders from canonical stored order state and provides Cancel/Replace controls wired to the paper lifecycle API.
-- Durable paper persistence boundary documented with account/order/fill/ledger/audit aggregates, repository operations, transactional invariants, optimistic concurrency, authorization separation, and migration strategy.
-- In-memory repository adapter added to exercise that persistence contract without coupling the trading engine to storage infrastructure; repository tests cover account version conflicts, account-scoped order IDs, stale order transitions, and idempotent audit appends.
-- Paper application state migrated from direct service Maps to the repository adapter; terminal orders remain queryable and lifecycle transitions are validated against stored status.
-- Canonical `GET /v1/paper/orders` endpoint and browser order-list client method added; Trading Panel now derives open orders from canonical order records rather than a bounded audit reconstruction.
-- CORS now explicitly permits the paper-order `DELETE` method.
-- Versioned workspace persistence contract added with schema version, owner binding, monotonic revisions, authorization checks, and regression coverage.
-- PostgreSQL reference migration added for durable paper accounts/orders/fills/ledger/audit storage and versioned workspace documents, including uniqueness and optimistic-concurrency constraints.
+- Paper-trading cancellation/replacement workflows using the shared order lifecycle contract, per-user order isolation, idempotent client order IDs, and lifecycle audit events.
+- Paper-only HTTP cancellation, replacement, bounded audit, and canonical order-list endpoints with explicit simulated metadata.
+- Portfolio mark-to-market valuation using deterministic demo quotes with unrealized P&L/equity updates and no cash mutation.
+- Trading Panel Cancel/Replace controls backed by canonical stored order state rather than bounded audit reconstruction.
+- Durable paper persistence boundary documented with account/order/fill/ledger/audit aggregates, repository operations, transactional invariants, optimistic concurrency, idempotency, authorization separation, and migration strategy.
+- In-memory repository adapter and regression coverage for account versions, account-scoped order identity, stale order transitions, and idempotent audit appends.
+- Versioned workspace persistence contract with schema version, owner binding, monotonic revisions, authorization checks, and regression coverage.
+- PostgreSQL paper repository adapter with injected pool/transaction support, optimistic account/order mutation, idempotent fill/ledger/audit writes, and account-scoped reads.
+- PostgreSQL migration runner with ordered transactional migrations and a schema-migrations ledger.
+- Position snapshot migration for durable paper portfolio recovery across process restarts.
 
 ## Not production-ready
 The market-data and fundamentals implementations are deterministic demo data. No licensed live exchange/fundamentals feeds, durable production market database, authenticated user system, production WebSocket gateway, alerts worker, or real order execution exists.
 
 The workspace API remains intentionally in-memory and demo-only. Drawing state remains browser-session state until the versioned workspace repository is integrated with authenticated identity and durable storage.
 
-Paper trading and backtesting are simulation/domain logic only. They do not claim broker execution, margin, exchange microstructure, historical-data completeness, or real-money guarantees. The current paper application uses deterministic demo quotes with bid/ask equal to the generated demo last price, a fixed demo fee rate, a bounded notional/position policy, and no short selling. Paper order state is now behind an application repository boundary but the active adapter remains in-memory and is not durable across process restart. Mark-to-market valuation is likewise based on the deterministic demo quote and is not a live valuation feed.
+Paper trading and backtesting are simulation/domain logic only. They do not claim broker execution, margin, exchange microstructure, historical-data completeness, or real-money guarantees. The current paper application uses deterministic demo quotes with bid/ask equal to the generated demo last price, a fixed demo fee rate, a bounded notional/position policy, and no short selling. The production PostgreSQL adapter is implemented but is not yet wired into API startup by default; demo mode remains in-memory. Mark-to-market valuation is based on the deterministic demo quote and is not a live valuation feed.
 
 The screener API has a pagination contract but the deterministic demo provider currently has no additional pages and therefore returns no next cursor. This is intentional; no fake pagination state is exposed.
 
 ## Verification
 - Previous CI run 168 passed package typecheck, all tests, and the production Vite build.
 - CI run 176 completed the substantive install, package typecheck, full test suite, and production build successfully for the previous project-state transition.
-- Fresh CI verification is still required for the repository-backed paper, order-list, and workspace persistence changes; no current green status is being claimed.
+- Fresh CI verification is still required for the PostgreSQL dependency/adapter and migration runner; no current green status is being claimed.
 
 ## Current risks / gaps
 - Backtest Sharpe annualization currently assumes 252 periods/year; interval-aware annualization remains future work.
@@ -72,10 +68,10 @@ The screener API has a pagination contract but the deterministic demo provider c
 - Screener needs a real fundamentals provider, durable provider pagination, and freshness/completeness policy before production use.
 - Drawing handles, rays, richer geometry, and durable server persistence remain future work.
 - Realtime stream currently sends an initial quote snapshot only; candle streaming, heartbeats, provider failover, rate limits, and observability remain future work.
-- Paper service still needs a production database adapter, migration runner, restart/recovery tests, and transaction/concurrency verification against a real database.
-- Versioned workspace repository integration, authenticated authorization, and durable storage remain future work.
+- PostgreSQL adapter needs real-database integration tests, restart/recovery verification, and explicit production startup wiring before replacing demo persistence.
+- Versioned workspace repository integration and authenticated authorization remain future work.
 - Alerts still need persistence, scheduler/worker delivery, webhook/notification adapters, idempotency, and application/UI integration.
 - Dedicated script runtime, community, authentication, durable persistence, deployment, and production security remain planned.
 
 ## Next implementation slice
-Implement the production database adapter and migration runner behind the repository contract, then integrate versioned workspace persistence into the API and add restart/concurrency verification.
+Wire an explicit `DATABASE_URL` production mode into API startup, add real-database integration coverage and migration smoke tests, then integrate versioned workspace persistence into the API.
