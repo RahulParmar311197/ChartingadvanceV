@@ -22,7 +22,7 @@ Phase 6 — Screener/fundamentals application integration in progress; chart cor
 - Position accounting with realized P&L handling.
 - Immutable paper portfolio ledger with idempotent fill application and account/symbol binding.
 - Deterministic paper risk checks for buying power, maximum order notional, maximum position size, and short-sale policy.
-- Deterministic candle-based backtesting with market/limit execution, fees, slippage, opt-in short positions, signed position accounting, realized P&L, equity/drawdown, win rate, profit factor, and Sharpe-style performance metrics.
+- Deterministic candle-based backtesting with short-position policy, realized P&L, equity/drawdown, and performance metrics.
 - Deterministic fundamental screener contracts with typed financial fields, numeric operators, AND/OR groups, deterministic ranking, and bounded result limits.
 - Fundamentals provider/application contract with freshness metadata and bounded pagination contract.
 - Provider-boundary validation for finite freshness timestamps, staleAt ordering, page shape, and bounded pagination cursors.
@@ -42,6 +42,8 @@ Phase 6 — Screener/fundamentals application integration in progress; chart cor
 - Regression coverage for cancellation, replacement, terminal-order protection, audit ordering, user isolation, and bounded audit reads.
 - Paper portfolio application valuation now marks every held symbol to the deterministic quote, updates unrealized P&L and equity without mutating cash, and exposes valuation through the existing portfolio response.
 - Trading-engine valuation regression coverage verifies long-position marking and safe behavior for positions without a current mark.
+- Trading Panel now surfaces open paper orders from bounded audit state and provides Cancel/Replace controls wired to the paper lifecycle API.
+- Browser lifecycle client regression coverage verifies URL encoding, HTTP methods, identity propagation, and API error propagation.
 
 ## Not production-ready
 The market-data and fundamentals implementations are deterministic demo data. No licensed live exchange/fundamentals feeds, durable production market database, authenticated user system, production WebSocket gateway, alerts worker, or real order execution exists.
@@ -64,9 +66,9 @@ The screener API has a pagination contract but the deterministic demo provider c
 - Screener needs a real fundamentals provider, durable provider pagination, and freshness/completeness policy before production use.
 - Drawing handles, rays, richer geometry, and versioned server persistence remain future work.
 - Realtime stream currently sends an initial quote snapshot only; candle streaming, heartbeats, provider failover, rate limits, and observability remain future work.
-- Paper trading still needs durable persistence and application/UI order-list lifecycle controls.
+- Paper trading still needs durable persistence for accounts/orders/fills/ledger/audit and versioned authorized workspace persistence.
 - Alerts still need persistence, scheduler/worker delivery, webhook/notification adapters, idempotency, and application/UI integration.
 - Dedicated script runtime, community, authentication, durable persistence, deployment, and production security remain planned.
 
 ## Next implementation slice
-Add application/UI order-list lifecycle controls using cancellation/replacement endpoints, then define durable persistence boundaries for paper accounts/audit and versioned authorized workspace state.
+Define durable persistence contracts for paper accounts/orders/fills/ledger/audit and versioned authorized workspace state, then continue backtesting application integration.
