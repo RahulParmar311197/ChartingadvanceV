@@ -47,6 +47,7 @@ Phase 6 — Screener/fundamentals application integration in progress; chart cor
 - Interval-aware Sharpe annualization using explicit assumptions: 252 trading days and 6.5 trading hours per trading day for intraday intervals; weekly and monthly frequencies use 52 and 12 periods/year.
 - Backtest API metadata now exposes the exact Sharpe annualization period assumption.
 - Regression coverage spans 1m, 5m, 15m, 1H, 4H, 1D, 1W, and 1M annualization factors plus API metadata.
+- Backtest application input validation now enforces non-negative integer Unix epoch-second timestamps, strict chronological ordering, finite positive OHLC prices, valid high/low relationships, and finite non-negative volume when supplied, including benchmark candles.
 
 ## Not production-ready
 Market-data and fundamentals implementations are deterministic demo data. No licensed live exchange/fundamentals feeds, durable production market database, authenticated user system, production WebSocket gateway, alerts worker, or real order execution exists.
@@ -58,7 +59,8 @@ The backtest API accepts only registered built-in strategies and never evaluates
 ## Verification
 - CI run 34104366664 on commit `4901bb1` passed PostgreSQL provisioning, package typecheck, full tests, and production build, including the concurrent duplicate-order race integration test.
 - CI run 34104724580 on commit `3124545` passed PostgreSQL provisioning, package typecheck, full tests, and production build for the second allowlisted strategy.
-- Interval-aware annualization commits are now on `main` and require their own fresh CI verification.
+- Interval-aware annualization commits require fresh CI verification.
+- Candle-semantics validation changes require fresh CI verification.
 
 ## Current risks / gaps
 - Demo identity must be bound to authenticated identity before production user isolation.
@@ -70,4 +72,4 @@ The backtest API accepts only registered built-in strategies and never evaluates
 - Dedicated script runtime, community, authentication, deployment, and production security remain planned.
 
 ## Next implementation slice
-Harden backtest data semantics next: validate candle chronology/price fields at the application boundary, reject non-monotonic timestamps and invalid OHLC relationships, and add regression coverage before expanding strategy breadth further.
+Advance the backtest contract after CI verification: add domain-level defensive validation where strategy-engine callers bypass the HTTP boundary, then address exchange/calendar-aware annualization before claiming production-grade performance metrics.
