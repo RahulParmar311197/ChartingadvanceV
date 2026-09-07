@@ -27,10 +27,14 @@ Phase 6 — Screener/fundamentals provider hardening and application workflows.
 - Provider boundary validates provider page shape, freshness timestamps, staleAt ordering, and bounded pagination cursors.
 - Synthetic multi-page provider tests verify cursor/limit forwarding, next-cursor propagation, and freshness transitions without manufacturing demo pages.
 - Screener runtime now has a single canonical TypeScript implementation. Node API/realtime scripts use `tsx` to execute TypeScript package contracts, eliminating the duplicated JavaScript screener implementation.
+- Paper-trading application service now owns per-demo-user paper accounts, risk admission, order lifecycle submission, deterministic demo execution, fill application, and portfolio retrieval.
+- Paper-trading HTTP endpoints expose portfolio reads and paper-only order submission with explicit simulated metadata and no brokerage path.
+- Paper-trading application regression tests cover fills, user isolation, risk rejection, short-sale rejection, and untriggered limit orders.
 
 ## Immediate tasks
 - Continue drawing endpoint drag wiring and versioned workspace persistence once the chart interaction boundary is clean.
-- Continue paper-trading application/API/UI integration without enabling real-money brokerage execution.
+- Integrate paper-trading portfolio/order state into the web Trading Panel without enabling real-money brokerage execution.
+- Add cancellation/replacement API workflows and durable audit-event contracts to the paper-trading application boundary.
 - Continue backtesting application integration, then dedicated script runtime, community, authentication/persistence, and production hardening in roadmap order.
 
 ## Rule
