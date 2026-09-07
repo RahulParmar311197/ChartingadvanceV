@@ -11,6 +11,12 @@ describe("market client", () => {
     expect(fetcher).toHaveBeenCalledWith("http://localhost:8787/v1/market/quote?symbol=NASDAQ%3AAAPL");
   });
 
+  it("uses the deterministic provider when no application API is configured", async () => {
+    const provider = { getQuote: vi.fn().mockReturnValue({ symbol: "NASDAQ:AAPL", last: 123.45, changePercent: 1.2 }) };
+    await expect(fetchQuote("NASDAQ:AAPL", undefined, provider)).resolves.toEqual({ symbol: "NASDAQ:AAPL", last: 123.45, changePercent: 1.2 });
+    expect(provider.getQuote).toHaveBeenCalledWith("NASDAQ:AAPL");
+  });
+
   it("fails loudly on upstream API errors", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 503 }));
     await expect(fetchQuote("NASDAQ:AAPL", "http://localhost:8787")).rejects.toThrow("Market API returned 503");
