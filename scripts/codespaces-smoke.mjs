@@ -70,10 +70,21 @@ try {
   await assertJson("/v1/paper/orders", (body) => { if (!Array.isArray(body.data)) throw new Error("paper orders contract mismatch"); });
   await assertJson("/v1/paper/audit", (body) => { if (!Array.isArray(body.data)) throw new Error("paper audit contract mismatch"); });
   await assertJson("/v1/workspace", (body) => { if (!Array.isArray(body.data?.watchlist)) throw new Error("workspace contract mismatch"); });
-  const backtest = await fetch(`${apiBase}/v1/backtest`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ symbol: "NASDAQ:AAPL", interval: "1D", strategy: "candle-direction", candles: [{ time: 1700000000, open: 100, high: 102, low: 99, close: 101, volume: 1000 }, { time: 1700086400, open: 101, high: 103, low: 100, close: 102, volume: 1000 }, { time: 1700172800, open: 102, high: 104, low: 101, close: 100, volume: 1000 }] }) });
-  if (!backtest.ok) throw new Error(`/v1/backtest returned HTTP ${backtest.status}`);
+
+  const candles = [
+    { time: 1700000000, open: 100, high: 102, low: 99, close: 101, volume: 1000 },
+    { time: 1700086400, open: 101, high: 103, low: 100, close: 102, volume: 1000 },
+    { time: 1700172800, open: 102, high: 104, low: 101, close: 100, volume: 1000 },
+  ];
+  const backtest = await fetch(`${apiBase}/v1/backtest`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ symbol: "NASDAQ:AAPL", interval: "1D", strategy: "candle-direction", candles }),
+  });
   const backtestBody = await backtest.json();
+  if (!backtest.ok) throw new Error(`/v1/backtest returned HTTP ${backtest.status}: ${backtestBody?.error?.message ?? "unknown error"}`);
   if (!backtestBody.data || backtestBody.meta?.simulated !== true) throw new Error("backtest contract mismatch");
+
   await smokeWebSocket();
   console.log("Codespaces smoke test: PASS — REST market, screener, paper, workspace, backtest and WebSocket paths are reachable.");
 } finally {
