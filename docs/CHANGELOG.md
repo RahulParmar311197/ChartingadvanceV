@@ -1,6 +1,10 @@
 # Changelog
 
 ## 2026-09-07
+- Canonicalized fundamentals snapshot `asOf` and `staleAt` timestamps to Unix epoch seconds, matching the market-domain candle convention.
+- Updated demo fundamentals fixtures and regression coverage so freshness calculations cannot silently mix millisecond and second timestamps.
+
+## 2026-09-07
 - Added a browser screener API client that mirrors the application fundamentals request/result contract without importing provider SDK semantics.
 - Added explicit browser continuation state that accumulates pages, forwards opaque application cursors, prevents concurrent page loads, rejects repeated cursors, and supports clean reset.
 - Added browser regression coverage for query/symbol/limit/cursor encoding, multi-page accumulation, repeated-cursor protection, reset behavior, and response metadata shape.
