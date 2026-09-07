@@ -1,6 +1,10 @@
 # Changelog
 
 ## 2026-09-07
+- Hardened concurrent duplicate paper client-order handling: a PostgreSQL unique-key race is converted into the same deterministic duplicate-order response as the preflight duplicate path.
+- Added regression coverage that simulates a unique-key race and verifies no second stored order is created.
+
+## 2026-09-07
 - Added an application-level transaction boundary around paper order submission, cancellation, and replacement when the repository supports transactions.
 - PostgreSQL lifecycle mutations now commit order transitions, fills, portfolio snapshots, ledger writes, and audit events atomically through the transaction-scoped repository.
 - Added regression coverage proving accepted paper lifecycle mutations enter the transaction boundary.
@@ -47,5 +51,5 @@
 - Fixed drawing endpoint drag lifecycle by keeping the chart-construction effect independent of selection state.
 - Wired DOM pointer capture for endpoint dragging, updating an immutable render preview during movement and committing the final point only on pointer release.
 - Added a browser paper-trading API client with explicit API configuration failure semantics rather than silent client-side simulation.
-- Integrated a Trading Panel into the workspace with market/limit/stop/stop-limit order controls, portfolio summary, positions, result/error messaging, and explicit paper-only disclosure.
+- Integrated a Trading Panel into the workspace with market/limit/stop/stop-limit controls, portfolio summary, positions, result/error messaging, and explicit paper-only disclosure.
 - Added browser-client regression coverage for configuration errors, demo identity propagation, JSON order serialization, and API error propagation.
