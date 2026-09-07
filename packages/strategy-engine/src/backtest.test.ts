@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { runBacktest } from './index';
+import { compareToBenchmark, runBacktest } from './index';
 
 const candles = [
   { time: 1, open: 100, high: 105, low: 99, close: 102 },
@@ -20,6 +20,7 @@ describe('runBacktest', () => {
     expect(result.metrics.totalReturn).toBeCloseTo(0.01);
     expect(result.metrics.maxDrawdown).toBe(0);
     expect(result.trades[1].realizedPnl).toBe(8);
+    expect(result.metrics.winRate).toBeGreaterThan(0);
   });
 
   it('applies fees and slippage deterministically', () => {
@@ -53,5 +54,14 @@ describe('runBacktest', () => {
     const result = runBacktest(candles.slice(0, 1), () => ({ side: 'sell', quantity: 1 }), { initialCash: 1_000 });
     expect(result.trades).toHaveLength(0);
     expect(result.finalEquity).toBe(1_000);
+  });
+
+  it('compares the strategy return against a buy-and-hold benchmark', () => {
+    const result = runBacktest(candles, ({ index, position }) => index === 0 && position === 0 ? { side: 'buy', quantity: 1 } : null, { initialCash: 1_000 });
+    const comparison = compareToBenchmark(result, candles);
+    expect(comparison.strategyReturn).toBeCloseTo(0.01);
+    expect(comparison.benchmarkReturn).toBeCloseTo(0.07843137);
+    expect(comparison.excessReturn).toBeCloseTo(-0.06843137);
+    expect(comparison.benchmarkFinalValue).toBeCloseTo(1_078.43137);
   });
 });
