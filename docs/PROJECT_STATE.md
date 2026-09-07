@@ -50,6 +50,8 @@ Phase 6 — Screener/fundamentals application integration in progress; chart cor
 - Explicit `PAPER_PERSISTENCE=postgres` API startup mode backed by `DATABASE_URL`; development remains deterministic/in-memory by default and `NODE_ENV=production` defaults to PostgreSQL with fail-fast configuration.
 - PostgreSQL adapter contract tests for mapping, optimistic portfolio writes, stale-write rejection, transaction commit, rollback, and error preservation.
 - PostgreSQL-backed versioned workspace service wired into the API when durable persistence is enabled, with owner-scoped reads, schema-version metadata, ETag revision responses, optimistic revision conflicts, and compatibility-preserving in-memory demo mode.
+- Paper lifecycle submission, cancellation, and replacement workflows now enter the repository transaction boundary when available, keeping order transitions, fills, portfolio snapshots, ledger entries, and audit events atomic in PostgreSQL mode.
+- Regression coverage verifies the application invokes the transaction boundary for accepted paper lifecycle mutations.
 
 ## Not production-ready
 The market-data and fundamentals implementations are deterministic demo data. No licensed live exchange/fundamentals feeds, durable production market database, authenticated user system, production WebSocket gateway, alerts worker, or real order execution exists.
@@ -62,10 +64,10 @@ The durable PostgreSQL workspace path is wired, but it still uses the demo ident
 
 ## Verification
 - CI run 34099627805 on commit `601421f` passed package typecheck, the full test suite, and the production Vite build.
-- The subsequent workspace persistence commits require a fresh CI run before their verification status is claimed.
+- CI run 34100697084 on commit `2a57f6c` passed package typecheck, the full test suite, and the production Vite build.
+- The latest transaction-boundary changes require a fresh CI run before their verification status is claimed.
 
 ## Current risks / gaps
-- PostgreSQL paper mutation sequences are not yet wrapped as one application-level transaction; order state, fills, ledger, audit, and portfolio snapshots still require coordinated atomicity before durable mode is production-grade.
 - PostgreSQL adapter needs real-database integration tests, restart/recovery verification, and migration smoke coverage.
 - The demo identity header must be replaced/bound to authenticated identity before production user data isolation is claimed.
 - Backtest Sharpe annualization currently assumes 252 periods/year; interval-aware annualization remains future work.
@@ -78,4 +80,4 @@ The durable PostgreSQL workspace path is wired, but it still uses the demo ident
 - Dedicated script runtime, community, authentication, durable persistence, deployment, and production security remain planned.
 
 ## Next implementation slice
-Add real PostgreSQL restart/recovery, concurrent lifecycle, and migration smoke tests; then make paper order/fill/ledger/audit/portfolio mutations transactionally atomic before continuing the backtesting application integration.
+Add real PostgreSQL restart/recovery, concurrent lifecycle, and migration smoke tests; continue hardening transactional account initialization and then resume backtesting application integration.
