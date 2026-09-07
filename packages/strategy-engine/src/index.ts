@@ -13,6 +13,22 @@ export interface BenchmarkComparison { strategyReturn: number; benchmarkReturn: 
 const PERIODS_PER_YEAR: Record<BacktestInterval, number> = { '1m': 252 * 390, '5m': 252 * 78, '15m': 252 * 26, '1H': 252 * 6.5, '4H': 252 * 1.625, '1D': 252, '1W': 52, '1M': 12 };
 export function annualizationPeriodsPerYear(interval: BacktestInterval = '1D'): number { return PERIODS_PER_YEAR[interval]; }
 
+export function validateBacktestCandles(candles: readonly Candle[]): void {
+  let previousTime: number | null = null;
+  for (let index = 0; index < candles.length; index += 1) {
+    const candle = candles[index];
+    if (!candle || typeof candle !== 'object') throw new Error(`candle[${index}] must be an object`);
+    if (!Number.isFinite(candle.time) || !Number.isInteger(candle.time) || candle.time < 0) throw new Error(`candle[${index}].time must be a non-negative Unix epoch second`);
+    if (previousTime != null && candle.time <= previousTime) throw new Error('candle timestamps must be strictly increasing');
+    previousTime = candle.time;
+    for (const name of ['open', 'high', 'low', 'close'] as const) {
+      if (!Number.isFinite(candle[name]) || candle[name] <= 0) throw new Error(`candle[${index}].${name} must be a finite positive number`);
+    }
+    if (candle.high < Math.max(candle.open, candle.close, candle.low)) throw new Error(`candle[${index}] high must be at least open, close, and low`);
+    if (candle.low > Math.min(candle.open, candle.close, candle.high)) throw new Error(`candle[${index}] low must be at most open, close, and high`);
+    if (candle.volume != null && (!Number.isFinite(candle.volume) || candle.volume < 0)) throw new Error(`candle[${index}].volume must be a finite non-negative number`);
+  }
+}
 function validateConfig(config: BacktestConfig): void {
   if (!Number.isFinite(config.initialCash) || config.initialCash < 0) throw new Error('initialCash must be non-negative');
   if (config.feeRate != null && (!Number.isFinite(config.feeRate) || config.feeRate < 0)) throw new Error('feeRate must be non-negative');
@@ -36,6 +52,7 @@ function sharpe(values: readonly number[], periodsPerYear: number): number {
 export function runBacktest(candles: readonly Candle[], strategy: StrategyStep, config: BacktestConfig): BacktestResult {
   validateConfig(config);
   if (!candles.length) throw new Error('candles are required');
+  validateBacktestCandles(candles);
   const periodsPerYear = annualizationPeriodsPerYear(config.interval);
   let cash = config.initialCash, position = 0, averageEntry = 0, equity = cash, peak = cash, maxDrawdown = 0;
   const trades: BacktestTrade[] = [], equityCurve: number[] = [];
