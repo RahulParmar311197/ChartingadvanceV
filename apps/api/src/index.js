@@ -2,7 +2,7 @@ import { createServer } from "node:http";
 import { generateCandles, generateQuote } from "../../../packages/market-domain/src/demo-core.js";
 import { getWorkspace, saveWorkspace } from "./workspace.js";
 import { executeDemoScreener } from "./screener.js";
-import { validateCandleRequest, validSymbol } from "./validation.js";
+import { parseScreenerRequest, validateCandleRequest, validSymbol } from "./validation.js";
 
 const PORT = Number(process.env.PORT ?? 8787);
 const PROVIDER = "demo";
@@ -47,14 +47,18 @@ const server = createServer(async (req, res) => {
 
   if (url.pathname === "/v1/screener/fundamentals" && req.method === "GET") {
     try {
+      const rawQuery = url.searchParams.get("query");
       const rawFilters = url.searchParams.get("filters");
-      const filters = rawFilters ? JSON.parse(rawFilters) : undefined;
-      if (filters != null && !Array.isArray(filters)) throw new Error("filters must be a JSON array");
-      const symbols = url.searchParams.getAll("symbol");
-      const limitRaw = url.searchParams.get("limit");
-      const limit = limitRaw == null ? undefined : Number(limitRaw);
-      const cursor = url.searchParams.get("cursor") ?? undefined;
-      const data = await executeDemoScreener({ symbols, query: filters ? { filters } : undefined, limit, cursor });
+      const rawGroups = url.searchParams.get("groups");
+      const parsed = parseScreenerRequest({
+        symbols: url.searchParams.getAll("symbol"),
+        query: rawQuery ? JSON.parse(rawQuery) : undefined,
+        filters: rawFilters ? JSON.parse(rawFilters) : undefined,
+        groups: rawGroups ? JSON.parse(rawGroups) : undefined,
+        limit: url.searchParams.get("limit") == null ? undefined : Number(url.searchParams.get("limit")),
+        cursor: url.searchParams.get("cursor") ?? undefined,
+      });
+      const data = await executeDemoScreener(parsed);
       return json(res, 200, { data, meta: { provider: PROVIDER, simulated: true } });
     } catch (error) {
       return json(res, 400, { error: { code: "INVALID_SCREENER_REQUEST", message: error?.message ?? "Invalid screener request" } });
