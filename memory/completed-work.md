@@ -14,5 +14,8 @@
 - Workspace validation tests strengthened for symbol/interval validation and state isolation.
 - Root API/realtime scripts and `ws` dependency added.
 - CI configured to run tests and build.
+- CI npm-cache dependency was removed because the repository intentionally has no lockfile yet; setup now reaches install/test/build instead of failing in setup-node cache discovery.
 - Web workspace lifecycle now loads normalized demo workspace state and debounces saves through the workspace client boundary.
 - SMA 20 and EMA 50 overlay controls now render through the Lightweight Charts series API.
+- Market-request validation extracted from the HTTP server and covered by Vitest.
+- Realtime subscription normalization extracted and covered by Vitest; malformed messages now produce an explicit degraded status event.
