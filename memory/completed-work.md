@@ -6,7 +6,7 @@
 - Phase 1 market-domain contracts added.
 - Deterministic market-data provider added behind the provider interface.
 - Web chart migrated from UI-owned random candle generation to the provider boundary.
-- Shared deterministic demo market core added so API and provider use consistent simulated semantics.
+- Shared deterministic market core added so API and provider use consistent simulated semantics.
 - Quote HTTP endpoint added and watchlist presentation moved to provider/API-backed quote state.
 - Demo WebSocket market gateway added with normalized status/quote events and monotonic sequence numbers.
 - Web realtime client added with stale-event rejection and bounded reconnect/backoff.
@@ -14,3 +14,5 @@
 - Workspace validation tests strengthened for symbol/interval validation and state isolation.
 - Root API/realtime scripts and `ws` dependency added.
 - CI configured to run tests and build.
+- Web workspace lifecycle now loads normalized demo workspace state and debounces saves through the workspace client boundary.
+- SMA 20 and EMA 50 overlay controls now render through the Lightweight Charts series API.
