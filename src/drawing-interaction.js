@@ -48,6 +48,22 @@ export function moveDrawingPoint(drawing, pointIndex, point) {
   };
 }
 
+export function createDrawingDrag(drawing, pointIndex) {
+  if (!drawing?.id || drawing.locked || !Number.isInteger(pointIndex) || pointIndex < 0 || pointIndex >= (drawing.points?.length ?? 0)) return null;
+  return { drawingId: drawing.id, pointIndex, startDrawing: drawing, previewDrawing: drawing };
+}
+
+export function updateDrawingDrag(drag, point) {
+  if (!drag || !point) return drag;
+  const previewDrawing = moveDrawingPoint(drag.previewDrawing, drag.pointIndex, point);
+  return previewDrawing === drag.previewDrawing ? drag : { ...drag, previewDrawing };
+}
+
+export function finishDrawingDrag(drag) {
+  if (!drag) return null;
+  return drag.previewDrawing;
+}
+
 export function advanceDrawingDraft(draft, point) {
   if (!point || !Number.isFinite(point.time) || !Number.isFinite(point.price)) return { points: [] };
   if (!draft?.points?.length) return { points: [point] };
