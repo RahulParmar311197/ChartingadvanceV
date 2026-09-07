@@ -43,6 +43,10 @@ Phase 6 — Screener/fundamentals application integration in progress; chart cor
 - Deterministic HTTP adapter regression coverage verifies pagination/query translation, canonical timestamp mapping, upstream error propagation, request bounds, and timeout cancellation.
 - Screener application freshness now defaults its clock to Unix epoch seconds, matching the canonical `asOf`/`staleAt` unit instead of mixing seconds with JavaScript millisecond time.
 - Regression coverage protects the default freshness clock from unit regressions.
+- Durable screener continuation migration `003_screener_continuations.sql` added.
+- In-memory and PostgreSQL screener continuation repositories added with owner/request-fingerprint/provider scoping, atomic single-use consumption, bounded expiry, and expired-row cleanup.
+- Provider cursor values remain infrastructure-only and are not used as browser continuation identifiers.
+- Regression coverage added for continuation scope isolation, expiry, single-use behavior, PostgreSQL atomic consume query shape, and cleanup.
 - Paper-trading application service with isolated demo paper accounts, risk admission, order lifecycle, deterministic execution, fills, and portfolio retrieval.
 - Paper-only HTTP portfolio/order endpoints with explicit simulated metadata and no brokerage execution path.
 - Browser paper-trading client and workspace Trading Panel with simulation disclosure.
@@ -74,13 +78,13 @@ The backtest API accepts only registered built-in strategies and never evaluates
 - CI run 34109685837 passed PostgreSQL provisioning, package typecheck, full tests, and production build for the screener freshness-state slice.
 - CI run 34111239978 passed package typecheck, full tests, and production build for the browser screener continuation slice at commit `1d70192`.
 - CI run 34112051500 passed package typecheck, full tests, and production build for timestamp-unit hardening.
-- Commit `c8580a4` introduced the HTTP adapter tests, but its PR-triggered workflow lookup returned no run.
-- The current HTTP adapter hardening and default freshness-clock fix are pushed to `main`; the resulting push CI run must pass before this slice is considered verified.
+- The durable continuation migration/repository slice is pushed to `main`; a fresh push-CI result is required before treating the new persistence code as verified.
 
 ## Current risks / gaps
 - Demo identity must be bound to authenticated identity before production user isolation.
 - Intraday annualization uses a 6.5-hour/252-day equity-session assumption; exchange/calendar-aware annualization remains future work.
-- Screener needs a real fundamentals provider and durable production cursor storage/continuation policy.
+- Screener requires a real fundamentals provider and application-route wiring for durable continuations once authenticated identity/provider credentials are available.
+- Provider cursor encryption/key management is still required before production storage of sensitive vendor tokens.
 - External-provider timestamp units must be explicitly translated into the canonical Unix epoch-second application contract.
 - Drawings need richer geometry and durable server persistence.
 - Realtime needs candle streaming, heartbeats, provider failover, rate limits, and observability.
@@ -88,4 +92,4 @@ The backtest API accepts only registered built-in strategies and never evaluates
 - Dedicated script runtime, community, authentication, deployment, and production security remain planned.
 
 ## Next implementation slice
-Define a durable provider-cursor/continuation policy covering restart persistence, expiry, opaque-token confidentiality, and safe invalidation; integrate it only at the application/infrastructure boundary without leaking provider cursor semantics into the UI.
+Wire application-level continuation IDs into the screener route while keeping provider cursors entirely behind the infrastructure boundary; require authenticated owner identity and provider-specific cursor protection before production activation.
