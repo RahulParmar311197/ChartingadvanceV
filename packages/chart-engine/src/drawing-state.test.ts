@@ -18,9 +18,10 @@ describe("drawing state", () => {
     expect(next.map((item) => item.id)).toEqual(["d1", "d2"]);
   });
 
-  it("rejects duplicate ids and invalid points", () => {
+  it("rejects duplicate ids, missing ids, and invalid points", () => {
     expect(() => addDrawing([], base)).not.toThrow();
     expect(() => addDrawing([base], base)).toThrow("Drawing already exists");
+    expect(() => addDrawing([], { ...base, id: "   " })).toThrow("id is required");
     expect(() => addDrawing([], { ...base, points: [{ time: Number.NaN, price: 10 }] })).toThrow("finite");
   });
 
