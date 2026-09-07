@@ -1,6 +1,6 @@
 import { runBacktest, compareToBenchmark } from "../../../packages/strategy-engine/src/index.ts";
 
-const STRATEGIES = new Set(["buy-and-hold"]);
+const STRATEGIES = new Set(["buy-and-hold", "candle-direction"]);
 const INTERVALS = new Set(["1m", "5m", "15m", "1H", "4H", "1D", "1W", "1M"]);
 
 function validateRequest(input) {
@@ -23,6 +23,11 @@ function validateRequest(input) {
 
 function strategyFor(name) {
   if (name === "buy-and-hold") return ({ index, position }) => index === 0 && position === 0 ? { side: "buy", quantity: 1, type: "market" } : null;
+  if (name === "candle-direction") return ({ candle, position }) => {
+    if (candle.close > candle.open && position === 0) return { side: "buy", quantity: 1, type: "market" };
+    if (candle.close < candle.open && position > 0) return { side: "sell", quantity: position, type: "market" };
+    return null;
+  };
   throw new Error("unsupported strategy");
 }
 
