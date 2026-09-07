@@ -1,6 +1,13 @@
 # Changelog
 
 ## 2026-09-07
+- Fixed drawing endpoint drag lifecycle by keeping the chart-construction effect independent of selection state.
+- Wired DOM pointer capture for endpoint dragging, updating an immutable render preview during movement and committing the final point only on pointer release.
+- Added a browser paper-trading API client with explicit API configuration failure semantics rather than silent client-side simulation.
+- Integrated a Trading Panel into the workspace with market/limit/stop/stop-limit order controls, portfolio summary, positions, result/error messaging, and explicit paper-only disclosure.
+- Added browser-client regression coverage for configuration errors, demo identity propagation, JSON order serialization, and API error propagation.
+
+## 2026-09-07
 - Added a paper-trading application service with isolated demo-user accounts, risk admission, order lifecycle submission, deterministic demo execution, fill application, and portfolio retrieval.
 - Added paper-only HTTP endpoints for portfolio reads and order submission, with explicit simulated metadata and no brokerage execution path.
 - Added application regression coverage for successful fills, user isolation, risk rejection, short-sale rejection, and untriggered limit orders.
@@ -37,30 +44,3 @@
 ## 2026-09-07
 - Added drawing drag lifecycle primitives for validating editable endpoints, creating unlocked drag state, producing immutable preview drawings, and finalizing a preview for persistence through the chart-engine update contract.
 - Added unit coverage for locked endpoint rejection, invalid endpoint rejection, immutable drag previews, and invalid preview coordinates.
-
-## 2026-09-07
-- Added a browser-local drawing-series adapter that maps domain prices to Lightweight Charts values and sorts a render-only copy by time, preserving the immutable drawing model when users click endpoints in reverse chronological order.
-- Added regression coverage for reversed drawing endpoints and non-mutating series conversion.
-
-## 2026-09-07
-- Added browser drawing interaction primitives for toolbar-to-domain tool mapping, chart-coordinate conversion, two-click draft progression, commit thresholds, and generated IDs.
-- Wired the primary chart Line and Trend Line tools to create actual two-point drawings through the chart-engine immutable drawing-state contract.
-- Rendered stored drawings as Lightweight Charts line series and added drawing selection by clicking a rendered drawing.
-- Added Delete/Backspace and toolbar deletion for the selected drawing, plus Escape to exit drawing/selection mode.
-- Kept drawing persistence explicitly client-session scoped; the server workspace contract is unchanged until a versioned, authorized persistence schema is defined.
-
-## 2026-09-07
-- Added an immutable chart-engine drawing-state model with validation, add/update/remove operations, visibility, and locking semantics.
-- Added unit coverage for drawing-state immutability, duplicate IDs, invalid points, lock behavior, and lifecycle operations.
-- Added a browser-local crosshair synchronization bus with subscription lifecycle tests and wired it between the primary and RSI Lightweight Charts panes.
-- Confirmed GitHub Actions run 148 passed package typecheck, tests, and production build for the crosshair synchronization slice.
-
-## 2026-09-07
-- Added an RSI 14 oscillator adapter in the indicator engine with deterministic warmup and timestamp mapping tests.
-- Added a real secondary RSI chart pane to the web workspace using Lightweight Charts.
-- Added fixed 0–100 RSI scaling and 70/30 reference levels.
-- Added an Indicators menu toggle for RSI 14; it is explicitly local UI state and is not yet persisted in the demo workspace contract.
-- Added source entrypoints for chart, indicator, market-domain, alert, and trading packages.
-- Added a dedicated TypeScript package-contract typecheck configuration and CI gate.
-
-## 2026-09-07
