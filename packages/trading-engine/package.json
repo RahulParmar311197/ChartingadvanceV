@@ -1,5 +1,8 @@
 {
   "name": "@chartingadvancev/trading-engine",
   "private": true,
-  "type": "module"
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  }
 }
