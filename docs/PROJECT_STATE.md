@@ -12,22 +12,23 @@ Phase 1 — Chart Core foundation in progress.
 - Project governance, agent rules, durable memory, and architecture documentation.
 - Typed market-domain contracts for symbols, candles, quotes, intervals, historical requests, and provider adapters.
 - Deterministic demo market-data provider behind the provider interface.
-- Chart-engine indicator contract now imports the shared market-domain Candle type.
-- Transport-neutral realtime market subscription/event contracts with sequence ordering.
-- Node HTTP market API with validated historical candle endpoint and explicit demo-provider metadata.
-- Web chart requests historical candles from the API when configured and falls back to the explicitly simulated provider when unavailable.
-- Core deterministic SMA, EMA, and RSI indicator calculations.
-- CI no longer assumes a lockfile that does not exist yet.
+- Chart-engine state model with the shared market-domain Candle contract.
+- Transport-neutral realtime market-event contract with monotonic sequence handling.
+- Historical candle HTTP API boundary with explicit demo-provider metadata.
+- Web chart API integration with explicit demo fallback.
+- Pure deterministic SMA, EMA, and RSI indicator calculations.
+- Vitest test files covering provider invariants, realtime ordering, and indicator behavior.
+- CI adjusted to install dependencies without pretending a lockfile exists.
 
 ## Not production-ready
-The current market-data implementation is deterministic demo data. No licensed live exchange feed, durable historical market database, authenticated API, persistent user state, production WebSocket gateway, alerts worker, paper brokerage simulator, or real order execution exists.
+The current market-data implementation is deterministic demo data. No licensed live exchange feed, historical market database, authenticated API, persistent user state, production WebSocket gateway, alerts worker, paper brokerage simulator, or real order execution exists.
 
 ## Current risks / gaps
-- Root project is still a Vite starter rather than a complete workspace build.
-- Domain/indicator packages are not yet independently packaged and CI-tested.
-- Web UI still contains static quote/news presentation data.
-- Realtime subscriptions have contracts only; no WebSocket gateway exists yet.
-- The API demo generator is intentionally temporary and must be replaced by an adapter backed by licensed data before any live-market claim.
+- Root project remains a Vite application rather than a fully configured workspace.
+- Package test files exist but are not yet integrated into one reproducible root test command.
+- Web watchlist quotes and news remain static presentation data.
+- Realtime contracts exist, but the WebSocket gateway is not implemented.
+- Chart/watchlist persistence is not implemented.
 
 ## Next implementation slice
-Add executable unit/integration tests for market-domain, indicators, and the HTTP API; package the TypeScript domains cleanly; then implement the first WebSocket market-event gateway and server-backed watchlist/chart state boundary.
+Establish the workspace/package build and test boundary, then implement the first WebSocket gateway that emits the normalized realtime contract. Replace static watchlist quotes with provider-backed quotes and add server-backed workspace state.
