@@ -1,10 +1,12 @@
 {
   "name": "chartingadvancev",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "api": "node apps/api/src/index.js",
+    "realtime": "node apps/api/src/realtime.js",
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
@@ -14,7 +16,8 @@
     "lightweight-charts": "^5.0.8",
     "lucide-react": "^0.468.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "ws": "^8.18.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",
