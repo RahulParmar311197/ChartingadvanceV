@@ -3,7 +3,7 @@
 Updated: 2026-09-07
 
 ## Status
-Phase 6 — Screener/fundamentals application integration in progress; chart core, analysis foundations, deterministic alerts, paper trading, and deterministic backtesting are implemented.
+Phase 6 — Screener/fundamentals application integration in progress; chart core, analysis foundations, deterministic alerts, paper trading, deterministic backtesting, and the first backtesting API boundary are implemented.
 
 ## Implemented
 - React/Vite TradingView-inspired workspace shell with Lightweight Charts candlestick/volume rendering.
@@ -55,11 +55,16 @@ Phase 6 — Screener/fundamentals application integration in progress; chart cor
 - Real PostgreSQL integration coverage added for idempotent migrations, restart/recovery through a new pool, and concurrent optimistic portfolio writes.
 - CI now provisions PostgreSQL 16 and runs the real integration suite alongside package typecheck, unit/integration tests, and production build.
 - Concurrent duplicate paper client-order submissions now convert PostgreSQL unique-key races into deterministic duplicate-order responses rather than leaking database errors.
+- Deterministic backtesting application service added with a safe built-in buy-and-hold strategy, bounded candle input, benchmark comparison, and explicit simulation metadata.
+- `/v1/backtest` POST API added with JSON validation and no arbitrary strategy-code execution.
+- Browser backtest API client added for the application boundary.
 
 ## Not production-ready
 The market-data and fundamentals implementations are deterministic demo data. No licensed live exchange/fundamentals feeds, durable production market database, authenticated user system, production WebSocket gateway, alerts worker, or real order execution exists.
 
 Paper trading and backtesting are simulation/domain logic only. They do not claim broker execution, margin, exchange microstructure, historical-data completeness, or real-money guarantees. The current paper application uses deterministic demo quotes with bid/ask equal to the generated demo last price, a fixed demo fee rate, a bounded notional/position policy, and no short selling. PostgreSQL persistence is selectable, but it remains persistence for the simulation and does not turn the application into a brokerage system. The `x-demo-user-id` identity boundary is not an authenticated production identity mechanism. Mark-to-market valuation is based on the deterministic demo quote and is not a live valuation feed.
+
+The backtest API intentionally accepts only a registered built-in strategy and never evaluates arbitrary JavaScript/Pine/code from a request. The current built-in strategy is buy-and-hold; richer strategy definitions belong behind the dedicated strategy/script runtime boundary.
 
 The screener API has a pagination contract but the deterministic demo provider currently has no additional pages and therefore returns no next cursor. This is intentional; no fake pagination state is exposed.
 
@@ -69,10 +74,10 @@ The durable PostgreSQL workspace path is wired, but it still uses the demo ident
 - CI run 34099627805 on commit `601421f` passed package typecheck, the full test suite, and the production Vite build.
 - CI run 34100697084 on commit `2a57f6c` passed package typecheck, the full test suite, and the production Vite build.
 - PostgreSQL integration CI run 34101299681 completed successfully for the PostgreSQL-enabled integration slice.
-- The latest duplicate-order hardening commit requires a fresh CI run before its verification status is claimed.
+- Duplicate-order hardening and the new backtest application commits require fresh CI verification.
 
 ## Current risks / gaps
-- The latest duplicate-order hardening suite must pass before that change is marked verified.
+- Fresh CI verification is required for the current backtest API/client slice.
 - The demo identity header must be replaced/bound to authenticated identity before production user data isolation is claimed.
 - Backtest Sharpe annualization currently assumes 252 periods/year; interval-aware annualization remains future work.
 - Backtest benchmark comparison is deterministic buy-and-hold over supplied benchmark candles; durable application-level integration remains future work.
@@ -84,4 +89,4 @@ The durable PostgreSQL workspace path is wired, but it still uses the demo ident
 - Dedicated script runtime, community, authentication, durable persistence, deployment, and production security remain planned.
 
 ## Next implementation slice
-Verify duplicate-order hardening, then resume backtesting application integration with a durable application boundary and regression coverage.
+Verify the current CI run, then integrate the backtest client into the workspace UI with a compact results/metrics panel before expanding strategy definitions.
