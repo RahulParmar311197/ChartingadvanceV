@@ -2,7 +2,7 @@ import { createServer } from "node:http";
 import { generateCandles, generateQuote } from "../../../packages/market-domain/src/demo-core.js";
 import { getWorkspace, saveWorkspace } from "./workspace.js";
 import { executeDemoScreener } from "./screener.js";
-import { submitPaperOrder, getPaperPortfolio } from "./paper-trading.js";
+import { submitPaperOrder, getPaperPortfolio, cancelPaperOrder, replacePaperOrder, getPaperAudit } from "./paper-trading.js";
 import { parseScreenerRequest, validateCandleRequest, validSymbol } from "./validation.js";
 
 const PORT = Number(process.env.PORT ?? 8787);
@@ -25,6 +25,7 @@ function readBody(req) {
   });
 }
 function userId(req) { return req.headers["x-demo-user-id"] || "anonymous"; }
+function paperMeta() { return { provider: PROVIDER, simulated: true, execution: "paper-only" }; }
 
 const server = createServer(async (req, res) => {
   if (req.method === "OPTIONS") return json(res, 204, null);
@@ -67,7 +68,12 @@ const server = createServer(async (req, res) => {
   }
 
   if (url.pathname === "/v1/paper/portfolio" && req.method === "GET") {
-    return json(res, 200, { data: getPaperPortfolio(userId(req)), meta: { provider: PROVIDER, simulated: true, execution: "paper-only" } });
+    return json(res, 200, { data: getPaperPortfolio(userId(req)), meta: paperMeta() });
+  }
+
+  if (url.pathname === "/v1/paper/audit" && req.method === "GET") {
+    const limit = url.searchParams.get("limit");
+    return json(res, 200, { data: getPaperAudit(userId(req), limit ?? 100), meta: paperMeta() });
   }
 
   if (url.pathname === "/v1/paper/orders" && req.method === "POST") {
@@ -77,10 +83,35 @@ const server = createServer(async (req, res) => {
       const input = JSON.parse(raw);
       if (!input || typeof input !== "object" || Array.isArray(input)) return json(res, 400, { error: { code: "INVALID_BODY", message: "JSON object is required" } });
       const result = submitPaperOrder(userId(req), input);
-      return json(res, result.order.status === "rejected" ? 422 : 200, { data: result, meta: { provider: PROVIDER, simulated: true, execution: "paper-only" } });
+      return json(res, result.order.status === "rejected" ? 422 : 200, { data: result, meta: paperMeta() });
     } catch (error) {
       const code = error?.message === "BODY_TOO_LARGE" ? "BODY_TOO_LARGE" : "INVALID_BODY";
       return json(res, 400, { error: { code, message: code === "BODY_TOO_LARGE" ? "Request body exceeds 32 KiB" : error?.message ?? "Malformed paper order" } });
+    }
+  }
+
+  const cancelMatch = url.pathname.match(/^\/v1\/paper\/orders\/([^/]+)$/);
+  if (cancelMatch && req.method === "DELETE") {
+    try {
+      const result = cancelPaperOrder(userId(req), decodeURIComponent(cancelMatch[1]));
+      return json(res, result.cancelled ? 200 : 404, { data: result, meta: paperMeta() });
+    } catch (error) {
+      return json(res, 422, { error: { code: "ORDER_CANCELLATION_REJECTED", message: error?.message ?? "Order cannot be cancelled" } });
+    }
+  }
+
+  if (cancelMatch && req.method === "PUT") {
+    try {
+      const raw = await readBody(req);
+      if (raw.length === 0) return json(res, 400, { error: { code: "INVALID_BODY", message: "JSON body is required" } });
+      const input = JSON.parse(raw);
+      if (!input || typeof input !== "object" || Array.isArray(input)) return json(res, 400, { error: { code: "INVALID_BODY", message: "JSON object is required" } });
+      const result = replacePaperOrder(userId(req), decodeURIComponent(cancelMatch[1]), input);
+      if (!result.replaced) return json(res, result.reason === "order not found" ? 404 : 422, { data: result, meta: paperMeta() });
+      return json(res, 200, { data: result, meta: paperMeta() });
+    } catch (error) {
+      const code = error?.message === "BODY_TOO_LARGE" ? "BODY_TOO_LARGE" : "ORDER_REPLACEMENT_REJECTED";
+      return json(res, 422, { error: { code, message: code === "BODY_TOO_LARGE" ? "Request body exceeds 32 KiB" : error?.message ?? "Order cannot be replaced" } });
     }
   }
 
