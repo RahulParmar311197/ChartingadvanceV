@@ -1,6 +1,12 @@
 # Changelog
 
 ## 2026-09-07
+- Added a PostgreSQL paper-trading repository adapter using an injected pool/transaction boundary, optimistic order/account updates, idempotent fill/ledger/audit writes, and account-scoped reads.
+- Added a PostgreSQL migration runner with ordered, transactional migration application and a schema-migrations ledger.
+- Added migration `002_paper_positions.sql` so position snapshots survive process restart alongside paper account state.
+- Added the `pg` runtime dependency and explicit `db:migrate` script; normal API startup remains demo/in-memory unless durable wiring is enabled.
+
+## 2026-09-07
 - Added a versioned workspace persistence contract with explicit owner binding and optimistic revision semantics.
 - Added repository-level paper persistence coverage for account concurrency, account-scoped order identity, stale lifecycle transitions, and idempotent audit appends.
 - Routed paper application state through an in-memory repository adapter instead of direct service-level Maps, while retaining the explicit demo-only persistence boundary.
