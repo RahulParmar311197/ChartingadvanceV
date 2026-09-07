@@ -31,8 +31,8 @@
 - Drawing interaction primitives added with coordinate conversion and two-click draft/commit tests.
 - Primary chart line/trendline tools now create actual two-point drawings through the chart-engine immutable drawing-state contract; selected drawings can be deleted from the toolbar or with Delete/Backspace.
 - Drawing drag lifecycle primitives added with immutable previews and endpoint validation.
-- Drawing endpoint dragging wired through DOM pointer events with pointer capture; selection styling is isolated from chart construction so selection changes do not tear down an active drag.
-- Deterministic alert evaluator added with threshold/crossing semantics, cooldowns, disabled-rule handling, and tests.
+- Drawing endpoint dragging wired through DOM pointer events with pointer capture; selection styling is isolated from chart construction so selecting an endpoint does not tear down an active drag.
+- Deterministic alert evaluator added with threshold/crossing semantics, cooldowns, disabled-rule handling, and stable delivery IDs.
 - Paper-trading execution primitives added for market/limit/stop/stop-limit orders, explicit bid/ask execution, deterministic fees/fill IDs, validation, and realized P&L position accounting.
 - Deterministic candle-based backtesting added with market/limit execution, fees, slippage, opt-in short positions, realized P&L, drawdown, win rate, profit factor, Sharpe-style metrics, and benchmark comparison.
 - Dedicated screener-engine package added with normalized fundamental snapshots, typed numeric operators, AND/OR filter groups, deterministic ranking, and bounded result limits.
@@ -49,6 +49,10 @@
 - Paper-trading application service added with isolated demo-user accounts, risk admission, order lifecycle submission, deterministic demo execution, fill application, and portfolio retrieval.
 - Paper-only HTTP portfolio and order-submission endpoints added with explicit simulated metadata and no brokerage execution path.
 - Paper-trading application regression coverage added for successful fills, account isolation, risk rejection, short-sale rejection, and untriggered limit orders.
-- Browser paper-trading API client added with explicit configuration failure instead of silent simulation fallback.
+- Browser paper-trading API client added with explicit configuration failure instead of silent simulation.
 - Workspace Trading Panel integrated with market/limit/stop/stop-limit controls, portfolio summary, positions, order-result messaging, and explicit paper-only disclosure.
 - Browser paper-trading client regression coverage added for configuration errors, demo identity propagation, order serialization, and API error propagation.
+- Paper-trading application cancellation/replacement workflows added using the shared lifecycle contract, with accepted-order-only mutation semantics, terminal-order protection, per-user isolation, and deterministic lifecycle audit events.
+- Paper-only HTTP cancellation (`DELETE /v1/paper/orders/:id`), replacement (`PUT /v1/paper/orders/:id`), and bounded audit (`GET /v1/paper/audit`) endpoints added; no brokerage execution path was introduced.
+- Browser paper-trading lifecycle API methods added for audit reads, cancellation, and replacement.
+- Regression coverage added for cancellation, replacement, terminal-order protection, audit ordering, user isolation, and bounded audit reads.
