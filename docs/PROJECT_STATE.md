@@ -52,7 +52,8 @@ Phase 6 — Screener/fundamentals application integration in progress; chart cor
 - Paper lifecycle submission, cancellation, and replacement now enter the repository transaction boundary when available, keeping order transitions, fills, portfolio snapshots, ledger entries, and audit events atomic in PostgreSQL mode.
 - In-memory paper transactions now provide rollback semantics matching the repository atomicity contract.
 - PostgreSQL account initialization now uses conflict-safe insertion and the application re-reads the durable portfolio when another concurrent initializer wins the race.
-- Real PostgreSQL integration coverage added for idempotent migrations, restart/recovery, and concurrent optimistic portfolio writes.
+- PostgreSQL order insertion now uses an atomic `insertOrderIfAbsent` repository contract backed by `ON CONFLICT (account_id,order_id) DO NOTHING`; duplicate-order handling no longer raises a unique-key exception inside the active lifecycle transaction.
+- Real PostgreSQL integration coverage added for idempotent migrations, restart/recovery, concurrent optimistic portfolio writes, and concurrent duplicate client-order races.
 - CI provisions PostgreSQL 16 and runs the real integration suite alongside package typecheck, unit/integration tests, and production build.
 - Application-level backtest boundary with bounded candle input, allowlisted Buy & Hold strategy execution, optional benchmark comparison, and explicit deterministic-simulation metadata.
 - `POST /v1/backtest` HTTP integration and browser API client.
@@ -70,10 +71,10 @@ The backtest API intentionally accepts only a registered built-in strategy and n
 - CI run 34099627805 on commit `601421f` passed package typecheck, the full test suite, and production Vite build.
 - CI run 34100697084 on commit `2a57f6c` passed package typecheck, the full test suite, and production Vite build.
 - PostgreSQL integration CI run 34101299681 completed successfully for the PostgreSQL-enabled integration slice.
-- Current duplicate-order hardening and strategy-tester/UI commits require fresh CI verification.
+- CI run 34103300368 on commit `631f686` passed package typecheck, the full test suite, and production Vite build.
+- Atomic duplicate-order hardening commits `6bd29ff`, `2e753bd`, `0b89741`, `6c42f38`, and `5423869` require fresh CI verification.
 
 ## Current risks / gaps
-- **Highest priority:** replace raw PostgreSQL duplicate-order exception handling with repository-level `INSERT ... ON CONFLICT DO NOTHING` semantics; a raw unique-key exception inside an open PostgreSQL transaction can abort that transaction.
 - Demo identity must be bound to authenticated identity before production user isolation.
 - Backtest Sharpe annualization assumes 252 periods/year; interval-aware annualization remains future work.
 - Screener needs a real fundamentals provider, durable pagination, and freshness/completeness policy.
@@ -83,4 +84,4 @@ The backtest API intentionally accepts only a registered built-in strategy and n
 - Dedicated script runtime, community, authentication, deployment, and production security remain planned.
 
 ## Next implementation slice
-Fix duplicate-order concurrency at the repository level, add a real PostgreSQL concurrent-race integration test, verify CI, then expand the strategy runtime boundary.
+Verify the PostgreSQL atomic duplicate-order race end-to-end in CI, then expand the strategy runtime boundary.
