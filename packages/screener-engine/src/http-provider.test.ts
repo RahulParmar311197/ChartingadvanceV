@@ -49,6 +49,22 @@ describe('HTTP fundamentals provider adapter', () => {
     });
   });
 
+  it('rejects invalid transport page bounds before calling upstream', async () => {
+    let calls = 0;
+    const provider = createHttpFundamentalsProvider({
+      endpoint: 'https://provider.invalid/fundamentals',
+      fetcher: async () => {
+        calls += 1;
+        return new Response('{}', { status: 200 });
+      },
+      mapResponse: () => ({ items: [], asOf: 1 }),
+    });
+
+    await expect(provider.getFundamentals({ limit: 101 })).rejects.toThrow('limit');
+    await expect(provider.getFundamentals({ cursor: 'x'.repeat(513), limit: 10 })).rejects.toThrow('cursor');
+    expect(calls).toBe(0);
+  });
+
   it('does not hide upstream HTTP failures behind a fabricated page', async () => {
     const provider = createHttpFundamentalsProvider({
       endpoint: 'https://provider.invalid/fundamentals',
@@ -59,5 +75,26 @@ describe('HTTP fundamentals provider adapter', () => {
     });
 
     await expect(provider.getFundamentals({ limit: 10 })).rejects.toThrow('HTTP 503');
+  });
+
+  it('aborts a hung upstream request at the configured timeout', async () => {
+    const provider = createHttpFundamentalsProvider({
+      endpoint: 'https://provider.invalid/fundamentals',
+      timeoutMs: 5,
+      fetcher: (_input, init) => new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () => reject(new Error('aborted')));
+      }),
+      mapResponse: () => ({ items: [], asOf: 1 }),
+    });
+
+    await expect(provider.getFundamentals({ limit: 10 })).rejects.toThrow('aborted');
+  });
+
+  it('rejects invalid timeout configuration at construction', () => {
+    expect(() => createHttpFundamentalsProvider({
+      endpoint: 'https://provider.invalid/fundamentals',
+      timeoutMs: 0,
+      mapResponse: () => ({ items: [], asOf: 1 }),
+    })).toThrow('timeoutMs');
   });
 });
