@@ -5,6 +5,8 @@
 - Added a real secondary RSI chart pane to the web workspace using Lightweight Charts.
 - Added fixed 0–100 RSI scaling and 70/30 reference levels.
 - Added an Indicators menu toggle for RSI 14; it is explicitly local UI state and is not yet persisted in the demo workspace contract.
+- Added source entrypoints for chart, indicator, market-domain, alert, and trading packages.
+- Added a dedicated TypeScript package-contract typecheck configuration and CI gate.
 
 ## 2026-09-07
 - Wired the web workspace to load normalized state from the demo workspace API and debounce saves after user state changes.
