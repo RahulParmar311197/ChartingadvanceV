@@ -7,6 +7,7 @@ export interface BacktestConfig { initialCash: number; feeRate?: number; slippag
 export interface BacktestTrade { index: number; time: number; side: 'buy' | 'sell'; quantity: number; price: number; fee: number; realizedPnl: number; }
 export interface BacktestMetrics { totalReturn: number; maxDrawdown: number; tradeCount: number; winRate: number; profitFactor: number; netProfit: number; averageTradePnl: number; sharpeRatio: number; }
 export interface BacktestResult { initialCash: number; finalCash: number; finalEquity: number; trades: readonly BacktestTrade[]; equityCurve: readonly number[]; metrics: BacktestMetrics; }
+export interface BenchmarkComparison { strategyReturn: number; benchmarkReturn: number; excessReturn: number; benchmarkFinalValue: number; }
 
 function validateConfig(config: BacktestConfig): void {
   if (!Number.isFinite(config.initialCash) || config.initialCash < 0) throw new Error('initialCash must be non-negative');
@@ -72,4 +73,12 @@ export function runBacktest(candles: readonly Candle[], strategy: StrategyStep, 
   const grossLoss = Math.abs(losses.reduce((a,b)=>a+b,0)), grossProfit = gains.reduce((a,b)=>a+b,0);
   const metrics: BacktestMetrics = { totalReturn: config.initialCash > 0 ? netProfit / config.initialCash : 0, maxDrawdown, tradeCount: trades.length, winRate: pnls.length ? gains.length / pnls.length : 0, profitFactor: grossLoss > 0 ? grossProfit / grossLoss : grossProfit > 0 ? Infinity : 0, netProfit, averageTradePnl: pnls.length ? pnls.reduce((a,b)=>a+b,0) / pnls.length : 0, sharpeRatio: sharpe(equityCurve) };
   return { initialCash: config.initialCash, finalCash: cash, finalEquity: equity, trades, equityCurve, metrics };
+}
+
+export function compareToBenchmark(result: BacktestResult, benchmarkCandles: readonly Candle[]): BenchmarkComparison {
+  if (!benchmarkCandles.length) throw new Error('benchmark candles are required');
+  const first = benchmarkCandles[0].close, last = benchmarkCandles[benchmarkCandles.length - 1].close;
+  if (![first, last].every(Number.isFinite) || first <= 0) throw new Error('benchmark candles contain invalid prices');
+  const benchmarkReturn = last / first - 1;
+  return { strategyReturn: result.metrics.totalReturn, benchmarkReturn, excessReturn: result.metrics.totalReturn - benchmarkReturn, benchmarkFinalValue: result.initialCash * (1 + benchmarkReturn) };
 }
