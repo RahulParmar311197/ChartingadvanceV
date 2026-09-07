@@ -56,3 +56,7 @@
 - Paper application state migrated from direct service Maps to the repository adapter; terminal orders remain queryable and lifecycle transitions are validated against canonical stored status.
 - Canonical paper order-list HTTP endpoint and browser client method added; Trading Panel now derives open orders from stored order status rather than bounded audit reconstruction.
 - Versioned workspace persistence contract added with schema version, owner binding, monotonic revisions, authorization checks, and regression coverage.
+- PostgreSQL paper repository adapter added with injected pool, optimistic account/portfolio writes, idempotent fill/ledger/audit persistence, account-scoped order reads, and transaction support.
+- PostgreSQL migration runner and position-snapshot migration added for restart-safe paper persistence.
+- Versioned PostgreSQL workspace repository adapter and application service added with owner-scoped reads, schema-version enforcement, and optimistic revision updates.
+- Backtest regression expectations corrected to match the engine's deterministic open-price execution and realized-P&L semantics.
