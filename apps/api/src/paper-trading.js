@@ -1,34 +1,25 @@
-import {
-  applyFillToPortfolio,
-  assessOrderRisk,
-  createPaperAccount,
-  executePaperOrder,
-  markPortfolio,
-  replaceOrder,
-  transitionOrder,
-} from "../../../packages/trading-engine/src/index.ts";
+import { applyFillToPortfolio, assessOrderRisk, createPaperAccount, executePaperOrder, markPortfolio, replaceOrder, transitionOrder } from "../../../packages/trading-engine/src/index.ts";
 import { generateQuote } from "../../../packages/market-domain/src/demo-core.js";
+import { createPaperRepository } from "./paper-repository.js";
 
 const FEE_RATE = 0.001;
-const accounts = new Map();
-const submittedOrderIds = new Map();
-const openOrders = new Map();
-const auditEvents = new Map();
+const repository = createPaperRepository();
 
-function accountFor(userId) {
+function accountIdFor(userId) {
   const safeUserId = typeof userId === "string" && userId.trim() ? userId.trim().slice(0, 128) : "anonymous";
-  const id = `paper:${safeUserId}`;
-  let portfolio = accounts.get(id);
+  return `paper:${safeUserId}`;
+}
+function accountFor(userId) {
+  const id = accountIdFor(userId);
+  let portfolio = repository.getPortfolio(id);
   if (!portfolio) {
-    portfolio = { account: createPaperAccount(id, "USD", 100_000), positions: [], ledger: [] };
-    accounts.set(id, portfolio);
+    const account = createPaperAccount(id, "USD", 100_000);
+    repository.createAccount(account);
+    portfolio = { account, positions: [], ledger: [] };
+    repository.savePortfolio(portfolio);
   }
-  if (!submittedOrderIds.has(id)) submittedOrderIds.set(id, new Set());
-  if (!openOrders.has(id)) openOrders.set(id, new Map());
-  if (!auditEvents.has(id)) auditEvents.set(id, []);
   return portfolio;
 }
-
 function validSymbol(symbol) { return typeof symbol === "string" && /^[A-Z0-9_.-]+:[A-Z0-9_.-]+$/i.test(symbol); }
 function executionQuote(symbol) {
   if (!validSymbol(symbol)) throw new Error("symbol must use EXCHANGE:TICKER format");
@@ -36,49 +27,51 @@ function executionQuote(symbol) {
   return { bid: quote.last, ask: quote.last, last: quote.last };
 }
 function audit(accountId, action, orderId, timestamp, reason) {
-  const events = auditEvents.get(accountId) ?? [];
-  const event = { id: `${orderId}:${action}:${timestamp}`, accountId, action, timestamp, orderId, ...(reason ? { reason } : {}) };
-  if (!events.some((item) => item.id === event.id)) auditEvents.set(accountId, [...events, event]);
+  repository.appendAuditEvent({ id: `${orderId}:${action}:${timestamp}`, accountId, action, timestamp, orderId, ...(reason ? { reason } : {}) });
 }
-function rememberOrder(accountId, order) { openOrders.get(accountId)?.set(order.id, order); }
 
 export function submitPaperOrder(userId, input, now = Date.now()) {
   if (!Number.isFinite(now)) throw new Error("invalid execution timestamp");
   const portfolio = accountFor(userId);
-  const order = { id: typeof input?.id === "string" && input.id ? input.id : `paper-order:${now}:${Math.random().toString(36).slice(2, 8)}`, accountId: portfolio.account.id, symbolId: input?.symbolId, side: input?.side, type: input?.type ?? "market", quantity: Number(input?.quantity), ...(input?.limitPrice !== undefined ? { limitPrice: Number(input.limitPrice) } : {}), ...(input?.stopPrice !== undefined ? { stopPrice: Number(input.stopPrice) } : {}), status: "pending", createdAt: now };
-  const ids = submittedOrderIds.get(portfolio.account.id);
-  if (ids.has(order.id)) {
+  const order = { id: typeof input?.id === "string" && input.id ? input.id : `paper-order:${now}:${repository.listOrders(portfolio.account.id).length + 1}`, accountId: portfolio.account.id, symbolId: input?.symbolId, side: input?.side, type: input?.type ?? "market", quantity: Number(input?.quantity), ...(input?.limitPrice !== undefined ? { limitPrice: Number(input.limitPrice) } : {}), ...(input?.stopPrice !== undefined ? { stopPrice: Number(input.stopPrice) } : {}), status: "pending", createdAt: now };
+  if (repository.getOrder(portfolio.account.id, order.id)) {
     audit(portfolio.account.id, "order_rejected", order.id, now, "duplicate order id");
     return { order: { ...order, status: "rejected" }, fill: null, portfolio, risk: { allowed: false, reason: "duplicate order id", estimatedNotional: 0 }, simulated: true };
   }
-  ids.add(order.id);
+  repository.insertOrder(order);
   audit(portfolio.account.id, "order_submitted", order.id, now);
   const referenceQuote = executionQuote(order.symbolId);
   const risk = assessOrderRisk(portfolio.account, portfolio.positions, order, referenceQuote.last, { allowShort: false, maxOrderNotional: 50_000, maxPositionQuantity: 10_000 });
   if (!risk.allowed) {
+    const rejected = transitionOrder(order, "reject", now);
+    repository.transitionOrder(portfolio.account.id, order.id, "pending", rejected);
     audit(portfolio.account.id, "order_rejected", order.id, now, risk.reason);
-    return { order: { ...order, status: "rejected" }, fill: null, portfolio, risk, simulated: true };
+    return { order: rejected, fill: null, portfolio, risk, simulated: true };
   }
   const accepted = transitionOrder(order, "submit", now);
+  repository.transitionOrder(portfolio.account.id, order.id, "pending", accepted);
   audit(portfolio.account.id, "order_accepted", accepted.id, now);
   const execution = executePaperOrder(accepted, referenceQuote, now, FEE_RATE);
   if (!execution.fill) {
-    rememberOrder(portfolio.account.id, execution.order);
+    repository.transitionOrder(portfolio.account.id, accepted.id, "accepted", execution.order);
     return { ...execution, portfolio, risk, simulated: true };
   }
-  const nextPortfolio = applyFillToPortfolio(portfolio, execution.fill, accepted.side);
-  accounts.set(portfolio.account.id, nextPortfolio);
+  const filled = transitionOrder(accepted, "fill", now);
+  repository.transitionOrder(portfolio.account.id, accepted.id, "accepted", filled);
+  const storedFill = repository.insertFill({ ...execution.fill, accountId: portfolio.account.id });
+  const nextPortfolio = applyFillToPortfolio(portfolio, storedFill, accepted.side);
+  repository.savePortfolio(nextPortfolio);
   audit(portfolio.account.id, "order_filled", accepted.id, now);
-  return { ...execution, portfolio: nextPortfolio, risk, simulated: true };
+  return { ...execution, order: filled, fill: storedFill, portfolio: nextPortfolio, risk, simulated: true };
 }
 
 export function cancelPaperOrder(userId, orderId, now = Date.now()) {
   if (!Number.isFinite(now)) throw new Error("invalid cancellation timestamp");
   const portfolio = accountFor(userId);
-  const order = openOrders.get(portfolio.account.id)?.get(orderId);
+  const order = repository.getOrder(portfolio.account.id, orderId);
   if (!order) throw new Error("open paper order not found");
   const cancelledOrder = transitionOrder(order, "cancel", now);
-  openOrders.get(portfolio.account.id).delete(orderId);
+  repository.transitionOrder(portfolio.account.id, orderId, "accepted", cancelledOrder);
   audit(portfolio.account.id, "order_cancelled", orderId, now);
   return { cancelled: true, order: cancelledOrder, portfolio: getPaperPortfolio(userId), simulated: true };
 }
@@ -86,26 +79,37 @@ export function cancelPaperOrder(userId, orderId, now = Date.now()) {
 export function replacePaperOrder(userId, orderId, request = {}, now = Date.now()) {
   if (!Number.isFinite(now)) throw new Error("invalid replacement timestamp");
   const portfolio = accountFor(userId);
-  const order = openOrders.get(portfolio.account.id)?.get(orderId);
+  const order = repository.getOrder(portfolio.account.id, orderId);
   if (!order) throw new Error("open paper order not found");
   const newOrderId = typeof request?.id === "string" && request.id ? request.id : `${orderId}:replace:${now}`;
-  const ids = submittedOrderIds.get(portfolio.account.id);
-  if (ids.has(newOrderId)) throw new Error("duplicate replacement order id");
-  const pair = replaceOrder(order, {
-    quantity: request.quantity === undefined ? undefined : Number(request.quantity),
-    limitPrice: request.limitPrice === undefined ? undefined : Number(request.limitPrice),
-    stopPrice: request.stopPrice === undefined ? undefined : Number(request.stopPrice),
-    createdAt: now,
-  }, newOrderId);
-  ids.add(newOrderId);
-  openOrders.get(portfolio.account.id).delete(orderId);
-  const accepted = transitionOrder(pair.replacement, "submit", now);
-  rememberOrder(portfolio.account.id, accepted);
+  if (repository.getOrder(portfolio.account.id, newOrderId)) throw new Error("duplicate replacement order id");
+  const pair = replaceOrder(order, { quantity: request.quantity === undefined ? undefined : Number(request.quantity), limitPrice: request.limitPrice === undefined ? undefined : Number(request.limitPrice), stopPrice: request.stopPrice === undefined ? undefined : Number(request.stopPrice), createdAt: now }, newOrderId);
+  const cancelled = pair.cancelled;
+  repository.transitionOrder(portfolio.account.id, orderId, "accepted", cancelled);
+  repository.insertOrder(pair.replacement);
+  const referenceQuote = executionQuote(pair.replacement.symbolId);
+  const risk = assessOrderRisk(portfolio.account, portfolio.positions, pair.replacement, referenceQuote.last, { allowShort: false, maxOrderNotional: 50_000, maxPositionQuantity: 10_000 });
   audit(portfolio.account.id, "order_cancelled", orderId, now, "replaced");
   audit(portfolio.account.id, "order_replaced", orderId, now);
   audit(portfolio.account.id, "order_submitted", newOrderId, now);
+  if (!risk.allowed) {
+    const rejected = transitionOrder(pair.replacement, "reject", now);
+    repository.transitionOrder(portfolio.account.id, newOrderId, "pending", rejected);
+    audit(portfolio.account.id, "order_rejected", newOrderId, now, risk.reason);
+    return { replaced: true, cancelled, replacement: rejected, order: cancelled, portfolio: getPaperPortfolio(userId), risk, simulated: true };
+  }
+  const accepted = transitionOrder(pair.replacement, "submit", now);
+  repository.transitionOrder(portfolio.account.id, newOrderId, "pending", accepted);
   audit(portfolio.account.id, "order_accepted", newOrderId, now);
-  return { replaced: true, cancelled: pair.cancelled, replacement: accepted, portfolio: getPaperPortfolio(userId), simulated: true };
+  const execution = executePaperOrder(accepted, referenceQuote, now, FEE_RATE);
+  if (!execution.fill) return { replaced: true, cancelled, replacement: accepted, order: cancelled, portfolio: getPaperPortfolio(userId), risk, simulated: true };
+  const filled = transitionOrder(accepted, "fill", now);
+  repository.transitionOrder(portfolio.account.id, newOrderId, "accepted", filled);
+  const storedFill = repository.insertFill({ ...execution.fill, accountId: portfolio.account.id });
+  const nextPortfolio = applyFillToPortfolio(portfolio, storedFill, accepted.side);
+  repository.savePortfolio(nextPortfolio);
+  audit(portfolio.account.id, "order_filled", newOrderId, now);
+  return { replaced: true, cancelled, replacement: filled, order: cancelled, fill: storedFill, portfolio: getPaperPortfolio(userId), risk, simulated: true };
 }
 
 export function getPaperPortfolio(userId) {
@@ -114,11 +118,6 @@ export function getPaperPortfolio(userId) {
   const marked = markPortfolio(portfolio.account, portfolio.positions, marks);
   return structuredClone({ ...portfolio, account: marked.account, positions: marked.positions });
 }
-
-export function getPaperAudit(userId, limit = 100) {
-  const portfolio = accountFor(userId);
-  const bounded = Math.max(1, Math.min(100, Number(limit) || 100));
-  return structuredClone((auditEvents.get(portfolio.account.id) ?? []).slice(-bounded));
-}
-
-export function resetPaperTradingStore() { accounts.clear(); submittedOrderIds.clear(); openOrders.clear(); auditEvents.clear(); }
+export function getPaperOrders(userId) { return repository.listOrders(accountFor(userId).account.id); }
+export function getPaperAudit(userId, limit = 100) { return repository.listAuditEvents(accountFor(userId).account.id, limit); }
+export function resetPaperTradingStore() { repository.accounts.clear(); repository.portfolios.clear(); repository.orders.clear(); repository.fills.clear(); repository.ledger.clear(); repository.audit.clear(); }
