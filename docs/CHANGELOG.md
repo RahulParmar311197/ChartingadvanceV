@@ -1,6 +1,11 @@
 # Changelog
 
 ## 2026-09-07
+- Hardened the backtest application boundary with strict candle timestamp chronology and OHLC/volume semantic validation.
+- Rejected malformed timestamps, duplicate/non-monotonic bars, non-positive/non-finite prices, impossible high/low relationships, and negative/non-finite volume.
+- Applied the same validation contract to optional benchmark candle input and added regression coverage.
+
+## 2026-09-07
 - Added interval-aware Sharpe annualization to the strategy engine for 1m/5m/15m/1H/4H/1D/1W/1M intervals.
 - Added explicit annualization metadata to the backtest application response.
 - Added regression coverage for intraday, daily, weekly, and monthly period assumptions.
