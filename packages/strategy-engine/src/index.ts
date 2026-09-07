@@ -14,7 +14,6 @@ function validateConfig(config: BacktestConfig): void {
   if (config.feeRate != null && (!Number.isFinite(config.feeRate) || config.feeRate < 0)) throw new Error('feeRate must be non-negative');
   if (config.slippageBps != null && (!Number.isFinite(config.slippageBps) || config.slippageBps < 0)) throw new Error('slippageBps must be non-negative');
 }
-
 function executionPrice(candle: Candle, order: BacktestOrder, slippageBps: number): number | null {
   if (![candle.open, candle.high, candle.low, candle.close].every(Number.isFinite)) return null;
   const raw = order.type === 'limit' ? order.limitPrice : candle.open;
@@ -22,7 +21,6 @@ function executionPrice(candle: Candle, order: BacktestOrder, slippageBps: numbe
   if (order.type === 'limit' && (order.side === 'buy' ? candle.low > raw! : candle.high < raw!)) return null;
   return raw! * (1 + (order.side === 'buy' ? 1 : -1) * slippageBps / 10_000);
 }
-
 function sharpe(values: readonly number[]): number {
   if (values.length < 2) return 0;
   const returns = values.slice(1).map((value, i) => values[i] === 0 ? 0 : value / values[i] - 1);
@@ -68,10 +66,10 @@ export function runBacktest(candles: readonly Candle[], strategy: StrategyStep, 
     maxDrawdown = Math.max(maxDrawdown, peak > 0 ? (peak - equity) / peak : 0);
     equityCurve.push(equity);
   }
-  const pnls = trades.map(t => t.realizedPnl - t.fee), gains = pnls.filter(v => v > 0), losses = pnls.filter(v => v < 0);
-  const netProfit = equity - config.initialCash;
-  const grossLoss = Math.abs(losses.reduce((a,b)=>a+b,0)), grossProfit = gains.reduce((a,b)=>a+b,0);
-  const metrics: BacktestMetrics = { totalReturn: config.initialCash > 0 ? netProfit / config.initialCash : 0, maxDrawdown, tradeCount: trades.length, winRate: pnls.length ? gains.length / pnls.length : 0, profitFactor: grossLoss > 0 ? grossProfit / grossLoss : grossProfit > 0 ? Infinity : 0, netProfit, averageTradePnl: pnls.length ? pnls.reduce((a,b)=>a+b,0) / pnls.length : 0, sharpeRatio: sharpe(equityCurve) };
+  const completedPnls = trades.map(t => t.realizedPnl - t.fee).filter(v => v !== 0);
+  const gains = completedPnls.filter(v => v > 0), losses = completedPnls.filter(v => v < 0);
+  const netProfit = equity - config.initialCash, grossLoss = Math.abs(losses.reduce((a,b)=>a+b,0)), grossProfit = gains.reduce((a,b)=>a+b,0);
+  const metrics: BacktestMetrics = { totalReturn: config.initialCash > 0 ? netProfit / config.initialCash : 0, maxDrawdown, tradeCount: trades.length, winRate: completedPnls.length ? gains.length / completedPnls.length : 0, profitFactor: grossLoss > 0 ? grossProfit / grossLoss : grossProfit > 0 ? Infinity : 0, netProfit, averageTradePnl: completedPnls.length ? completedPnls.reduce((a,b)=>a+b,0) / completedPnls.length : 0, sharpeRatio: sharpe(equityCurve) };
   return { initialCash: config.initialCash, finalCash: cash, finalEquity: equity, trades, equityCurve, metrics };
 }
 
