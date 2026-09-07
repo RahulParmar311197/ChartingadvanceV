@@ -1,3 +1,5 @@
+import { authConfigErrors } from "./auth.js";
+
 const DEFAULT_RATE_LIMIT = 120;
 const DEFAULT_RATE_WINDOW_MS = 60_000;
 
@@ -19,11 +21,7 @@ export function createRateLimiter({ limit = DEFAULT_RATE_LIMIT, windowMs = DEFAU
         return { allowed: true, remaining: maxRequests - 1, retryAfterSeconds: 0 };
       }
       if (current.count >= maxRequests) {
-        return {
-          allowed: false,
-          remaining: 0,
-          retryAfterSeconds: Math.max(1, Math.ceil((window - (now - current.startedAt)) / 1000)),
-        };
+        return { allowed: false, remaining: 0, retryAfterSeconds: Math.max(1, Math.ceil((window - (now - current.startedAt)) / 1000)) };
       }
       current.count += 1;
       return { allowed: true, remaining: maxRequests - current.count, retryAfterSeconds: 0 };
@@ -72,15 +70,14 @@ export function createSecurityHeaders({ origin, production = false } = {}) {
 
 export function productionConfigErrors(env = process.env) {
   if (env.NODE_ENV !== "production") return [];
-  const errors = [];
-  if (env.AUTH_MODE !== "authenticated") errors.push("AUTH_MODE=authenticated is required for production; demo identity is not accepted");
+  const errors = [...authConfigErrors(env)];
   if (env.MARKET_DATA_MODE !== "live") errors.push("MARKET_DATA_MODE=live is required for production");
   if (env.FUNDAMENTALS_DATA_MODE !== "live") errors.push("FUNDAMENTALS_DATA_MODE=live is required for production");
   if (env.MARKET_DATA_PROVIDER !== "configured") errors.push("MARKET_DATA_PROVIDER=configured is required; a real provider adapter must be installed before production");
   if (env.FUNDAMENTALS_DATA_PROVIDER !== "configured") errors.push("FUNDAMENTALS_DATA_PROVIDER=configured is required; a real provider adapter must be installed before production");
   if (env.PAPER_PERSISTENCE !== "postgres") errors.push("PAPER_PERSISTENCE=postgres is required for production");
   if (!env.DATABASE_URL) errors.push("DATABASE_URL is required for production");
-  if (!env.SCREENER_CURSOR_ENCRYPTION_KEY) errors.push("SCREENER_CURSOR_ENCRYPTION_KEY is required for production");
+  if (!env.SCREENER_CURSOR_ENCRYPTION_KEY && !env.SCREENER_CURSOR_ENCRYPTION_KEYS) errors.push("SCREENER_CURSOR_ENCRYPTION_KEY or SCREENER_CURSOR_ENCRYPTION_KEYS is required for production");
   try { parseCorsOrigins(env.CORS_ORIGINS, { production: true }); } catch (error) { errors.push(error.message); }
   return errors;
 }
