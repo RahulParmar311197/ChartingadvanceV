@@ -1,6 +1,11 @@
 # Changelog
 
 ## 2026-09-07
+- Hardened the provider-neutral fundamentals HTTP adapter with page-size and cursor bounds, configurable timeout cancellation, and upstream error propagation without fabricated fallback data.
+- Exported the HTTP adapter through the screener-engine package subpath so application infrastructure can consume the transport seam without provider-specific imports.
+- Added regression coverage for request-bound enforcement, timeout cancellation, invalid timeout configuration, query translation, timestamp mapping, and upstream HTTP failures.
+
+## 2026-09-07
 - Canonicalized fundamentals snapshot `asOf` and `staleAt` timestamps to Unix epoch seconds, matching the market-domain candle convention.
 - Updated demo fundamentals fixtures and regression coverage so freshness calculations cannot silently mix millisecond and second timestamps.
 
