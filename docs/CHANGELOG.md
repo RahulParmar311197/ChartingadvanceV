@@ -1,6 +1,15 @@
 # Changelog
 
 ## 2026-09-07
+- Added fail-closed production configuration validation for authenticated identity, live-data modes/providers, PostgreSQL persistence, encrypted screener cursors, and explicit CORS origins.
+- Added API security response headers, allowlisted CORS, process-local rate limiting with `429`/`Retry-After`, `/ready` database readiness, request-body abort protection, and graceful HTTP/DB shutdown.
+- Hardened the market WebSocket with an 8 KiB payload cap, connection-capacity guard, ping/pong heartbeat liveness, and graceful shutdown.
+- Added rotating screener cursor keyring support so old encrypted continuation cursors remain readable during controlled key rotation while new cursors use the active key.
+- Expanded durable screener continuation storage bounds to accommodate the encrypted cursor envelope while keeping provider cursors bounded.
+- Added regression coverage for production security configuration, CORS, rate limiting, security headers, and cursor-key rotation.
+- Fixed browser quote fallback so demo development without `VITE_MARKET_API_URL` does not permanently render `No quote`.
+
+## 2026-09-07
 - Added migration `003_screener_continuations.sql` for durable screener continuation state.
 - Added in-memory and PostgreSQL continuation repositories with owner/query/provider scoping, single-use atomic consumption, expiry, and expired-row cleanup.
 - Kept provider cursors infrastructure-only; continuation identifiers exposed to application callers are independently generated opaque IDs.
@@ -17,7 +26,7 @@
 
 ## 2026-09-07
 - Added a browser screener API client that mirrors the application fundamentals request/result contract without importing provider SDK semantics.
-- Added explicit browser continuation state that accumulates pages, forwards opaque application cursors, prevents concurrent page loads, rejects repeated cursors, and supports clean reset.
+- Added explicit browser continuation state that accumulates pages, forwards opaque application cursors, prevents concurrent loads, rejects repeated cursors, and supports clean reset.
 - Added browser regression coverage for query/symbol/limit/cursor encoding, multi-page accumulation, repeated-cursor protection, reset behavior, and response metadata shape.
 
 ## 2026-09-07
