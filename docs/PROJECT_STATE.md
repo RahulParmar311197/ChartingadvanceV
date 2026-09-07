@@ -3,7 +3,7 @@
 Updated: 2026-09-07
 
 ## Status
-Phase 1 — Chart Core foundation in progress; historical API, quote API, demo realtime transport, demo workspace state, web workspace lifecycle, indicator overlays, validation boundaries, chart viewport controls, chart-engine viewport invariants, package workspace graph, and an RSI secondary pane are implemented.
+Phase 1 — Chart Core foundation in progress; historical API, quote API, demo realtime transport, demo workspace state, web workspace lifecycle, indicator overlays, validation boundaries, chart viewport controls, chart-engine viewport invariants, package workspace graph, package entrypoints/typecheck, and an RSI secondary pane are implemented.
 
 ## Implemented
 - React/Vite TradingView-inspired workspace shell with Lightweight Charts candlestick/volume rendering.
@@ -28,8 +28,9 @@ Phase 1 — Chart Core foundation in progress; historical API, quote API, demo r
 - Chart viewport controls now maintain a bounded visible-bar window and expose zoom-in/zoom-out controls in the chart toolbar.
 - Chart-engine viewport operations now provide tested clamping, zoom, and bounded pan invariants.
 - Root `package.json` now declares npm workspaces for `apps/*` and `packages/*`.
-- Existing API and domain packages now have explicit package manifests, establishing package ownership without moving runtime imports yet.
-- CI runs `npm install`, `npm test`, and `npm run build`.
+- Package manifests now expose source entrypoints for chart, indicator, market-domain, alert, and trading domains.
+- Root `typecheck:packages` uses a dedicated TypeScript configuration to validate production package contracts without moving domain logic into React.
+- CI runs package typecheck, tests, and the browser build.
 
 ## Not production-ready
 The current market-data implementation is deterministic demo data. No licensed live exchange feed, historical market database, authenticated API, durable user state, production market WebSocket gateway, alerts worker, paper brokerage simulator, or real order execution exists.
@@ -41,10 +42,11 @@ The workspace API is intentionally in-memory and `x-demo-user-id` is not authent
 - GitHub Actions run 88 passed the complete `npm install`, `npm run test`, and `npm run build` gate for the chart-interaction slice.
 - GitHub Actions run 89 passed the complete `npm install`, `npm run test`, and `npm run build` gate for the viewport-control implementation.
 - GitHub Actions run 100 passed the complete `npm install`, `npm run test`, and `npm run build` gate for the workspace package graph on main.
-- The RSI implementation and adapter tests have been committed; the post-change CI gate remains the verification step for this slice.
+- GitHub Actions run 120 passed package typecheck, all Vitest tests, and the production Vite build after the package-entrypoint/typecheck changes.
+- The first RSI CI run exposed incorrect expected Wilder-RSI values in the new test; the test was corrected and the full gate subsequently passed.
 
 ## Current risks / gaps
-- The root Vite application still owns the browser build; package manifests establish boundaries but package-specific build/typecheck scripts are not yet wired.
+- The root Vite application still owns the browser build; package manifests establish source boundaries but production package publishing/build artifacts are not yet configured.
 - The RSI pane is a separate Lightweight Charts instance; horizontal interaction synchronization beyond the shared bounded visible-bar control remains future work.
 - No durable persistence or authenticated session boundary exists.
 - Realtime stream currently sends an initial quote snapshot only; candle streaming, heartbeats, provider failover, rate limits, and observability remain future work.
@@ -52,4 +54,4 @@ The workspace API is intentionally in-memory and `x-demo-user-id` is not authent
 - News, screener, Pine runtime, strategy testing, alerts, paper trading, and community systems remain planned rather than implemented.
 
 ## Next implementation slice
-Verify the RSI change with CI, then wire package-level entrypoints/build scripts without moving domain invariants into React. After that, improve synchronized primary/secondary chart interaction and continue Phase 1 drawing/crosshair primitives.
+Improve synchronized primary/secondary chart interaction (shared pan/crosshair) and continue Phase 1 drawing/crosshair primitives, then move toward persistent indicator configuration once the workspace contract can safely carry it.
