@@ -3,7 +3,7 @@
 Updated: 2026-09-07
 
 ## Status
-Phase 1 — Chart Core foundation in progress; historical API, quote API, demo realtime transport, demo workspace state, web workspace client boundary, and indicator overlay foundation are implemented.
+Phase 1 — Chart Core foundation in progress; historical API, quote API, demo realtime transport, demo workspace state, web workspace lifecycle, and indicator overlays are implemented.
 
 ## Implemented
 - React/Vite TradingView-inspired workspace shell with Lightweight Charts candlestick/volume rendering.
@@ -16,9 +16,10 @@ Phase 1 — Chart Core foundation in progress; historical API, quote API, demo r
 - Demo WebSocket gateway at `ws://localhost:8788` with subscription messages, normalized quote/status events, sequence numbers, and bounded client reconnect logic.
 - Web watchlist quote state now comes from the provider/API instead of hardcoded presentation prices.
 - Demo workspace GET/PUT API with bounded JSON input and explicitly non-persistent, demo-only identity via `x-demo-user-id`.
-- Web workspace client boundary with normalization, deduplication, and bounded watchlist state.
+- Web workspace client with normalization, deduplication, bounded watchlist state, API load, and debounced API save.
 - Pure deterministic SMA, EMA, and RSI indicator calculations with Vitest coverage.
 - Moving-average overlay adapter mapping indicator output to chart timestamps, with tests.
+- SMA 20 and EMA 50 can be toggled and are rendered as Lightweight Charts line series.
 - CI runs `npm install`, `npm test`, and `npm run build`.
 
 ## Not production-ready
@@ -28,15 +29,16 @@ The workspace API is intentionally in-memory and `x-demo-user-id` is not authent
 
 ## Verification
 - GitHub CI configuration includes test and build gates.
+- The latest feature commit did not yet have an associated workflow run when checked; do not treat the current head as CI-verified until a run completes successfully.
 - Local execution verification was attempted previously, but this environment could not resolve `github.com`; do not treat the current head as locally verified until CI produces a successful run.
 
 ## Current risks / gaps
 - Root project is still a Vite application rather than the planned full workspace/package build graph.
 - No durable persistence or authenticated session boundary exists.
 - Realtime stream currently sends an initial quote snapshot only; candle streaming, heartbeats, provider failover, rate limits, and observability remain future work.
-- Web workspace persistence client exists but is not yet wired into App lifecycle.
-- SMA/EMA overlay adapter exists but is not yet rendered by the chart UI.
+- Indicator configuration is intentionally limited to SMA 20 and EMA 50 controls; the RSI engine is not yet rendered in a pane.
+- Drawing tools are still interaction-state placeholders rather than a persistent drawing model.
 - News, screener, Pine runtime, strategy testing, alerts, paper trading, and community systems remain planned rather than implemented.
 
 ## Next implementation slice
-Wire workspace load/save into the web lifecycle, render SMA/EMA overlays through Lightweight Charts, and add API/realtime integration tests. Keep all market outputs explicitly simulated until a licensed provider is integrated.
+Add pure API/realtime route validation tests, then strengthen chart interaction primitives and the workspace/package build graph. Keep all market outputs explicitly simulated until a licensed provider is integrated.
