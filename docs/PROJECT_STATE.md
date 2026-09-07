@@ -39,7 +39,7 @@ Phase 6 — Screener/fundamentals application integration in progress; chart cor
 - In-memory and PostgreSQL repository adapters with transaction support and restart-safe position snapshots.
 - Versioned PostgreSQL workspace persistence with owner-scoped reads, schema versions, ETags, and optimistic revision conflicts.
 - PostgreSQL account initialization and duplicate client-order insertion are conflict-safe; concurrent duplicate submissions use atomic repository-level `insertOrderIfAbsent` semantics.
-- Real PostgreSQL integration coverage for migrations, restart/recovery, optimistic portfolio writes, and concurrent duplicate client-order races.
+- Real PostgreSQL integration coverage for migrations, restart/recovery, optimistic portfolio writes, and concurrent duplicate-order races.
 - CI provisions PostgreSQL 16 and runs typecheck, unit/integration tests, and production build.
 - Application backtest boundary with bounded candle input, allowlisted deterministic strategies, optional benchmark comparison, and explicit simulation metadata.
 - `POST /v1/backtest` and browser backtest client.
@@ -59,8 +59,8 @@ The backtest API accepts only registered built-in strategies and never evaluates
 ## Verification
 - CI run 34104366664 on commit `4901bb1` passed PostgreSQL provisioning, package typecheck, full tests, and production build, including the concurrent duplicate-order race integration test.
 - CI run 34104724580 on commit `3124545` passed PostgreSQL provisioning, package typecheck, full tests, and production build for the second allowlisted strategy.
-- Interval-aware annualization commits require fresh CI verification.
-- Candle-semantics validation changes require fresh CI verification.
+- CI run 34106083667 on commit `d67572a` passed PostgreSQL provisioning, package typecheck, full tests, and production build for interval-aware Sharpe and candle-semantics validation.
+- Documentation-only state/memory commits after the verified implementation will receive normal CI validation.
 
 ## Current risks / gaps
 - Demo identity must be bound to authenticated identity before production user isolation.
@@ -72,4 +72,4 @@ The backtest API accepts only registered built-in strategies and never evaluates
 - Dedicated script runtime, community, authentication, deployment, and production security remain planned.
 
 ## Next implementation slice
-Advance the backtest contract after CI verification: add domain-level defensive validation where strategy-engine callers bypass the HTTP boundary, then address exchange/calendar-aware annualization before claiming production-grade performance metrics.
+Add defensive candle invariants at the strategy-engine boundary for direct non-HTTP callers, keeping application request-size and transport validation in `apps/api` and avoiding duplicated architecture responsibilities.
