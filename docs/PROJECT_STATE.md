@@ -42,12 +42,14 @@ Phase 6 — Screener/fundamentals application integration in progress; chart cor
 - Regression coverage for cancellation, replacement, terminal-order protection, audit ordering, user isolation, and bounded audit reads.
 - Paper portfolio application valuation now marks every held symbol to the deterministic quote, updates unrealized P&L and equity without mutating cash, and exposes valuation through the existing portfolio response.
 - Trading-engine valuation regression coverage verifies long-position marking and safe behavior for positions without a current mark.
+- Trading Panel now surfaces open paper orders from canonical stored order state and provides Cancel/Replace controls wired to the paper lifecycle API.
 - Durable paper persistence boundary documented with account/order/fill/ledger/audit aggregates, repository operations, transactional invariants, optimistic concurrency, authorization separation, and migration strategy.
-- In-memory repository adapter added to exercise the durable contract without coupling the trading engine to storage infrastructure; repository tests cover account version conflicts, account-scoped order IDs, stale order transitions, and idempotent audit appends.
+- In-memory repository adapter added to exercise that persistence contract without coupling the trading engine to storage infrastructure; repository tests cover account version conflicts, account-scoped order IDs, stale order transitions, and idempotent audit appends.
 - Paper application state migrated from direct service Maps to the repository adapter; terminal orders remain queryable and lifecycle transitions are validated against stored status.
 - Canonical `GET /v1/paper/orders` endpoint and browser order-list client method added; Trading Panel now derives open orders from canonical order records rather than a bounded audit reconstruction.
 - CORS now explicitly permits the paper-order `DELETE` method.
 - Versioned workspace persistence contract added with schema version, owner binding, monotonic revisions, authorization checks, and regression coverage.
+- PostgreSQL reference migration added for durable paper accounts/orders/fills/ledger/audit storage and versioned workspace documents, including uniqueness and optimistic-concurrency constraints.
 
 ## Not production-ready
 The market-data and fundamentals implementations are deterministic demo data. No licensed live exchange/fundamentals feeds, durable production market database, authenticated user system, production WebSocket gateway, alerts worker, or real order execution exists.
@@ -61,7 +63,7 @@ The screener API has a pagination contract but the deterministic demo provider c
 ## Verification
 - Previous CI run 168 passed package typecheck, all tests, and the production Vite build.
 - CI run 176 completed the substantive install, package typecheck, full test suite, and production build successfully for the previous project-state transition.
-- Fresh CI verification is still required for the repository-backed paper and workspace persistence changes; no current green status is being claimed.
+- Fresh CI verification is still required for the repository-backed paper, order-list, and workspace persistence changes; no current green status is being claimed.
 
 ## Current risks / gaps
 - Backtest Sharpe annualization currently assumes 252 periods/year; interval-aware annualization remains future work.
@@ -70,10 +72,10 @@ The screener API has a pagination contract but the deterministic demo provider c
 - Screener needs a real fundamentals provider, durable provider pagination, and freshness/completeness policy before production use.
 - Drawing handles, rays, richer geometry, and durable server persistence remain future work.
 - Realtime stream currently sends an initial quote snapshot only; candle streaming, heartbeats, provider failover, rate limits, and observability remain future work.
-- Paper service still needs a concrete durable database adapter/schema, restart/recovery tests, and transaction/concurrency verification.
+- Paper service still needs a production database adapter, migration runner, restart/recovery tests, and transaction/concurrency verification against a real database.
 - Versioned workspace repository integration, authenticated authorization, and durable storage remain future work.
 - Alerts still need persistence, scheduler/worker delivery, webhook/notification adapters, idempotency, and application/UI integration.
 - Dedicated script runtime, community, authentication, durable persistence, deployment, and production security remain planned.
 
 ## Next implementation slice
-Add the concrete durable paper database schema/adapter and restart/concurrency verification, then integrate versioned workspace persistence into the API.
+Implement the production database adapter and migration runner behind the repository contract, then integrate versioned workspace persistence into the API and add restart/concurrency verification.
