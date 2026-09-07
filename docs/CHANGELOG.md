@@ -1,6 +1,13 @@
 # Changelog
 
 ## 2026-09-07
+- Added a versioned workspace persistence contract with explicit owner binding and optimistic revision semantics.
+- Added repository-level paper persistence coverage for account concurrency, account-scoped order identity, stale lifecycle transitions, and idempotent audit appends.
+- Routed paper application state through an in-memory repository adapter instead of direct service-level Maps, while retaining the explicit demo-only persistence boundary.
+- Added `GET /v1/paper/orders` and a browser order-list client method so open-order UI state comes from canonical order records rather than reconstructing lifecycle state from a bounded audit window.
+- Added CORS support for `DELETE` paper-order requests.
+
+## 2026-09-07
 - Added paper portfolio mark-to-market valuation to the application workflow using deterministic demo quotes.
 - Equity and unrealized P&L now update from held-position marks while cash remains unchanged.
 - Added trading-engine valuation regression coverage for marked and unmarked positions.
