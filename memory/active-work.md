@@ -18,11 +18,14 @@ Phase 1 — Chart Core foundation.
 - Root npm workspace graph and explicit manifests for existing domain/API packages are established and verified by CI run 100.
 - RSI 14 oscillator adapter and secondary chart pane are implemented; adapter behavior is covered by unit tests.
 - Package source entrypoints and a dedicated production-package TypeScript typecheck gate are implemented and verified by CI run 120.
+- Primary logical-range changes now propagate to the RSI pane through a local chart-range synchronization bus; CI run 135 verified typecheck, tests, and production build.
+- Crosshair synchronization bus primitives and immutable drawing-state operations are now implemented with unit coverage.
 
 ## Immediate tasks
-- Synchronize horizontal interaction between the primary chart and RSI pane, including pan/crosshair behavior.
+- Wire the crosshair bus into the primary and RSI chart instances using the Lightweight Charts v5 crosshair APIs.
+- Wire drawing-state operations into the chart workspace without bypassing the chart-engine contract.
 - Improve chart interaction primitives: cursor, zoom/pan, symbol/timeframe state, and indicator configuration.
-- Add persistent indicator configuration only after the workspace contract is expanded safely.
+- Add persistent indicator/drawing configuration only after the workspace contract is expanded safely.
 - Replace the demo market boundary only with a licensed provider and authenticated/durable production services.
 
 ## Rule
