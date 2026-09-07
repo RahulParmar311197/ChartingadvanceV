@@ -3,7 +3,7 @@
 Updated: 2026-09-07
 
 ## Status
-Phase 6 — Screener/fundamentals application integration in progress; chart core, analysis foundations, deterministic alerts, paper trading, deterministic backtesting, and the first backtesting UI are implemented.
+Phase 6 — Screener/fundamentals application integration in progress; chart core, analysis foundations, deterministic alerts, paper trading, deterministic backtesting, and first backtesting UI are implemented. Production-hardening work is active, but production deployment remains intentionally blocked until authenticated identity and real provider adapters are installed and verified.
 
 ## Implemented
 - React/Vite TradingView-inspired workspace shell with Lightweight Charts candlestick/volume rendering.
@@ -27,28 +27,19 @@ Phase 6 — Screener/fundamentals application integration in progress; chart cor
 - Fundamentals provider/application contract with freshness metadata and bounded pagination contract.
 - Provider-boundary validation for finite freshness timestamps, staleAt ordering, page shape, and bounded pagination cursors.
 - Screener pagination now has explicit completeness semantics: a provider next cursor means partial coverage; absence of a cursor means provider-exhausted/complete coverage.
-- Screener provider pages cannot claim continuation with an empty item set, preventing cursor loops that make no progress.
-- Screener provider pages cannot repeat the incoming continuation cursor, preventing non-advancing pagination loops.
-- Screener freshness now explicitly distinguishes `fresh`, `stale`, and `unknown`; missing staleAt no longer masquerades as confirmed freshness.
-- Application-level screener pagination/freshness regression coverage using a synthetic multi-page provider; the demo provider still exposes no fabricated pages.
+- Screener provider pages cannot claim continuation with an empty item set or repeat the incoming continuation cursor.
+- Screener freshness explicitly distinguishes `fresh`, `stale`, and `unknown`.
+- Application-level screener pagination/freshness regression coverage using a synthetic multi-page provider; demo provider exposes no fabricated pages.
 - Canonical TypeScript screener runtime consumed through `tsx`; duplicated JavaScript screener implementation removed.
 - Demo fundamentals screener API endpoint with symbol selection, full query/filter/group parsing, centralized request validation, and explicit stale/simulated metadata.
 - Browser screener API client and workspace-integrated fundamentals screener panel with filter controls, deterministic results, score display, freshness state, and explicit simulated-data warning.
-- Browser screener client now has an explicit continuation pager that accumulates application results, forwards opaque cursors, prevents concurrent loads, rejects repeated cursors, and resets safely.
-- Browser screener client regression coverage for query encoding, cursor continuation, repeated cursors, reset behavior, and response metadata shape.
-- Fundamentals snapshot `asOf`/`staleAt` timestamps are now canonical Unix epoch seconds, matching the market-domain candle timestamp convention.
-- Demo fundamentals fixtures and freshness tests use the canonical epoch-second convention.
-- Provider-neutral HTTP fundamentals adapter now translates symbols/cursor/limit into transport parameters, delegates provider response normalization explicitly, propagates upstream HTTP failures without fabricating data, bounds transport page size/cursors, and aborts hung upstream requests after a configurable timeout.
-- The HTTP fundamentals adapter is exported as an explicit package subpath so application infrastructure can consume it without importing provider internals.
-- Deterministic HTTP adapter regression coverage verifies pagination/query translation, canonical timestamp mapping, upstream error propagation, request bounds, and timeout cancellation.
-- Screener application freshness now defaults its clock to Unix epoch seconds, matching the canonical `asOf`/`staleAt` unit instead of mixing seconds with JavaScript millisecond time.
-- Regression coverage protects the default freshness clock from unit regressions.
-- Durable screener continuation migration `003_screener_continuations.sql` added.
-- In-memory and PostgreSQL screener continuation repositories added with owner/request-fingerprint/provider scoping, atomic single-use consumption, bounded expiry, and expired-row cleanup.
-- Provider cursor values remain infrastructure-only and are not used as browser continuation identifiers.
-- Screener application continuation boundary now converts provider cursors into server-owned application continuation IDs and binds them to owner/request fingerprint/provider.
-- Screener API route now uses the continuation boundary; PostgreSQL mode persists continuation state across API restarts, while demo memory mode remains process-local.
-- Regression coverage added for continuation scope isolation, expiry, single-use behavior, PostgreSQL atomic consume query shape, cleanup, provider-token non-disclosure, and application-route semantics.
+- Browser screener client continuation pager with accumulated pages, opaque cursors, concurrency protection, repeated-cursor rejection, and reset behavior.
+- Fundamentals snapshot `asOf`/`staleAt` timestamps use canonical Unix epoch seconds.
+- Provider-neutral HTTP fundamentals adapter with bounded requests, timeout cancellation, explicit response normalization, and upstream error propagation.
+- Durable screener continuation migration and in-memory/PostgreSQL repositories with owner/request/provider scoping, atomic single-use consumption, expiry, and cleanup.
+- Provider cursors remain infrastructure-only; application cursors are opaque server-generated IDs.
+- Screener cursor encryption with AES-256-GCM and deployment-managed keys; rotating keyring support can decrypt previous keys while always issuing cursors with the active key.
+- Screener continuation repository storage bound expanded to accommodate the bounded encrypted envelope without permitting unbounded provider cursor storage.
 - Paper-trading application service with isolated demo paper accounts, risk admission, order lifecycle, deterministic execution, fills, and portfolio retrieval.
 - Paper-only HTTP portfolio/order endpoints with explicit simulated metadata and no brokerage execution path.
 - Browser paper-trading client and workspace Trading Panel with simulation disclosure.
@@ -63,37 +54,44 @@ Phase 6 — Screener/fundamentals application integration in progress; chart cor
 - `POST /v1/backtest` and browser backtest client.
 - Strategy Tester workspace panel with fixed Buy & Hold and Candle Direction strategies, performance metrics, equity visualization, and simulation limitations.
 - Interval-aware Sharpe annualization using explicit assumptions: 252 trading days and 6.5 trading hours per trading day for intraday intervals; weekly and monthly frequencies use 52 and 12 periods/year.
-- Backtest API metadata now exposes the exact Sharpe annualization period assumption.
+- Backtest API metadata exposes the exact Sharpe annualization period assumption.
 - Regression coverage spans 1m, 5m, 15m, 1H, 4H, 1D, 1W, and 1M annualization factors plus API metadata.
-- Backtest application input validation now enforces non-negative integer Unix epoch-second timestamps, strict chronological ordering, finite positive OHLC prices, valid high/low relationships, and finite non-negative volume when supplied, including benchmark candles.
-- Strategy-engine direct callers now receive the same candle semantic invariants through `validateBacktestCandles`; transport/request-size concerns remain at the application boundary.
+- Backtest application input validation enforces non-negative integer Unix epoch-second timestamps, strict chronological ordering, finite positive OHLC prices, valid high/low relationships, and finite non-negative volume when supplied, including benchmark candles.
+- Strategy-engine direct callers receive the same candle semantic invariants through `validateBacktestCandles`.
+- API runtime now has explicit production configuration gates, security response headers, allowlisted CORS, bounded in-memory request rate limiting, `/health` liveness and `/ready` database readiness checks, request-body abort on oversize input, and graceful shutdown of HTTP/DB resources.
+- Market WebSocket runtime now has bounded payload size, connection-capacity protection, heartbeat/ping-pong liveness detection, graceful shutdown, and explicit status handling.
+- Browser market client falls back to the deterministic demo provider when no application API URL is configured, instead of rendering a permanent `No quote` state.
 
 ## Not production-ready
-Market-data and fundamentals implementations are deterministic demo data. No licensed live exchange/fundamentals feeds, durable production market database, authenticated user system, production WebSocket gateway, alerts worker, or real order execution exists.
+Market-data and fundamentals implementations are still deterministic demo data. No licensed live exchange/fundamentals feeds, durable production market database, or production WebSocket provider adapter exists.
 
-Paper trading and backtesting are simulation/domain logic only. They do not claim broker execution, margin, exchange microstructure, historical-data completeness, or real-money guarantees. The `x-demo-user-id` identity boundary is not authenticated production identity. Mark-to-market valuation uses deterministic demo quotes.
+There is no authenticated user system yet; the current `x-demo-user-id` identity boundary is intentionally non-production. Production startup now fails closed unless authenticated identity, real market/fundamentals provider configuration, PostgreSQL persistence, cursor encryption, and explicit CORS origins are configured. The current repository does not yet contain those real identity/provider implementations, so a production environment must not be started.
+
+Paper trading and backtesting remain simulation/domain logic only. They do not claim broker execution, margin, exchange microstructure, historical-data completeness, or real-money guarantees. Mark-to-market valuation uses deterministic demo quotes.
 
 The backtest API accepts only registered built-in strategies and never evaluates arbitrary JavaScript/Pine/code. Current built-ins are Buy & Hold and Candle Direction. Candle-level execution does not model intrabar ordering, queue position, partial fills, borrow fees, margin calls, or corporate actions. Annualization assumptions are equity-market session assumptions, not universal exchange calendars.
 
-Screener continuation persistence is production-incomplete until authenticated identity is introduced and provider cursors can be encrypted with deployment-managed keys. Demo mode is intentionally simulated.
+The API rate limiter is process-local and is not a distributed production limiter; production deployment needs a shared limiter at the edge or a shared store. WebSocket connection caps are also process-local and should be coordinated at the gateway/load-balancer layer.
+
+Drawings need richer geometry and durable server persistence. Realtime still needs candle streaming, provider failover, provider authentication, durable market storage, and observability. Alerts still need persistence, scheduler/worker delivery, adapters, idempotency, and UI integration. Dedicated script runtime, community, authentication, billing, deployment automation, and production security review remain planned.
 
 ## Verification
 - CI run 34108387596 on commit `299a2d4` passed PostgreSQL provisioning, package typecheck, full tests, and production build for the screener cursor-validation slice.
 - CI run 34109685837 passed PostgreSQL provisioning, package typecheck, full tests, and production build for the screener freshness-state slice.
 - CI run 34111239978 passed package typecheck, full tests, and production build for the browser screener continuation slice at commit `1d70192`.
 - CI run 34112051500 passed package typecheck, full tests, and production build for timestamp-unit hardening.
-- The continuation repository/application route changes are pushed to `main`; no new CI result is currently available through the connected status endpoint, so this slice is not claimed CI-verified.
+- CI run 34115606065 on commit `54bca691` passed typecheck, tests, build, and PostgreSQL initialization for the browser market API client slice.
+- Current production-hardening commits were pushed to `main`; CI verification for the newest head must be checked before claiming the slice verified.
 
 ## Current risks / gaps
-- Demo identity must be bound to authenticated identity before production user isolation.
-- Provider cursor encryption/key management is required before production storage of sensitive vendor tokens.
+- Authenticated identity and authorization enforcement are still absent; demo identity must never be used for production user isolation.
+- Real market and fundamentals provider adapters, credentials, licensing/terms, rate limits, failover, and data-quality monitoring are still absent.
 - Intraday annualization uses a 6.5-hour/252-day equity-session assumption; exchange/calendar-aware annualization remains future work.
-- Screener still requires a real fundamentals provider and documented provider credentials/API terms.
 - External-provider timestamp units must be explicitly translated into the canonical Unix epoch-second application contract.
 - Drawings need richer geometry and durable server persistence.
-- Realtime needs candle streaming, heartbeats, provider failover, rate limits, and observability.
+- Realtime needs candle streaming, provider failover, rate limits at the gateway, and observability.
 - Alerts need persistence, scheduler/worker delivery, adapters, idempotency, and UI integration.
-- Dedicated script runtime, community, authentication, deployment, and production security remain planned.
+- Production deployment needs secrets management, TLS termination, shared rate limiting, metrics/traces/log correlation, backup/restore drills, migrations in deployment, and security review.
 
 ## Next implementation slice
-Add provider-cursor encryption/key-management abstraction without committing secrets, then add production-oriented integration coverage for continuation persistence/restart and authenticated-owner enforcement.
+Implement authenticated identity/authorization at the application boundary, replacing `x-demo-user-id` with a verified principal while preserving owner-scoped persistence and continuation semantics. Then wire a real provider adapter behind the existing market/fundamentals contracts and add deployment-level observability and shared rate limiting.
