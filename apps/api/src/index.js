@@ -1,7 +1,7 @@
 import { createServer } from "node:http";
 import { generateCandles, generateQuote } from "../../../packages/market-domain/src/demo-core.js";
 import { getWorkspace, saveWorkspace } from "./workspace.js";
-import { INTERVALS, validateCandleRequest, validSymbol } from "./validation.js";
+import { validateCandleRequest, validSymbol } from "./validation.js";
 
 const PORT = Number(process.env.PORT ?? 8787);
 const PROVIDER = "demo";
