@@ -1,6 +1,11 @@
 # Changelog
 
 ## 2026-09-07
+- Added deterministic backtesting support for opt-in short positions, average-entry tracking, realized P&L, win rate, profit factor, net/average trade P&L, maximum drawdown, equity curve, and Sharpe-style performance measurement.
+- Added a benchmark comparison contract for strategy return, buy-and-hold return, excess return, and benchmark terminal value.
+- Added regression coverage for long/short execution policy, realized P&L, and benchmark comparison.
+
+## 2026-09-07
 - Added deterministic alert evaluation for threshold and crossing operators, disabled rules, cooldowns, invalid values, and stable delivery IDs.
 - Added unit coverage for alert triggering, crossing semantics, cooldown blocking, and invalid inputs.
 - Added deterministic paper-trading execution primitives for market, limit, stop, and stop-limit orders using explicit bid/ask inputs.
