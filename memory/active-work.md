@@ -10,7 +10,7 @@ Phase 6 — Screener/fundamentals provider hardening and application workflows.
 - Monotonic-sequence filtering and bounded reconnect/backoff in the web realtime client.
 - Server-backed demo workspace GET/PUT boundary with bounded JSON input and defensive normalization.
 - Root API/realtime scripts and `ws` runtime dependency.
-- Web workspace lifecycle now loads normalized state from the demo workspace API and debounces state saves.
+- Web workspace lifecycle now loads normalized demo workspace state and debounces state saves.
 - SMA 20 and EMA 50 overlay controls are wired into the Lightweight Charts rendering path.
 - Market-request and realtime subscription validation are extracted and covered by Vitest.
 - Root npm workspace graph and explicit manifests for existing domain/API packages are established and verified by CI.
@@ -23,12 +23,12 @@ Phase 6 — Screener/fundamentals provider hardening and application workflows.
 - Deterministic fundamentals screener domain contracts, operators, groups, ranking, limits, provider/application boundary, freshness metadata, and demo API adapter are implemented and tested.
 - Screener HTTP request parsing validates the full filter/group/query contract centrally, including symbols, numeric operators, ranges, limits, and cursor shape.
 - Browser screener API client and workspace-integrated fundamentals screener panel are implemented with explicit stale/demo disclosure.
-- Browser client regression tests and TypeScript/JavaScript runtime conformance tests are implemented.
-- Provider boundary now validates provider page shape, freshness timestamps, staleAt ordering, and bounded pagination cursors.
+- Browser client regression tests are implemented.
+- Provider boundary validates provider page shape, freshness timestamps, staleAt ordering, and bounded pagination cursors.
 - Synthetic multi-page provider tests verify cursor/limit forwarding, next-cursor propagation, and freshness transitions without manufacturing demo pages.
+- Screener runtime now has a single canonical TypeScript implementation. Node API/realtime scripts use `tsx` to execute TypeScript package contracts, eliminating the duplicated JavaScript screener implementation.
 
 ## Immediate tasks
-- Decide and document a production build strategy that removes the parallel TypeScript/JavaScript screener-core implementations without changing the public contract.
 - Continue drawing endpoint drag wiring and versioned workspace persistence once the chart interaction boundary is clean.
 - Continue paper-trading application/API/UI integration without enabling real-money brokerage execution.
 - Continue backtesting application integration, then dedicated script runtime, community, authentication/persistence, and production hardening in roadmap order.
