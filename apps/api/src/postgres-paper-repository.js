@@ -60,6 +60,12 @@ export class PostgresPaperRepository {
     await this.pool.query("INSERT INTO paper_orders(account_id,order_id,symbol_id,side,order_type,quantity,limit_price,stop_price,status,created_at,updated_at,version,replacement_of) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$10,0,$11)", [order.accountId, order.id, order.symbolId, order.side, order.type, order.quantity, order.limitPrice ?? null, order.stopPrice ?? null, order.status, now, order.replacementOf ?? null]);
     return structuredClone(order);
   }
+  async insertOrderIfAbsent(order, now = new Date()) {
+    const result = await this.pool.query("INSERT INTO paper_orders(account_id,order_id,symbol_id,side,order_type,quantity,limit_price,stop_price,status,created_at,updated_at,version,replacement_of) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$10,0,$11) ON CONFLICT (account_id,order_id) DO NOTHING RETURNING account_id,order_id,symbol_id,side,order_type,quantity,limit_price,stop_price,status,created_at,updated_at,version,replacement_of", [order.accountId, order.id, order.symbolId, order.side, order.type, order.quantity, order.limitPrice ?? null, order.stopPrice ?? null, order.status, now, order.replacementOf ?? null]);
+    if (result.rowCount) return { inserted: true, order: orderRow(result.rows[0]) };
+    const existing = await this.pool.query("SELECT account_id,order_id,symbol_id,side,order_type,quantity,limit_price,stop_price,status,created_at,updated_at,version,replacement_of FROM paper_orders WHERE account_id=$1 AND order_id=$2", [order.accountId, order.id]);
+    return { inserted: false, order: orderRow(existing.rows[0]) };
+  }
   async transitionOrder(accountId, orderId, expectedStatus, nextOrder, now = new Date()) {
     const result = await this.pool.query("UPDATE paper_orders SET status=$3,quantity=$4,limit_price=$5,stop_price=$6,updated_at=$7,version=version+1 WHERE account_id=$1 AND order_id=$2 AND status=$8 RETURNING account_id,order_id,symbol_id,side,order_type,quantity,limit_price,stop_price,status,created_at,updated_at,version,replacement_of", [accountId, orderId, nextOrder.status, nextOrder.quantity, nextOrder.limitPrice ?? null, nextOrder.stopPrice ?? null, now, expectedStatus]);
     if (!result.rowCount) throw new Error(`order status conflict: expected ${expectedStatus}`);
