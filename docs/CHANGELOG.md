@@ -1,6 +1,11 @@
 # Changelog
 
 ## 2026-09-07
+- Expanded the application backtest allowlist with a second deterministic `candle-direction` strategy while retaining the no-arbitrary-code execution boundary.
+- Added regression coverage for the new strategy and exposed the fixed strategy choices in the Strategy Tester UI.
+- Updated the UI disclosure to make the fixed, deterministic, allowlisted strategy boundary explicit.
+
+## 2026-09-07
 - Replaced raw PostgreSQL duplicate-order exception handling with repository-level `insertOrderIfAbsent` semantics using `ON CONFLICT (account_id,order_id) DO NOTHING`.
 - Paper-order submission and replacement now consume the atomic insert result, so a concurrent duplicate cannot abort the active PostgreSQL transaction.
 - Added a real PostgreSQL integration race covering two concurrent submissions with the same client order ID and verifying exactly one fill, one deterministic duplicate rejection, one stored order, and a usable losing transaction.
@@ -40,7 +45,7 @@
 
 ## 2026-09-07
 - Added a PostgreSQL paper-trading repository adapter using an injected pool/transaction boundary, optimistic order/account updates, idempotent fill/ledger/audit writes, and account-scoped reads.
-- Added a PostgreSQL migration runner with ordered, transactional migration application and a schema-migrations ledger.
+- Added a PostgreSQL migration runner with ordered transactional migration application and a schema-migrations ledger.
 - Added migration `002_paper_positions.sql` so position snapshots survive process restart alongside paper account state.
 - Added the `pg` runtime dependency and explicit `db:migrate` script; normal API startup remains demo/in-memory unless durable wiring is enabled.
 
