@@ -1,31 +1,66 @@
 import { describe, expect, it } from 'vitest';
-import { runScreener, type FundamentalsProvider } from './provider';
+import { runScreener, type FundamentalsPage, type FundamentalsProvider, type FundamentalsRequest } from './provider';
+
+const snapshots = [
+  { symbolId: 'NYSE:AAA', asOf: 100, revenueGrowth: 0.2 },
+  { symbolId: 'NYSE:BBB', asOf: 100, revenueGrowth: 0.1 },
+];
 
 describe('fundamentals application boundary', () => {
-  const provider: FundamentalsProvider = {
-    async getFundamentals() {
-      return {
-        items: [
-          { symbolId: 'NYSE:A', asOf: 100, peRatio: 8 },
-          { symbolId: 'NYSE:B', asOf: 100, peRatio: 20 },
-        ],
-        asOf: 100,
-        staleAt: 200,
-        nextCursor: 'next',
-      };
-    },
-  };
+  it('forwards cursor and limit and preserves provider pagination', async () => {
+    const calls: FundamentalsRequest[] = [];
+    const provider: FundamentalsProvider = {
+      async getFundamentals(request) {
+        calls.push(request);
+        const page: FundamentalsPage = request.cursor === 'page:2'
+          ? { items: [snapshots[1]], asOf: 100, nextCursor: 'page:3' }
+          : { items: [snapshots[0]], asOf: 100, nextCursor: 'page:2' };
+        return page;
+      },
+    };
 
-  it('screens provider results and propagates pagination/freshness', async () => {
     const result = await runScreener(provider, {
-      query: { filters: [{ field: 'peRatio', operator: 'lt', value: 10 }] },
-    }, 250);
-    expect(result.items.map(item => item.snapshot.symbolId)).toEqual(['NYSE:A']);
-    expect(result.nextCursor).toBe('next');
-    expect(result.freshness).toEqual({ asOf: 100, staleAt: 200, stale: true });
+      query: { filters: [{ field: 'revenueGrowth', operator: 'gte', value: 0.1 }] },
+      cursor: 'page:2',
+      limit: 1,
+    }, 150);
+
+    expect(calls).toEqual([expect.objectContaining({ cursor: 'page:2', limit: 1 })]);
+    expect(result.items.map(item => item.snapshot.symbolId)).toEqual(['NYSE:BBB']);
+    expect(result.nextCursor).toBe('page:3');
+    expect(result.freshness).toEqual({ asOf: 100, staleAt: undefined, stale: false });
   });
 
-  it('rejects oversized pages', async () => {
-    await expect(runScreener(provider, { limit: 101 })).rejects.toThrow('1 to 100');
+  it('marks a page stale only at or after staleAt', async () => {
+    const provider: FundamentalsProvider = {
+      async getFundamentals() {
+        return { items: snapshots, asOf: 100, staleAt: 200 };
+      },
+    };
+
+    await expect(runScreener(provider, {}, 199)).resolves.toMatchObject({
+      freshness: { asOf: 100, staleAt: 200, stale: false },
+    });
+    await expect(runScreener(provider, {}, 200)).resolves.toMatchObject({
+      freshness: { asOf: 100, staleAt: 200, stale: true },
+    });
+  });
+
+  it('rejects malformed provider page metadata', async () => {
+    const provider: FundamentalsProvider = {
+      async getFundamentals() {
+        return { items: snapshots, asOf: Number.NaN };
+      },
+    };
+    await expect(runScreener(provider, {})).rejects.toThrow('provider asOf must be finite');
+  });
+
+  it('rejects malformed provider pagination cursors', async () => {
+    const provider: FundamentalsProvider = {
+      async getFundamentals() {
+        return { items: snapshots, asOf: 100, nextCursor: 42 as unknown as string };
+      },
+    };
+    await expect(runScreener(provider, {})).rejects.toThrow('provider nextCursor must be a string');
   });
 });
