@@ -23,7 +23,13 @@ export class InMemoryPaperRepository {
   appendLedgerEntry(entry) { const entries = this.ledger.get(entry.accountId) ?? []; if (entries.some((item) => item.id === entry.id)) return structuredClone(entry); this.ledger.set(entry.accountId, [...entries, structuredClone(entry)]); return structuredClone(entry); }
   appendAuditEvent(event) { const events = this.audit.get(event.accountId) ?? []; if (events.some((item) => item.id === event.id)) return structuredClone(event); this.audit.set(event.accountId, [...events, structuredClone(event)]); return structuredClone(event); }
   listAuditEvents(accountId, limit = 100, before) { const events = this.audit.get(accountId) ?? []; const filtered = before == null ? events : events.filter((event) => event.timestamp < before); const bounded = Math.max(1, Math.min(100, Number(limit) || 100)); return structuredClone(filtered.slice(-bounded)); }
-  async runTransaction(work) { return work(this); }
+  async runTransaction(work) {
+    const snapshots = [this.accounts, this.portfolios, this.orders, this.fills, this.ledger, this.audit].map((store) => new Map([...store].map(([key, value]) => [key, structuredClone(value)])));
+    try { return await work(this); } catch (error) {
+      [this.accounts, this.portfolios, this.orders, this.fills, this.ledger, this.audit] = snapshots;
+      throw error;
+    }
+  }
   clear() { this.accounts.clear(); this.portfolios.clear(); this.orders.clear(); this.fills.clear(); this.ledger.clear(); this.audit.clear(); }
 }
 export function createPaperRepository() { return new InMemoryPaperRepository(); }
