@@ -17,8 +17,9 @@ describe('runBacktest', () => {
     expect(result.trades).toHaveLength(2);
     expect(result.finalCash).toBe(1_010);
     expect(result.finalEquity).toBe(1_010);
-    expect(result.totalReturn).toBeCloseTo(0.01);
-    expect(result.maxDrawdown).toBe(0);
+    expect(result.metrics.totalReturn).toBeCloseTo(0.01);
+    expect(result.metrics.maxDrawdown).toBe(0);
+    expect(result.trades[1].realizedPnl).toBe(8);
   });
 
   it('applies fees and slippage deterministically', () => {
@@ -30,6 +31,26 @@ describe('runBacktest', () => {
 
   it('does not execute a limit order when the candle does not touch it', () => {
     const result = runBacktest(candles.slice(0, 1), () => ({ side: 'buy', quantity: 1, type: 'limit', limitPrice: 98 }), { initialCash: 1_000 });
+    expect(result.trades).toHaveLength(0);
+    expect(result.finalEquity).toBe(1_000);
+  });
+
+  it('supports an explicitly enabled short position and realizes short profit', () => {
+    const result = runBacktest([
+      { time: 1, open: 100, high: 101, low: 99, close: 100 },
+      { time: 2, open: 90, high: 91, low: 89, close: 90 },
+    ], ({ index, position }) => {
+      if (index === 0 && position === 0) return { side: 'sell', quantity: 2 };
+      if (index === 1 && position === -2) return { side: 'buy', quantity: 2 };
+      return null;
+    }, { initialCash: 1_000, allowShort: true });
+    expect(result.finalCash).toBe(1_020);
+    expect(result.finalEquity).toBe(1_020);
+    expect(result.trades[1].realizedPnl).toBe(20);
+  });
+
+  it('does not permit short sales unless explicitly enabled', () => {
+    const result = runBacktest(candles.slice(0, 1), () => ({ side: 'sell', quantity: 1 }), { initialCash: 1_000 });
     expect(result.trades).toHaveLength(0);
     expect(result.finalEquity).toBe(1_000);
   });
