@@ -28,6 +28,8 @@ Phase 6 — Screener/fundamentals application integration in progress; chart cor
 - Provider-boundary validation for finite freshness timestamps, staleAt ordering, page shape, and bounded pagination cursors.
 - Screener pagination now has explicit completeness semantics: a provider next cursor means partial coverage; absence of a cursor means provider-exhausted/complete coverage.
 - Screener provider pages cannot claim continuation with an empty item set, preventing cursor loops that make no progress.
+- Screener provider pages cannot repeat the incoming continuation cursor, preventing non-advancing pagination loops.
+- Screener freshness now explicitly distinguishes `fresh`, `stale`, and `unknown`; missing `staleAt` no longer masquerades as confirmed freshness.
 - Application-level screener pagination/freshness regression coverage using a synthetic multi-page provider; the demo provider still exposes no fabricated pages.
 - Canonical TypeScript screener runtime consumed through `tsx`; duplicated JavaScript screener implementation removed.
 - Demo fundamentals screener API endpoint with symbol selection, full query/filter/group parsing, centralized request validation, and explicit stale/simulated metadata.
@@ -60,8 +62,8 @@ Paper trading and backtesting are simulation/domain logic only. They do not clai
 The backtest API accepts only registered built-in strategies and never evaluates arbitrary JavaScript/Pine/code. Current built-ins are Buy & Hold and Candle Direction. Candle-level execution does not model intrabar ordering, queue position, partial fills, borrow fees, margin calls, or corporate actions. Annualization assumptions are equity-market session assumptions, not universal exchange calendars.
 
 ## Verification
-- CI run 34106083667 on commit `d67572a` passed PostgreSQL provisioning, package typecheck, full tests, and production build for interval-aware Sharpe and application candle-semantics validation.
-- Screener completeness/cursor changes are pending fresh CI verification.
+- CI run 34108387596 on commit `299a2d4` passed PostgreSQL provisioning, package typecheck, full tests, and production build for the screener cursor-validation slice.
+- The freshness-state change is now committed and awaits its own CI run.
 
 ## Current risks / gaps
 - Demo identity must be bound to authenticated identity before production user isolation.
@@ -73,4 +75,4 @@ The backtest API accepts only registered built-in strategies and never evaluates
 - Dedicated script runtime, community, authentication, deployment, and production security remain planned.
 
 ## Next implementation slice
-Verify the screener completeness/cursor changes, then add provider-independent cursor integrity/continuation safeguards before wiring a real fundamentals provider.
+Wire the screener's browser continuation state to the application cursor contract, then prepare a real fundamentals-provider adapter without embedding provider SDK semantics in the UI.
