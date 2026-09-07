@@ -1,6 +1,8 @@
 # Changelog
 
 ## 2026-09-07
+- Hardened the fundamentals provider/application boundary with validation for provider page shape, finite freshness timestamps, staleAt ordering, and bounded next cursors.
+- Added application-level regression coverage for multi-page cursor forwarding, limit propagation, freshness transitions, and malformed provider pagination metadata using a synthetic provider.
 - Added a dedicated screener-engine package with normalized fundamental snapshots, typed numeric filters, AND/OR filter groups, deterministic scoring, and bounded results.
 - Added regression coverage for operators, missing fundamentals, grouping, ranking, limits, and invalid input.
 - Added a fundamentals provider/application boundary with freshness metadata and bounded pagination semantics.
