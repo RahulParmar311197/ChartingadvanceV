@@ -33,7 +33,7 @@ function sharpe(values: readonly number[]): number {
 export function runBacktest(candles: readonly Candle[], strategy: StrategyStep, config: BacktestConfig): BacktestResult {
   validateConfig(config);
   if (!candles.length) throw new Error('candles are required');
-  let cash = config.initialCash, position = 0, equity = cash, peak = cash, maxDrawdown = 0;
+  let cash = config.initialCash, position = 0, averageEntry = 0, equity = cash, peak = cash, maxDrawdown = 0;
   const trades: BacktestTrade[] = [], equityCurve: number[] = [];
   const feeRate = config.feeRate ?? 0, slippageBps = config.slippageBps ?? 0;
   for (let index = 0; index < candles.length; index += 1) {
@@ -42,16 +42,23 @@ export function runBacktest(candles: readonly Candle[], strategy: StrategyStep, 
       if (!Number.isFinite(order.quantity) || order.quantity <= 0) throw new Error('strategy returned invalid quantity');
       const price = executionPrice(candle, order, slippageBps);
       if (price != null) {
-        const previousPosition = position, signed = order.side === 'buy' ? order.quantity : -order.quantity;
+        const signed = order.side === 'buy' ? order.quantity : -order.quantity;
         const notional = order.quantity * price, fee = notional * feeRate;
-        const canBuy = order.side === 'buy' && (config.allowShort !== true || true) && cash >= notional + fee;
-        const canSell = order.side === 'sell' && (config.allowShort === true || position >= order.quantity);
-        if (canBuy || canSell) {
+        const validBuy = order.side === 'buy' && cash >= notional + fee;
+        const validSell = order.side === 'sell' && (config.allowShort === true || position >= order.quantity);
+        if (validBuy || validSell) {
+          const previous = position;
           cash += order.side === 'buy' ? -notional - fee : notional - fee;
           position += signed;
-          const closed = previousPosition !== 0 && Math.sign(previousPosition) !== Math.sign(signed) ? Math.min(Math.abs(previousPosition), order.quantity) : 0;
-          const realizedPnl = closed * (order.side === 'sell' ? price - Math.abs(previousPosition ? previousPosition / Math.abs(previousPosition) : 1) * Math.abs(previousPosition === 0 ? 0 : price) : 0);
-          trades.push({ index, time: candle.time, side: order.side, quantity: order.quantity, price, fee, realizedPnl: Number.isFinite(realizedPnl) ? realizedPnl : 0 });
+          let realizedPnl = 0;
+          if (previous !== 0 && Math.sign(previous) !== Math.sign(signed)) {
+            const closed = Math.min(Math.abs(previous), order.quantity);
+            realizedPnl = (order.side === 'sell' ? 1 : -1) * closed * (price - averageEntry);
+          }
+          if (position === 0) averageEntry = 0;
+          else if (previous === 0 || Math.sign(previous) === Math.sign(signed)) averageEntry = (Math.abs(previous) * averageEntry + order.quantity * price) / Math.abs(position);
+          else if (Math.sign(position) !== Math.sign(previous)) averageEntry = price;
+          trades.push({ index, time: candle.time, side: order.side, quantity: order.quantity, price, fee, realizedPnl });
         }
       }
     }
@@ -62,6 +69,7 @@ export function runBacktest(candles: readonly Candle[], strategy: StrategyStep, 
   }
   const pnls = trades.map(t => t.realizedPnl - t.fee), gains = pnls.filter(v => v > 0), losses = pnls.filter(v => v < 0);
   const netProfit = equity - config.initialCash;
-  const metrics: BacktestMetrics = { totalReturn: config.initialCash > 0 ? netProfit / config.initialCash : 0, maxDrawdown, tradeCount: trades.length, winRate: pnls.length ? gains.length / pnls.length : 0, profitFactor: Math.abs(losses.reduce((a,b)=>a+b,0)) > 0 ? gains.reduce((a,b)=>a+b,0) / Math.abs(losses.reduce((a,b)=>a+b,0)) : gains.length ? Infinity : 0, netProfit, averageTradePnl: pnls.length ? pnls.reduce((a,b)=>a+b,0) / pnls.length : 0, sharpeRatio: sharpe(equityCurve) };
+  const grossLoss = Math.abs(losses.reduce((a,b)=>a+b,0)), grossProfit = gains.reduce((a,b)=>a+b,0);
+  const metrics: BacktestMetrics = { totalReturn: config.initialCash > 0 ? netProfit / config.initialCash : 0, maxDrawdown, tradeCount: trades.length, winRate: pnls.length ? gains.length / pnls.length : 0, profitFactor: grossLoss > 0 ? grossProfit / grossLoss : grossProfit > 0 ? Infinity : 0, netProfit, averageTradePnl: pnls.length ? pnls.reduce((a,b)=>a+b,0) / pnls.length : 0, sharpeRatio: sharpe(equityCurve) };
   return { initialCash: config.initialCash, finalCash: cash, finalEquity: equity, trades, equityCurve, metrics };
 }
