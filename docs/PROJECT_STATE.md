@@ -29,7 +29,7 @@ Phase 6 — Screener/fundamentals application integration in progress; chart cor
 - Screener pagination now has explicit completeness semantics: a provider next cursor means partial coverage; absence of a cursor means provider-exhausted/complete coverage.
 - Screener provider pages cannot claim continuation with an empty item set, preventing cursor loops that make no progress.
 - Screener provider pages cannot repeat the incoming continuation cursor, preventing non-advancing pagination loops.
-- Screener freshness now explicitly distinguishes `fresh`, `stale`, and `unknown`; missing `staleAt` no longer masquerades as confirmed freshness.
+- Screener freshness now explicitly distinguishes `fresh`, `stale`, and `unknown`; missing staleAt no longer masquerades as confirmed freshness.
 - Application-level screener pagination/freshness regression coverage using a synthetic multi-page provider; the demo provider still exposes no fabricated pages.
 - Canonical TypeScript screener runtime consumed through `tsx`; duplicated JavaScript screener implementation removed.
 - Demo fundamentals screener API endpoint with symbol selection, full query/filter/group parsing, centralized request validation, and explicit stale/simulated metadata.
@@ -41,6 +41,8 @@ Phase 6 — Screener/fundamentals application integration in progress; chart cor
 - Provider-neutral HTTP fundamentals adapter now translates symbols/cursor/limit into transport parameters, delegates provider response normalization explicitly, propagates upstream HTTP failures without fabricating data, bounds transport page size/cursors, and aborts hung upstream requests after a configurable timeout.
 - The HTTP fundamentals adapter is exported as an explicit package subpath so application infrastructure can consume it without importing provider internals.
 - Deterministic HTTP adapter regression coverage verifies pagination/query translation, canonical timestamp mapping, upstream error propagation, request bounds, and timeout cancellation.
+- Screener application freshness now defaults its clock to Unix epoch seconds, matching the canonical `asOf`/`staleAt` unit instead of mixing seconds with JavaScript millisecond time.
+- Regression coverage protects the default freshness clock from unit regressions.
 - Paper-trading application service with isolated demo paper accounts, risk admission, order lifecycle, deterministic execution, fills, and portfolio retrieval.
 - Paper-only HTTP portfolio/order endpoints with explicit simulated metadata and no brokerage execution path.
 - Browser paper-trading client and workspace Trading Panel with simulation disclosure.
@@ -72,7 +74,8 @@ The backtest API accepts only registered built-in strategies and never evaluates
 - CI run 34109685837 passed PostgreSQL provisioning, package typecheck, full tests, and production build for the screener freshness-state slice.
 - CI run 34111239978 passed package typecheck, full tests, and production build for the browser screener continuation slice at commit `1d70192`.
 - CI run 34112051500 passed package typecheck, full tests, and production build for timestamp-unit hardening.
-- HTTP fundamentals adapter tests were added in commit `c8580a4`; its PR-triggered workflow lookup returned no run, so that commit is not treated as independently verified.
+- Commit `c8580a4` introduced the HTTP adapter tests, but its PR-triggered workflow lookup returned no run.
+- The current HTTP adapter hardening and default freshness-clock fix are pushed to `main`; the resulting push CI run must pass before this slice is considered verified.
 
 ## Current risks / gaps
 - Demo identity must be bound to authenticated identity before production user isolation.
@@ -85,4 +88,4 @@ The backtest API accepts only registered built-in strategies and never evaluates
 - Dedicated script runtime, community, authentication, deployment, and production security remain planned.
 
 ## Next implementation slice
-Select and integrate a documented real fundamentals provider adapter only when provider credentials/API terms are available; until then, keep the transport/normalization seam provider-neutral and prevent demo data from being represented as live coverage.
+Define a durable provider-cursor/continuation policy covering restart persistence, expiry, opaque-token confidentiality, and safe invalidation; integrate it only at the application/infrastructure boundary without leaking provider cursor semantics into the UI.
