@@ -35,4 +35,20 @@ describe("screener application continuation boundary", () => {
     await expect(app.run({ ownerId: "user-b", symbols: ["NASDAQ:AAPL"], cursor: first.nextCursor })).rejects.toThrow("invalid or expired screener cursor");
     await expect(app.run({ ownerId: "user-a", symbols: ["NASDAQ:MSFT"], cursor: first.nextCursor })).rejects.toThrow("invalid or expired screener cursor");
   });
+
+  it("binds continuation tokens to filters and groups as parsed by the application route", async () => {
+    const provider = pagedProvider();
+    const app = createScreenerApplication({ provider, providerName: "test" });
+    const filters = [{ field: "peRatio", operator: "lt", value: 20 }];
+    const groups = [{ operator: "and", filters }];
+    const first = await app.run({ ownerId: "user-a", symbols: ["NASDAQ:AAPL"], filters, groups });
+
+    await expect(app.run({
+      ownerId: "user-a",
+      symbols: ["NASDAQ:AAPL"],
+      filters: [{ field: "peRatio", operator: "gt", value: 10 }],
+      groups,
+      cursor: first.nextCursor,
+    })).rejects.toThrow("invalid or expired screener cursor");
+  });
 });
