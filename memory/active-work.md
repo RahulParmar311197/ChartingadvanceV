@@ -24,11 +24,11 @@ Phase 6 — Screener/fundamentals provider hardening and application workflows.
 - Screener HTTP request parsing validates the full filter/group/query contract centrally, including symbols, numeric operators, ranges, limits, and cursor shape.
 - Browser screener API client and workspace-integrated fundamentals screener panel are implemented with explicit stale/demo disclosure.
 - Browser client regression tests and TypeScript/JavaScript runtime conformance tests are implemented.
+- Provider boundary now validates provider page shape, freshness timestamps, staleAt ordering, and bounded pagination cursors.
+- Synthetic multi-page provider tests verify cursor/limit forwarding, next-cursor propagation, and freshness transitions without manufacturing demo pages.
 
 ## Immediate tasks
-- Harden the fundamentals provider boundary for real provider pagination and freshness/completeness policy.
 - Decide and document a production build strategy that removes the parallel TypeScript/JavaScript screener-core implementations without changing the public contract.
-- Add application-level screener pagination tests when a provider can supply multiple pages; do not manufacture demo pages.
 - Continue drawing endpoint drag wiring and versioned workspace persistence once the chart interaction boundary is clean.
 - Continue paper-trading application/API/UI integration without enabling real-money brokerage execution.
 - Continue backtesting application integration, then dedicated script runtime, community, authentication/persistence, and production hardening in roadmap order.
