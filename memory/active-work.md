@@ -21,11 +21,13 @@ Phase 6 — Screener/fundamentals application integration in progress.
 - Added PostgreSQL-backed and in-memory screener continuation repositories with owner/query/provider scoping, atomic single-use consumption, expiry, and expired-row purging.
 - Added migration `003_screener_continuations.sql`; provider cursors remain infrastructure-only and are never used as client continuation identifiers.
 - Added regression coverage for restart-safe persistence semantics, scope isolation, expiry, atomic consume, and cleanup.
+- Wired the continuation boundary into the API screener route; browser cursors are now application continuation IDs, while provider cursors remain server-side.
+- Added request fingerprint binding so a continuation cannot be replayed against another symbol/filter query or owner.
 
 ## Immediate tasks
-- Wire the durable continuation repository into the production application screener route once authenticated identity and a real provider are available; demo mode remains intentionally deterministic.
 - Add provider-cursor encryption/key-management at the infrastructure boundary before storing sensitive vendor tokens in production.
 - Select and integrate a documented real fundamentals provider only when credentials/API terms are available.
+- Add authenticated identity before production owner isolation; `x-demo-user-id` remains a demo identity mechanism.
 - Keep freshness semantics explicit: `staleAt` is an advisory freshness boundary and missing `staleAt` means freshness is unknown.
 
 ## Rule
