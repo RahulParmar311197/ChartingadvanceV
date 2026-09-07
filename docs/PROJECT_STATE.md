@@ -3,7 +3,7 @@
 Updated: 2026-09-07
 
 ## Status
-Phase 1 — Chart Core foundation in progress; historical API, quote API, demo realtime transport, demo workspace state, web workspace lifecycle, indicator overlays, validation boundaries, chart viewport controls, chart-engine viewport invariants, package workspace graph, package entrypoints/typecheck, RSI secondary pane, and synchronized chart viewport are implemented.
+Phase 1 — Chart Core foundation in progress; historical API, quote API, demo realtime transport, demo workspace state, web workspace lifecycle, indicator overlays, validation boundaries, chart viewport controls, chart-engine viewport invariants, package workspace graph, package entrypoints/typecheck, RSI secondary pane, synchronized chart viewport, crosshair bus primitives, and drawing state foundations are implemented.
 
 ## Implemented
 - React/Vite TradingView-inspired workspace shell with Lightweight Charts candlestick/volume rendering.
@@ -31,6 +31,8 @@ Phase 1 — Chart Core foundation in progress; historical API, quote API, demo r
 - Package manifests now expose source entrypoints for chart, indicator, market-domain, alert, and trading domains.
 - Root `typecheck:packages` uses a dedicated TypeScript configuration to validate production package contracts without moving domain logic into React.
 - Primary chart logical-range changes now propagate through a small browser-local synchronization bus to the RSI secondary pane, keeping pan/zoom viewport state aligned.
+- Browser-local crosshair publish/subscribe primitives now provide a decoupled synchronization contract for multiple chart panes.
+- Chart-engine drawing state now provides immutable add/update/remove operations plus visibility/locking controls and validation for finite drawing points.
 - CI runs package typecheck, tests, and the browser build.
 
 ## Not production-ready
@@ -45,15 +47,16 @@ The workspace API is intentionally in-memory and `x-demo-user-id` is not authent
 - GitHub Actions run 100 passed the complete `npm install`, `npm run test`, and `npm run build` gate for the workspace package graph on main.
 - GitHub Actions run 120 passed package typecheck, all Vitest tests, and the production Vite build after the package-entrypoint/typecheck changes.
 - The first RSI CI run exposed incorrect expected Wilder-RSI values in the new test; the test was corrected and the full gate subsequently passed.
-- The chart-pane synchronization test covers range comparison, propagation, and unchanged-range suppression; the post-sync GitHub Actions gate is required before calling this slice verified.
+- GitHub Actions run 135 passed package typecheck, all Vitest tests, and the production Vite build for the synchronized chart viewport implementation.
+- The crosshair bus and drawing-state tests were added after run 135; a fresh CI run is required before calling these new changes verified.
 
 ## Current risks / gaps
 - The root Vite application still owns the browser build; package manifests establish source boundaries but production package publishing/build artifacts are not yet configured.
-- Primary-to-secondary logical-range synchronization is implemented, but crosshair synchronization and bidirectional secondary-pane interaction remain future work.
+- Crosshair synchronization infrastructure exists, but the browser chart instances are not yet wired to it; bidirectional secondary-pane interaction remains future work.
 - No durable persistence or authenticated session boundary exists.
 - Realtime stream currently sends an initial quote snapshot only; candle streaming, heartbeats, provider failover, rate limits, and observability remain future work.
-- Drawing tools are still interaction-state placeholders rather than a persistent drawing model.
+- Drawing state is now modeled and tested, but the React drawing toolbar is not yet connected to this domain state and no durable drawing persistence exists.
 - News, screener, Pine runtime, strategy testing, alerts, paper trading, and community systems remain planned rather than implemented.
 
 ## Next implementation slice
-Verify the synchronized chart viewport with the full CI gate, then implement shared crosshair synchronization and begin the persistent drawing model without coupling drawing invariants to React presentation state.
+Wire the crosshair bus into the Lightweight Charts primary/RSI instances using the installed v5 API, then connect the drawing state to a controlled workspace interaction path. Expand workspace persistence only after the domain contract safely includes drawings.
