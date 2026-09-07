@@ -1,9 +1,12 @@
 # Changelog
 
 ## 2026-09-07
-- Added a pure drawing-series normalization helper that maps domain prices to Lightweight Charts values and sorts points by time without mutating drawing state.
-- Added regression tests for reversed endpoint order and immutable source points.
-- Added GitHub Codespaces setup and documented the reproducible verification gate.
+- Added drawing drag lifecycle primitives for validating editable endpoints, creating unlocked drag state, producing immutable preview drawings, and finalizing a preview for persistence through the chart-engine update contract.
+- Added unit coverage for locked endpoint rejection, invalid endpoint rejection, immutable drag previews, and invalid preview coordinates.
+
+## 2026-09-07
+- Added a browser-local drawing-series adapter that maps domain prices to Lightweight Charts values and sorts a render-only copy by time, preserving the immutable drawing model when users click endpoints in reverse chronological order.
+- Added regression coverage for reversed drawing endpoints and non-mutating series conversion.
 
 ## 2026-09-07
 - Added browser drawing interaction primitives for toolbar-to-domain tool mapping, chart-coordinate conversion, two-click draft progression, commit thresholds, and generated IDs.
