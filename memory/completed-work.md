@@ -25,3 +25,6 @@
 - RSI 14 rendered as a dedicated secondary Lightweight Charts pane with fixed 0–100 scale and 70/30 reference levels.
 - Package source entrypoints added for chart, indicator, market-domain, alert, and trading packages.
 - Dedicated production-package TypeScript typecheck configuration and CI gate added; CI run 120 verified typecheck, tests, and production build.
+- Primary logical-range changes now propagate to the RSI pane through a local chart-range synchronization bus; CI run 135 verified typecheck, tests, and production build for that synchronized viewport slice.
+- Crosshair synchronization bus primitives added with subscribe/publish lifecycle tests.
+- Immutable chart-engine drawing state added with validation, add/update/remove, visibility, locking, and invariant tests.
