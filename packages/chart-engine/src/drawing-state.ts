@@ -29,7 +29,7 @@ function assertPoint(point: DrawingPoint): void {
 }
 
 function assertDrawing(drawing: Drawing): void {
-  if (!drawing.id.trim()) throw new Error("Drawing id is required");
+  if (typeof drawing.id !== "string" || !drawing.id.trim()) throw new Error("Drawing id is required");
   if (!DRAWING_TYPES.has(drawing.type)) throw new Error(`Unsupported drawing type: ${drawing.type}`);
   if (!Array.isArray(drawing.points) || drawing.points.length === 0) throw new Error("Drawing requires at least one point");
   drawing.points.forEach(assertPoint);
