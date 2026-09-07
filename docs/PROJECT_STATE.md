@@ -33,7 +33,6 @@ Phase 6 — Screener/fundamentals application integration in progress; chart cor
 - Browser screener client regression coverage.
 - Paper-trading application service with isolated demo-user paper accounts, risk admission, order lifecycle submission, deterministic demo execution, fill application, and portfolio retrieval.
 - Paper-only HTTP portfolio and order-submission endpoints with explicit simulated metadata and no brokerage execution path.
-- Paper-trading application regression coverage for fills, user isolation, risk rejection, short-sale rejection, and untriggered limit orders.
 - Browser paper-trading API client and workspace Trading Panel with market/limit/stop/stop-limit controls, portfolio summary, position display, and explicit simulation disclosure.
 - Browser paper-trading client regression coverage for configuration errors, identity headers, JSON order serialization, and API error propagation.
 - Paper-trading cancellation/replacement workflows using the shared order lifecycle contract, per-user order isolation, idempotent client order IDs, and lifecycle audit events.
@@ -49,9 +48,12 @@ Phase 6 — Screener/fundamentals application integration in progress; chart cor
 - Asynchronous repository-injected paper application service shared by memory and PostgreSQL implementations.
 - Explicit `PAPER_PERSISTENCE=postgres` API startup mode backed by `DATABASE_URL`; development remains deterministic/in-memory by default and `NODE_ENV=production` defaults to PostgreSQL with fail-fast configuration.
 - PostgreSQL adapter contract tests for mapping, optimistic portfolio writes, stale-write rejection, transaction commit, rollback, and error preservation.
-- PostgreSQL-backed versioned workspace service wired into the API when durable persistence is enabled, with owner-scoped reads, schema-version metadata, ETag revision responses, optimistic revision conflicts, and compatibility-preserving in-memory demo mode.
-- Paper lifecycle submission, cancellation, and replacement workflows now enter the repository transaction boundary when available, keeping order transitions, fills, portfolio snapshots, ledger entries, and audit events atomic in PostgreSQL mode.
-- Regression coverage verifies the application invokes the transaction boundary for accepted paper lifecycle mutations.
+- PostgreSQL-backed versioned workspace service wired into the API durable mode, with owner-scoped reads, schema-version metadata, ETag revision responses, optimistic revision conflicts, and compatibility-preserving in-memory demo mode.
+- Paper lifecycle submission, cancellation, and replacement now enter the repository transaction boundary when available, keeping order transitions, fills, portfolio snapshots, ledger entries, and audit events atomic in PostgreSQL mode.
+- In-memory paper transactions now provide rollback semantics matching the repository atomicity contract.
+- PostgreSQL account initialization now uses conflict-safe insertion and the application re-reads the durable portfolio when another concurrent initializer wins the race.
+- Real PostgreSQL integration coverage added for idempotent migrations, restart/recovery through a new pool, and concurrent optimistic portfolio writes.
+- CI now provisions PostgreSQL 16 and runs the real integration suite alongside package typecheck, unit/integration tests, and production build.
 
 ## Not production-ready
 The market-data and fundamentals implementations are deterministic demo data. No licensed live exchange/fundamentals feeds, durable production market database, authenticated user system, production WebSocket gateway, alerts worker, or real order execution exists.
@@ -60,15 +62,16 @@ Paper trading and backtesting are simulation/domain logic only. They do not clai
 
 The screener API has a pagination contract but the deterministic demo provider currently has no additional pages and therefore returns no next cursor. This is intentional; no fake pagination state is exposed.
 
-The durable PostgreSQL workspace path is wired, but it still uses the demo identity header and requires authenticated identity binding before production user isolation can be claimed. Real database restart/recovery, concurrency, and migration-smoke verification are still required.
+The durable PostgreSQL workspace path is wired, but it still uses the demo identity header and requires authenticated identity binding before production user isolation can be claimed.
 
 ## Verification
 - CI run 34099627805 on commit `601421f` passed package typecheck, the full test suite, and the production Vite build.
 - CI run 34100697084 on commit `2a57f6c` passed package typecheck, the full test suite, and the production Vite build.
-- The latest transaction-boundary changes require a fresh CI run before their verification status is claimed.
+- The PostgreSQL integration CI run triggered by the new persistence hardening is still pending verification for the latest commits.
 
 ## Current risks / gaps
-- PostgreSQL adapter needs real-database integration tests, restart/recovery verification, and migration smoke coverage.
+- The latest PostgreSQL integration suite must pass before durable persistence is marked verified.
+- Concurrent duplicate client-order submission can still surface a database uniqueness conflict at the transaction boundary; application-level idempotent duplicate handling remains to be hardened.
 - The demo identity header must be replaced/bound to authenticated identity before production user data isolation is claimed.
 - Backtest Sharpe annualization currently assumes 252 periods/year; interval-aware annualization remains future work.
 - Backtest benchmark comparison is deterministic buy-and-hold over supplied benchmark candles; durable application-level integration remains future work.
@@ -80,4 +83,4 @@ The durable PostgreSQL workspace path is wired, but it still uses the demo ident
 - Dedicated script runtime, community, authentication, durable persistence, deployment, and production security remain planned.
 
 ## Next implementation slice
-Add real PostgreSQL restart/recovery, concurrent lifecycle, and migration smoke tests; continue hardening transactional account initialization and then resume backtesting application integration.
+Verify the PostgreSQL integration suite, harden concurrent duplicate paper-order idempotency, then resume backtesting application integration.
