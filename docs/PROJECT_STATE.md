@@ -16,13 +16,13 @@ Phase 6 — Screener/fundamentals application integration in progress; chart cor
 - Workspace normalization, bounded state, API load, and debounced save lifecycle.
 - Deterministic SMA, EMA, and RSI calculations with chart overlays and secondary RSI pane.
 - Synchronized chart ranges and crosshairs between primary and RSI panes.
-- Line/trendline drawing creation, selection, deletion, immutable drawing lifecycle helpers, and render-only point sorting.
+- Line/trendline drawing creation, selection, deletion, immutable drawing lifecycle helpers, endpoint hit-testing, and pointer-based drag previews/commit lifecycle.
 - Deterministic alert evaluation with threshold/crossing operators, cooldowns, invalid-input rejection, and stable delivery IDs.
 - Paper-trading market/limit/stop/stop-limit trigger evaluation, explicit bid/ask pricing, fee calculation, validation, and deterministic fills.
 - Position accounting with realized P&L handling.
 - Immutable paper portfolio ledger with idempotent fill application and account/symbol binding.
 - Deterministic paper risk checks for buying power, maximum order notional, maximum position size, and short-sale policy.
-- Deterministic candle-based backtesting with market/limit execution, fees, slippage, opt-in short positions, signed position accounting, realized P&L, equity curve, drawdown, win rate, profit factor, and Sharpe-style performance metrics.
+- Deterministic candle-based backtesting with market/limit execution, fees, slippage, opt-in short positions, signed position accounting, realized P&L, equity/drawdown, win rate, profit factor, and Sharpe-style performance metrics.
 - Deterministic fundamental screener contracts with typed financial fields, numeric operators, AND/OR groups, deterministic ranking, and bounded result limits.
 - Fundamentals provider/application contract with freshness metadata and bounded pagination contract.
 - Provider-boundary validation for finite freshness timestamps, staleAt ordering, page shape, and bounded pagination cursors.
@@ -36,6 +36,8 @@ Phase 6 — Screener/fundamentals application integration in progress; chart cor
 - Paper-trading application service with isolated demo-user paper accounts, risk admission, order lifecycle submission, deterministic demo execution, fill application, and portfolio retrieval.
 - Paper-only HTTP portfolio and order-submission endpoints with explicit simulated metadata and no brokerage execution path.
 - Paper-trading application regression coverage for fills, user isolation, risk rejection, short-sale rejection, and untriggered limit orders.
+- Browser paper-trading API client and workspace Trading Panel with market/limit/stop/stop-limit controls, portfolio summary, position display, and explicit simulation disclosure.
+- Browser paper-trading client regression coverage for configuration errors, identity headers, JSON order serialization, and API error propagation.
 - Root npm workspace graph/typecheck and CI test/build gates.
 
 ## Not production-ready
@@ -50,18 +52,18 @@ The screener API has a pagination contract but the deterministic demo provider c
 ## Verification
 - Previous CI run 168 passed package typecheck, all tests, and the production Vite build.
 - CI run 176 completed the substantive install, package typecheck, full test suite, and production build successfully for the previous project-state transition.
-- Paper-trading application commits require fresh CI verification; GitHub currently reports no workflow status checks for the recent main commits.
+- Latest paper-trading/drawing commits require fresh CI verification; GitHub currently reports no workflow status checks for the recent main commits.
 
 ## Current risks / gaps
 - Backtest Sharpe annualization currently assumes 252 periods/year; interval-aware annualization remains future work.
 - Backtest benchmark comparison is deterministic buy-and-hold over supplied benchmark candles; durable application-level integration remains future work.
 - Backtest execution is candle-level and does not model intrabar ordering, queue position, partial fills, borrow fees, margin calls, or corporate actions.
 - Screener needs a real fundamentals provider, durable provider pagination, and freshness/completeness policy before production use.
-- Drawing point-drag UI wiring, handles, rays, and richer geometry remain future work.
+- Drawing handles, rays, richer geometry, and versioned server persistence remain future work.
 - Realtime stream currently sends an initial quote snapshot only; candle streaming, heartbeats, provider failover, rate limits, and observability remain future work.
-- Paper trading still needs web Trading Panel integration, cancellation/replacement lifecycle at the application boundary, audit-event persistence, portfolio mark-to-market valuation, and durable storage.
+- Paper trading still needs cancellation/replacement lifecycle at the application boundary, audit-event persistence, portfolio mark-to-market valuation, and durable storage.
 - Alerts still need persistence, scheduler/worker delivery, webhook/notification adapters, idempotency, and application/UI integration.
 - Dedicated script runtime, community, authentication, durable persistence, deployment, and production security remain planned.
 
 ## Next implementation slice
-Integrate the paper-trading portfolio/order state into the web Trading Panel while keeping all execution explicitly paper-only, then add cancellation/replacement and audit contracts before moving to durable persistence.
+Add cancellation/replacement and audit contracts to the paper-trading application boundary while preserving the paper-only safety boundary, then add portfolio valuation and durable persistence design.
