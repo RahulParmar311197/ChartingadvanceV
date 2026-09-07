@@ -1,9 +1,10 @@
 export const WORKSPACE_SCHEMA_VERSION = 1 as const;
 
 export interface WorkspaceState {
-  symbolId: string;
+  watchlist: string[];
+  activeSymbol: string;
   interval: string;
-  drawings: unknown[];
+  drawings?: unknown[];
   panes?: unknown[];
   layout?: unknown;
 }
@@ -35,6 +36,7 @@ export function assertWorkspaceOwner(document: WorkspaceDocument, ownerId: strin
 
 export function nextWorkspaceRevision(document: WorkspaceDocument, expectedRevision: number, state: WorkspaceState, now: number): WorkspaceDocument {
   if (document.revision !== expectedRevision) throw new Error("workspace revision conflict");
+  if (!Number.isFinite(expectedRevision) || expectedRevision < 0 || !Number.isInteger(expectedRevision)) throw new Error("invalid workspace revision");
   if (!Number.isFinite(now) || now < document.updatedAt) throw new Error("invalid workspace timestamp");
   assertWorkspaceOwner(document, document.ownerId);
   return { ...document, revision: expectedRevision + 1, updatedAt: now, state: structuredClone(state) };
