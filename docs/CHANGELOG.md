@@ -3,6 +3,10 @@
 ## 2026-09-07
 - Added a dedicated screener-engine package with normalized fundamental snapshots, typed numeric filters, AND/OR filter groups, deterministic scoring, and bounded results.
 - Added regression coverage for operators, missing fundamentals, grouping, ranking, limits, and invalid input.
+- Added a fundamentals provider/application boundary with freshness metadata and bounded pagination semantics.
+- Added a deterministic demo fundamentals API endpoint and centralized HTTP request validation for symbols, filters, groups, operators, ranges, limits, cursors, and full query objects.
+- Added regression coverage for the complete screener request-validation boundary.
+- Kept demo screener pagination explicit: the provider returns no next cursor because the demo dataset has no additional page.
 
 ## 2026-09-07
 - Added deterministic backtesting support for opt-in short positions, average-entry tracking, realized P&L, win rate, profit factor, net/average trade P&L, maximum drawdown, equity curve, and Sharpe-style performance measurement.
@@ -55,7 +59,6 @@
 - Repaired chart-engine dependency on the canonical market-domain Candle type.
 - Added deterministic SMA, EMA, and RSI calculation layer.
 - Added executable unit-test coverage for market-data invariants, realtime sequence ordering, and indicators.
-- Added explicit package-boundary documentation and Phase 1 verification matrix.
 - Added shared deterministic demo market core, quote HTTP endpoint, demo WebSocket gateway, resilient web realtime client, and server-backed demo workspace boundary.
 - Kept demo-provider semantics explicit; no live-market guarantees are introduced.
 
