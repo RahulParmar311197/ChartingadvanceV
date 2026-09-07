@@ -1,10 +1,17 @@
 # Changelog
 
 ## 2026-09-07
+- Added browser drawing interaction primitives for toolbar-to-domain tool mapping, chart-coordinate conversion, two-click draft progression, commit thresholds, and generated IDs.
+- Wired the primary chart Line and Trend Line tools to create actual two-point drawings through the chart-engine immutable drawing-state contract.
+- Rendered stored drawings as Lightweight Charts line series and added drawing selection by clicking a rendered drawing.
+- Added Delete/Backspace and toolbar deletion for the selected drawing, plus Escape to exit drawing/selection mode.
+- Kept drawing persistence explicitly client-session scoped; the server workspace contract is unchanged until a versioned, authorized persistence schema is defined.
+
+## 2026-09-07
 - Added an immutable chart-engine drawing-state model with validation, add/update/remove operations, visibility, and locking semantics.
 - Added unit coverage for drawing-state immutability, duplicate IDs, invalid points, lock behavior, and lifecycle operations.
-- Added a browser-local crosshair synchronization bus with subscription lifecycle tests, ready to connect multiple Lightweight Charts panes without coupling them directly.
-- Confirmed GitHub Actions run 135 passed package typecheck, tests, and production build for the preceding synchronized viewport implementation.
+- Added a browser-local crosshair synchronization bus with subscription lifecycle tests and wired it between the primary and RSI Lightweight Charts panes.
+- Confirmed GitHub Actions run 148 passed package typecheck, tests, and production build for the crosshair synchronization slice.
 
 ## 2026-09-07
 - Added an RSI 14 oscillator adapter in the indicator engine with deterministic warmup and timestamp mapping tests.
@@ -16,7 +23,7 @@
 
 ## 2026-09-07
 - Wired the web workspace to load normalized state from the demo workspace API and debounce saves after user state changes.
-- Added SMA 20 and EMA 50 chart overlay controls backed by the indicator engine and Lightweight Charts line series.
+- Added SMA 20 and EMA 50 chart overlay controls backed by the indicator engine and Lightweight Charts.
 - Kept workspace identity explicitly demo-only and non-authenticated.
 
 ## 2026-09-07 — Phase 1 transport and chart core
