@@ -14,10 +14,11 @@ Phase 6 — Screener/fundamentals application integration in progress.
 - Browser continuation state accumulates pages, forwards opaque cursors, prevents concurrent page loads, rejects repeated cursors, and resets cleanly.
 - Browser screener client regression coverage added for query encoding, cursor continuation, repeated-cursor protection, and reset behavior.
 - CI run 34111239978 passed typecheck, full tests, and production build for the browser continuation slice.
+- Canonicalized fundamentals `asOf`/`staleAt` timestamps to Unix epoch seconds, matching market-domain candle timestamps.
+- Updated demo fundamentals fixtures and regression tests to enforce the timestamp convention.
 
 ## Immediate tasks
 - Prepare a real fundamentals-provider adapter without exposing provider SDK semantics to the UI.
-- Decide and document the canonical timestamp unit at the fundamentals application boundary before connecting an external provider.
 - Define durable cursor/continuation policy for production provider adapters, including restart and expiry behavior.
 - Keep freshness semantics explicit: `staleAt` is an advisory freshness boundary and missing `staleAt` means freshness is unknown.
 
