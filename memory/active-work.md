@@ -18,9 +18,13 @@ Phase 6 — Screener/fundamentals application integration in progress.
 - Updated demo fundamentals fixtures and regression tests to enforce the timestamp convention.
 - Added and hardened the provider-neutral HTTP fundamentals adapter with bounded request parameters, timeout cancellation, upstream error propagation, explicit normalization, and an exported package subpath.
 - Added deterministic adapter regression coverage for pagination/query translation, timestamp mapping, upstream failures, request bounds, timeout cancellation, and invalid timeout configuration.
+- Added PostgreSQL-backed and in-memory screener continuation repositories with owner/query/provider scoping, atomic single-use consumption, expiry, and expired-row purging.
+- Added migration `003_screener_continuations.sql`; provider cursors remain infrastructure-only and are never used as client continuation identifiers.
+- Added regression coverage for restart-safe persistence semantics, scope isolation, expiry, atomic consume, and cleanup.
 
 ## Immediate tasks
-- Define durable cursor/continuation policy for production provider adapters, including restart, expiry, and provider-token confidentiality behavior.
+- Wire the durable continuation repository into the production application screener route once authenticated identity and a real provider are available; demo mode remains intentionally deterministic.
+- Add provider-cursor encryption/key-management at the infrastructure boundary before storing sensitive vendor tokens in production.
 - Select and integrate a documented real fundamentals provider only when credentials/API terms are available.
 - Keep freshness semantics explicit: `staleAt` is an advisory freshness boundary and missing `staleAt` means freshness is unknown.
 
