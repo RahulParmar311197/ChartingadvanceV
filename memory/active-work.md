@@ -1,34 +1,32 @@
 # Active Work
 
 ## Current milestone
-Phase 6 — Screener/fundamentals application integration in progress.
+Phase 9 — production hardening is active while Phase 6 screener integration remains the current product milestone.
 
 ## Completed in this slice
-- Backtest application and strategy-engine candle semantics hardened and verified in CI.
-- Strategy-engine Sharpe annualization is interval-aware with explicit equity-session assumptions.
-- Screener provider pagination now exposes explicit complete/partial coverage semantics.
-- Empty pagination cursors are rejected at both request and provider boundaries.
-- Provider continuation cursors are rejected when they do not advance beyond the incoming cursor.
-- Screener freshness explicitly reports `fresh`, `stale`, or `unknown` instead of treating missing `staleAt` as freshness proof.
-- Browser screener API client now mirrors the application cursor/freshness/completeness contract.
-- Browser continuation state accumulates pages, forwards opaque cursors, prevents concurrent loads, rejects repeated cursors, and resets cleanly.
-- Browser screener client regression coverage added for query encoding, cursor continuation, repeated-cursor protection, and reset behavior.
-- CI run 34111239978 passed typecheck, full tests, and production build for the browser continuation slice.
-- Canonicalized fundamentals `asOf`/`staleAt` timestamps to Unix epoch seconds, matching market-domain candle timestamps.
-- Updated demo fundamentals fixtures and regression tests to enforce the timestamp convention.
-- Added and hardened the provider-neutral HTTP fundamentals adapter with bounded request parameters, timeout cancellation, upstream error propagation, explicit normalization, and an exported package subpath.
-- Added deterministic adapter regression coverage for pagination/query translation, timestamp mapping, upstream failures, request bounds, timeout cancellation, and invalid timeout configuration.
-- Added PostgreSQL-backed and in-memory screener continuation repositories with owner/query/provider scoping, atomic single-use consumption, expiry, and expired-row purging.
-- Added migration `003_screener_continuations.sql`; provider cursors remain infrastructure-only and are never used as client continuation identifiers.
-- Added regression coverage for restart-safe persistence semantics, scope isolation, expiry, atomic consume, and cleanup.
-- Wired the continuation boundary into the API screener route; browser cursors are now application continuation IDs, while provider cursors remain server-side.
-- Added request fingerprint binding so a continuation cannot be replayed against another symbol/filter query or owner.
+- Added fail-closed production configuration gates for authenticated proxy identity, live data modes, explicit provider configuration, PostgreSQL persistence, encrypted screener continuation keys, and explicit CORS origins.
+- Added a signed proxy-HMAC principal boundary with replay-window validation and constant-time signature comparison; demo identity remains explicit development-only behavior.
+- Enforced authenticated principals at the API boundary in production.
+- Added API security response headers, allowlisted CORS, process-local rate limiting, `/health` liveness, `/ready` database readiness, request-body abort protection, and graceful shutdown.
+- Hardened the market WebSocket with bounded payloads, connection-capacity protection, ping/pong heartbeat liveness, and graceful shutdown.
+- Added screener cursor key rotation with active-key issuance and previous-key decryption.
+- Increased durable screener continuation storage bounds to fit the bounded encrypted envelope.
+- Added service smoke coverage to CI and improved startup-failure detection; corrected the smoke backtest fixture after CI exposed invalid candle semantics.
+- Fixed browser quote fallback so development without an API URL uses the explicitly simulated demo provider instead of a permanent `No quote` state.
+
+## Verification state
+- Typecheck, unit tests, and production build passed in CI run 34118624634 before the smoke fixture fix.
+- That CI run correctly failed the new smoke test because its third backtest candle violated the enforced low <= open/close/high invariant; the fixture was corrected in commit `322fd590f6a6ff7156120c5530b8c5c2d932c6da`.
+- A new CI run is expected for the corrected head; do not claim the latest head CI-verified until that run completes successfully.
 
 ## Immediate tasks
-- Add provider-cursor encryption/key-management at the infrastructure boundary before storing sensitive vendor tokens in production.
-- Select and integrate a documented real fundamentals provider only when credentials/API terms are available.
-- Add authenticated identity before production owner isolation; `x-demo-user-id` remains a demo identity mechanism.
-- Keep freshness semantics explicit: `staleAt` is an advisory freshness boundary and missing `staleAt` means freshness is unknown.
+- Complete a real market-data adapter behind the existing market-domain provider contract; production must remain blocked until a licensed provider and terms are configured.
+- Complete a real fundamentals adapter behind the existing screener provider contract; production must remain blocked until a documented provider and terms are configured.
+- Deploy the signed proxy-HMAC identity boundary behind an actual authenticated edge/IdP gateway, or replace it with a first-party identity adapter.
+- Move API rate limiting and WebSocket connection coordination to a shared edge/gateway layer for horizontally scaled production.
+- Add structured observability: request IDs, metrics, traces, dependency health, and alerting.
+- Add deployment automation, TLS/secret management, database backup/restore drills, migration rollout/rollback checks, and security review.
+- Keep freshness semantics explicit and preserve canonical Unix epoch-second timestamps.
 
 ## Rule
 When a task is completed, move it to `memory/completed-work.md` and update `docs/PROJECT_STATE.md`.
