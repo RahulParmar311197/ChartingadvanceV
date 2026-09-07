@@ -16,7 +16,7 @@
 - CI configured to run tests and build.
 - CI npm-cache dependency was removed because the repository intentionally has no lockfile yet; setup now reaches install/test/build instead of failing in setup-node cache discovery.
 - Web workspace lifecycle now loads normalized demo workspace state and debounces saves through the workspace client boundary.
-- SMA 20 and EMA 50 overlay controls now render through the Lightweight Charts series API.
+- SMA 20 and EMA 50 overlay controls now render through the indicator engine and Lightweight Charts.
 - Market-request validation extracted from the HTTP server and covered by Vitest.
 - Realtime subscription normalization extracted and covered by Vitest; malformed messages now produce an explicit degraded status event.
 - Chart viewport controls and chart-engine viewport invariants now provide bounded zoom state with unit coverage.
@@ -26,11 +26,12 @@
 - Package source entrypoints added for chart, indicator, market-domain, alert, and trading packages.
 - Dedicated production-package TypeScript typecheck configuration and CI gate added; CI run 120 verified typecheck, tests, and production build.
 - Primary logical-range changes now propagate to the RSI pane through a local chart-range synchronization bus; CI run 135 verified typecheck, tests, and production build for that synchronized viewport slice.
-- Crosshair synchronization bus added and wired between primary/RSI chart panes, including clear-on-leave behavior.
+- Crosshair synchronization bus added and wired between the primary and RSI Lightweight Charts panes, including clear-on-leave behavior.
 - Immutable chart-engine drawing state added with validation, add/update/remove, visibility, locking, and invariant tests.
 - Drawing interaction primitives added with coordinate conversion and two-click draft/commit tests.
-- Primary chart line/trendline tools now create actual two-point drawing series through the chart-engine state contract; selected drawings can be deleted from the toolbar or with Delete/Backspace.
+- Primary chart line/trendline tools now create actual two-point drawings through the chart-engine immutable drawing-state contract; selected drawings can be deleted from the toolbar or with Delete/Backspace.
 - Drawing drag lifecycle primitives added with immutable previews and endpoint validation.
+- Drawing endpoint dragging wired through DOM pointer events with pointer capture; selection styling is isolated from chart construction so selection changes do not tear down an active drag.
 - Deterministic alert evaluator added with threshold/crossing semantics, cooldowns, disabled-rule handling, and tests.
 - Paper-trading execution primitives added for market/limit/stop/stop-limit orders, explicit bid/ask execution, deterministic fees/fill IDs, validation, and realized P&L position accounting.
 - Deterministic candle-based backtesting added with market/limit execution, fees, slippage, opt-in short positions, realized P&L, drawdown, win rate, profit factor, Sharpe-style metrics, and benchmark comparison.
@@ -41,10 +42,13 @@
 - Application-level screener pagination/freshness regression coverage added using a synthetic multi-page provider without fabricating demo pages.
 - Deterministic demo fundamentals API adapter added with explicit stale/simulated metadata.
 - Screener HTTP endpoint added with symbol selection and full query/filter/group support.
-- Centralized screener request validation added for fields, operators, ranges, groups, symbols, limits, cursors, and query objects, with regression coverage.
-- Browser screener API client added with local validation and normalized query serialization.
+- Centralized screener request validation added for fields, operators, ranges, groups, symbols, cursors, and query objects, with regression coverage.
+- Browser screener API client added with preflight validation and normalized query serialization.
 - Fundamentals screener panel integrated into the workspace with filter controls, deterministic ranking, score display, freshness status, and explicit simulated-data disclosure.
-- Browser screener client regression tests and TypeScript/JavaScript runtime conformance tests added.
+- Browser screener client regression tests added.
 - Paper-trading application service added with isolated demo-user accounts, risk admission, order lifecycle submission, deterministic demo execution, fill application, and portfolio retrieval.
 - Paper-only HTTP portfolio and order-submission endpoints added with explicit simulated metadata and no brokerage execution path.
 - Paper-trading application regression coverage added for successful fills, account isolation, risk rejection, short-sale rejection, and untriggered limit orders.
+- Browser paper-trading API client added with explicit configuration failure instead of silent simulation fallback.
+- Workspace Trading Panel integrated with market/limit/stop/stop-limit controls, portfolio summary, positions, order-result messaging, and explicit paper-only disclosure.
+- Browser paper-trading client regression coverage added for configuration errors, demo identity propagation, order serialization, and API error propagation.
