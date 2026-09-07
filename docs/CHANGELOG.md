@@ -8,6 +8,7 @@
 - Expanded durable screener continuation storage bounds to accommodate the encrypted cursor envelope while keeping provider cursors bounded.
 - Added regression coverage for production security configuration, CORS, rate limiting, security headers, and cursor-key rotation.
 - Fixed browser quote fallback so demo development without `VITE_MARKET_API_URL` does not permanently render `No quote`.
+- Added the service smoke test to CI and made smoke startup failures fail immediately instead of waiting for an HTTP timeout.
 
 ## 2026-09-07
 - Added migration `003_screener_continuations.sql` for durable screener continuation state.
