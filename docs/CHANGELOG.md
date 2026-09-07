@@ -1,6 +1,12 @@
 # Changelog
 
 ## 2026-09-07
+- Added an immutable chart-engine drawing-state model with validation, add/update/remove operations, visibility, and locking semantics.
+- Added unit coverage for drawing-state immutability, duplicate IDs, invalid points, lock behavior, and lifecycle operations.
+- Added a browser-local crosshair synchronization bus with subscription lifecycle tests, ready to connect multiple Lightweight Charts panes without coupling them directly.
+- Confirmed GitHub Actions run 135 passed package typecheck, tests, and production build for the preceding synchronized viewport implementation.
+
+## 2026-09-07
 - Added an RSI 14 oscillator adapter in the indicator engine with deterministic warmup and timestamp mapping tests.
 - Added a real secondary RSI chart pane to the web workspace using Lightweight Charts.
 - Added fixed 0–100 RSI scaling and 70/30 reference levels.
