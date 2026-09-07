@@ -14,6 +14,14 @@ describe("backtest application service", () => {
     expect(result.result.finalEquity).toBe(1_008);
   });
 
+  it("runs the second safe built-in candle-direction strategy", () => {
+    const result = executeBacktest({ strategy: "candle-direction", candles, initialCash: 1_000 });
+    expect(result.meta).toMatchObject({ simulated: true, strategy: "candle-direction" });
+    expect(result.result.trades).toHaveLength(1);
+    expect(result.result.trades[0]).toMatchObject({ side: "buy", quantity: 1, price: 100 });
+    expect(result.result.finalEquity).toBe(1_008);
+  });
+
   it("optionally compares the strategy with supplied benchmark candles", () => {
     const result = executeBacktest({ strategy: "buy-and-hold", candles, benchmarkCandles: candles, initialCash: 1_000 });
     expect(result.benchmark).toMatchObject({ benchmarkReturn: 0.05882352941176472, strategyReturn: 0.008 });
