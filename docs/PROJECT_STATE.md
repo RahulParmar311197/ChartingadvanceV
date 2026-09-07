@@ -3,7 +3,7 @@
 Updated: 2026-09-07
 
 ## Status
-Phase 6 — Screener/fundamentals application integration in progress; chart core, analysis foundations, deterministic alerts, paper trading, deterministic backtesting, and the first backtesting API boundary are implemented.
+Phase 6 — Screener/fundamentals application integration in progress; chart core, analysis foundations, deterministic alerts, paper trading, deterministic backtesting, and the first backtesting UI are implemented.
 
 ## Implemented
 - React/Vite TradingView-inspired workspace shell with Lightweight Charts candlestick/volume rendering.
@@ -52,41 +52,35 @@ Phase 6 — Screener/fundamentals application integration in progress; chart cor
 - Paper lifecycle submission, cancellation, and replacement now enter the repository transaction boundary when available, keeping order transitions, fills, portfolio snapshots, ledger entries, and audit events atomic in PostgreSQL mode.
 - In-memory paper transactions now provide rollback semantics matching the repository atomicity contract.
 - PostgreSQL account initialization now uses conflict-safe insertion and the application re-reads the durable portfolio when another concurrent initializer wins the race.
-- Real PostgreSQL integration coverage added for idempotent migrations, restart/recovery through a new pool, and concurrent optimistic portfolio writes.
-- CI now provisions PostgreSQL 16 and runs the real integration suite alongside package typecheck, unit/integration tests, and production build.
-- Concurrent duplicate paper client-order submissions now convert PostgreSQL unique-key races into deterministic duplicate-order responses rather than leaking database errors.
-- Deterministic backtesting application service added with a safe built-in buy-and-hold strategy, bounded candle input, benchmark comparison, and explicit simulation metadata.
-- `/v1/backtest` POST API added with JSON validation and no arbitrary strategy-code execution.
-- Browser backtest API client added for the application boundary.
+- Real PostgreSQL integration coverage added for idempotent migrations, restart/recovery, and concurrent optimistic portfolio writes.
+- CI provisions PostgreSQL 16 and runs the real integration suite alongside package typecheck, unit/integration tests, and production build.
+- Application-level backtest boundary with bounded candle input, allowlisted Buy & Hold strategy execution, optional benchmark comparison, and explicit deterministic-simulation metadata.
+- `POST /v1/backtest` HTTP integration and browser API client.
+- Strategy Tester workspace panel with deterministic Buy & Hold controls, performance metrics, equity visualization, and explicit simulation limitations.
+- Browser strategy-tester regression coverage for successful requests and structured API errors.
 
 ## Not production-ready
-The market-data and fundamentals implementations are deterministic demo data. No licensed live exchange/fundamentals feeds, durable production market database, authenticated user system, production WebSocket gateway, alerts worker, or real order execution exists.
+Market-data and fundamentals implementations are deterministic demo data. No licensed live exchange/fundamentals feeds, durable production market database, authenticated user system, production WebSocket gateway, alerts worker, or real order execution exists.
 
-Paper trading and backtesting are simulation/domain logic only. They do not claim broker execution, margin, exchange microstructure, historical-data completeness, or real-money guarantees. The current paper application uses deterministic demo quotes with bid/ask equal to the generated demo last price, a fixed demo fee rate, a bounded notional/position policy, and no short selling. PostgreSQL persistence is selectable, but it remains persistence for the simulation and does not turn the application into a brokerage system. The `x-demo-user-id` identity boundary is not an authenticated production identity mechanism. Mark-to-market valuation is based on the deterministic demo quote and is not a live valuation feed.
+Paper trading and backtesting are simulation/domain logic only. They do not claim broker execution, margin, exchange microstructure, historical-data completeness, or real-money guarantees. The `x-demo-user-id` identity boundary is not authenticated production identity. Mark-to-market valuation uses deterministic demo quotes.
 
-The backtest API intentionally accepts only a registered built-in strategy and never evaluates arbitrary JavaScript/Pine/code from a request. The current built-in strategy is buy-and-hold; richer strategy definitions belong behind the dedicated strategy/script runtime boundary.
-
-The screener API has a pagination contract but the deterministic demo provider currently has no additional pages and therefore returns no next cursor. This is intentional; no fake pagination state is exposed.
-
-The durable PostgreSQL workspace path is wired, but it still uses the demo identity header and requires authenticated identity binding before production user isolation can be claimed.
+The backtest API intentionally accepts only a registered built-in strategy and never evaluates arbitrary JavaScript/Pine/code. The current built-in strategy is Buy & Hold. Candle-level execution does not model intrabar ordering, queue position, partial fills, borrow fees, margin calls, or corporate actions.
 
 ## Verification
-- CI run 34099627805 on commit `601421f` passed package typecheck, the full test suite, and the production Vite build.
-- CI run 34100697084 on commit `2a57f6c` passed package typecheck, the full test suite, and the production Vite build.
+- CI run 34099627805 on commit `601421f` passed package typecheck, the full test suite, and production Vite build.
+- CI run 34100697084 on commit `2a57f6c` passed package typecheck, the full test suite, and production Vite build.
 - PostgreSQL integration CI run 34101299681 completed successfully for the PostgreSQL-enabled integration slice.
-- Duplicate-order hardening and the new backtest application commits require fresh CI verification.
+- Current duplicate-order hardening and strategy-tester/UI commits require fresh CI verification.
 
 ## Current risks / gaps
-- Fresh CI verification is required for the current backtest API/client slice.
-- The demo identity header must be replaced/bound to authenticated identity before production user data isolation is claimed.
-- Backtest Sharpe annualization currently assumes 252 periods/year; interval-aware annualization remains future work.
-- Backtest benchmark comparison is deterministic buy-and-hold over supplied benchmark candles; durable application-level integration remains future work.
-- Backtest execution is candle-level and does not model intrabar ordering, queue position, partial fills, borrow fees, margin calls, or corporate actions.
-- Screener needs a real fundamentals provider, durable provider pagination, and freshness/completeness policy before production use.
-- Drawing handles, rays, richer geometry, and durable server persistence remain future work.
-- Realtime stream currently sends an initial quote snapshot only; candle streaming, heartbeats, provider failover, rate limits, and observability remain future work.
-- Alerts still need persistence, scheduler/worker delivery, webhook/notification adapters, idempotency, and application/UI integration.
-- Dedicated script runtime, community, authentication, durable persistence, deployment, and production security remain planned.
+- **Highest priority:** replace raw PostgreSQL duplicate-order exception handling with repository-level `INSERT ... ON CONFLICT DO NOTHING` semantics; a raw unique-key exception inside an open PostgreSQL transaction can abort that transaction.
+- Demo identity must be bound to authenticated identity before production user isolation.
+- Backtest Sharpe annualization assumes 252 periods/year; interval-aware annualization remains future work.
+- Screener needs a real fundamentals provider, durable pagination, and freshness/completeness policy.
+- Drawings need richer geometry and durable server persistence.
+- Realtime needs candle streaming, heartbeats, provider failover, rate limits, and observability.
+- Alerts need persistence, scheduler/worker delivery, adapters, idempotency, and UI integration.
+- Dedicated script runtime, community, authentication, deployment, and production security remain planned.
 
 ## Next implementation slice
-Verify the current CI run, then integrate the backtest client into the workspace UI with a compact results/metrics panel before expanding strategy definitions.
+Fix duplicate-order concurrency at the repository level, add a real PostgreSQL concurrent-race integration test, verify CI, then expand the strategy runtime boundary.
