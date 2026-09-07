@@ -15,11 +15,14 @@ Phase 1 — Chart Core foundation.
 - Pure market-request validation extracted from the HTTP server and covered by Vitest.
 - Realtime subscription validation extracted and covered by Vitest.
 - CI no longer depends on an uncommitted npm lockfile for cache setup.
+- Root npm workspace graph and explicit manifests for existing domain/API packages are established and verified by CI run 100.
+- RSI 14 oscillator adapter and secondary chart pane are implemented; adapter behavior is covered by unit tests.
 
 ## Immediate tasks
-- Verify the full GitHub Actions test/build gate on the corrected CI workflow.
+- Verify the RSI implementation with the full GitHub Actions test/build gate.
+- Wire package-level entrypoints/build scripts without moving domain invariants into React.
+- Synchronize horizontal interaction between the primary chart and RSI pane, including pan/crosshair behavior.
 - Improve chart interaction primitives: cursor, zoom/pan, symbol/timeframe state, and indicator configuration.
-- Establish the workspace/package build graph before expanding into alerts, screeners, Pine, or trading.
 - Replace the demo market boundary only with a licensed provider and authenticated/durable production services.
 
 ## Rule
