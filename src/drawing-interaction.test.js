@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { advanceDrawingDraft, createDrawingId, drawingPointFromCoordinates, drawingPointToCoordinates, drawingTypeForTool, hitTestDrawingPoint, moveDrawingPoint, shouldCommitDrawing } from "./drawing-interaction.js";
+import { advanceDrawingDraft, createDrawingDrag, createDrawingId, drawingPointFromCoordinates, drawingPointToCoordinates, drawingTypeForTool, finishDrawingDrag, hitTestDrawingPoint, moveDrawingPoint, shouldCommitDrawing, updateDrawingDrag } from "./drawing-interaction.js";
 
 describe("drawing interaction primitives", () => {
   it("maps supported toolbar tools to domain drawing types", () => {
@@ -39,6 +39,28 @@ describe("drawing interaction primitives", () => {
     const updated = moveDrawingPoint(drawing, 1, { time: 90, price: 45 });
     expect(updated.points).toEqual([{ time: 20, price: 30 }, { time: 90, price: 45 }]);
     expect(drawing.points[1]).toEqual({ time: 80, price: 40 });
+  });
+
+  it("creates an editable drag only for unlocked valid endpoints", () => {
+    const drawing = { id: "d1", type: "line", points: [{ time: 10, price: 20 }, { time: 30, price: 40 }] };
+    expect(createDrawingDrag(drawing, 1)).toMatchObject({ drawingId: "d1", pointIndex: 1 });
+    expect(createDrawingDrag({ ...drawing, locked: true }, 1)).toBeNull();
+    expect(createDrawingDrag(drawing, 2)).toBeNull();
+  });
+
+  it("updates a drag preview without mutating the source drawing", () => {
+    const drawing = { id: "d1", type: "line", points: [{ time: 10, price: 20 }, { time: 30, price: 40 }] };
+    const drag = createDrawingDrag(drawing, 0);
+    const updated = updateDrawingDrag(drag, { time: 15, price: 25 });
+    expect(updated.previewDrawing.points).toEqual([{ time: 15, price: 25 }, { time: 30, price: 40 }]);
+    expect(drawing.points).toEqual([{ time: 10, price: 20 }, { time: 30, price: 40 }]);
+    expect(finishDrawingDrag(updated)).toEqual(updated.previewDrawing);
+  });
+
+  it("ignores invalid drag preview points", () => {
+    const drawing = { id: "d1", type: "line", points: [{ time: 10, price: 20 }, { time: 30, price: 40 }] };
+    const drag = createDrawingDrag(drawing, 0);
+    expect(updateDrawingDrag(drag, { time: NaN, price: 25 })).toBe(drag);
   });
 
   it("builds a two-click draft and commits only after two points", () => {
