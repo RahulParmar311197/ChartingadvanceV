@@ -35,10 +35,10 @@
 - Deterministic alert evaluator added with threshold/crossing semantics, cooldowns, disabled-rule handling, and stable delivery IDs.
 - Paper-trading execution primitives added for market/limit/stop/stop-limit orders, explicit bid/ask execution, deterministic fees/fill IDs, validation, and realized P&L position accounting.
 - Deterministic candle-based backtesting added with market/limit execution, fees, slippage, opt-in short positions, realized P&L, drawdown, win rate, profit factor, Sharpe-style metrics, and benchmark comparison.
-- Dedicated screener-engine package added with normalized fundamental snapshots, typed numeric operators, AND/OR filter groups, deterministic ranking, and bounded result limits.
+- Dedicated screener-engine package added with normalized fundamental snapshots, typed numeric filters, AND/OR filter groups, deterministic ranking, and bounded results.
 - Screener regression coverage added for operators, missing fundamentals, grouping, ranking, limits, and invalid inputs.
 - Fundamentals provider/application boundary added with freshness metadata and bounded pagination contract.
-- Provider boundary hardened with page-shape, freshness timestamp, staleAt ordering, and bounded next-cursor validation.
+- Provider boundary hardened with page-shape, freshness timestamps, staleAt ordering, and bounded next-cursor validation.
 - Application-level screener pagination/freshness regression coverage added using a synthetic multi-page provider without fabricating demo pages.
 - Deterministic demo fundamentals API adapter added with explicit stale/simulated metadata.
 - Screener HTTP endpoint added with symbol selection and full query/filter/group support.
@@ -56,3 +56,5 @@
 - Paper-only HTTP cancellation (`DELETE /v1/paper/orders/:id`), replacement (`PUT /v1/paper/orders/:id`), and bounded audit (`GET /v1/paper/audit`) endpoints added; no brokerage execution path was introduced.
 - Browser paper-trading lifecycle API methods added for audit reads, cancellation, and replacement.
 - Regression coverage added for cancellation, replacement, terminal-order protection, audit ordering, user isolation, and bounded audit reads.
+- Paper portfolio mark-to-market valuation added to the application workflow; deterministic demo quotes now update unrealized P&L and equity without changing cash.
+- Trading-engine valuation regression coverage added for marked long positions and unmarked-position preservation.
