@@ -1,6 +1,10 @@
 # Changelog
 
 ## 2026-09-07
+- Added a dedicated screener-engine package with normalized fundamental snapshots, typed numeric filters, AND/OR filter groups, deterministic scoring, and bounded results.
+- Added regression coverage for operators, missing fundamentals, grouping, ranking, limits, and invalid input.
+
+## 2026-09-07
 - Added deterministic backtesting support for opt-in short positions, average-entry tracking, realized P&L, win rate, profit factor, net/average trade P&L, maximum drawdown, equity curve, and Sharpe-style performance measurement.
 - Added a benchmark comparison contract for strategy return, buy-and-hold return, excess return, and benchmark terminal value.
 - Added regression coverage for long/short execution policy, realized P&L, and benchmark comparison.
