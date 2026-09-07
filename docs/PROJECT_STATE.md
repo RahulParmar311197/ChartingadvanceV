@@ -48,12 +48,13 @@ Phase 6 — Screener/fundamentals application integration in progress; chart cor
 - Asynchronous repository-injected paper application service shared by memory and PostgreSQL implementations.
 - Explicit `PAPER_PERSISTENCE=postgres` API startup mode backed by `DATABASE_URL`; development remains deterministic/in-memory by default and `NODE_ENV=production` defaults to PostgreSQL with fail-fast configuration.
 - PostgreSQL adapter contract tests for mapping, optimistic portfolio writes, stale-write rejection, transaction commit, rollback, and error preservation.
-- PostgreSQL-backed versioned workspace service wired into the API durable mode, with owner-scoped reads, schema-version metadata, ETag revision responses, optimistic revision conflicts, and compatibility-preserving in-memory demo mode.
+- PostgreSQL-backed versioned workspace service wired into the durable API mode, with owner-scoped reads, schema-version metadata, ETag revision responses, optimistic revision conflicts, and compatibility-preserving in-memory demo mode.
 - Paper lifecycle submission, cancellation, and replacement now enter the repository transaction boundary when available, keeping order transitions, fills, portfolio snapshots, ledger entries, and audit events atomic in PostgreSQL mode.
 - In-memory paper transactions now provide rollback semantics matching the repository atomicity contract.
 - PostgreSQL account initialization now uses conflict-safe insertion and the application re-reads the durable portfolio when another concurrent initializer wins the race.
 - Real PostgreSQL integration coverage added for idempotent migrations, restart/recovery through a new pool, and concurrent optimistic portfolio writes.
 - CI now provisions PostgreSQL 16 and runs the real integration suite alongside package typecheck, unit/integration tests, and production build.
+- Concurrent duplicate paper client-order submissions now convert PostgreSQL unique-key races into deterministic duplicate-order responses rather than leaking database errors.
 
 ## Not production-ready
 The market-data and fundamentals implementations are deterministic demo data. No licensed live exchange/fundamentals feeds, durable production market database, authenticated user system, production WebSocket gateway, alerts worker, or real order execution exists.
@@ -67,11 +68,11 @@ The durable PostgreSQL workspace path is wired, but it still uses the demo ident
 ## Verification
 - CI run 34099627805 on commit `601421f` passed package typecheck, the full test suite, and the production Vite build.
 - CI run 34100697084 on commit `2a57f6c` passed package typecheck, the full test suite, and the production Vite build.
-- The PostgreSQL integration CI run triggered by the new persistence hardening is still pending verification for the latest commits.
+- PostgreSQL integration CI run 34101299681 completed successfully for the PostgreSQL-enabled integration slice.
+- The latest duplicate-order hardening commit requires a fresh CI run before its verification status is claimed.
 
 ## Current risks / gaps
-- The latest PostgreSQL integration suite must pass before durable persistence is marked verified.
-- Concurrent duplicate client-order submission can still surface a database uniqueness conflict at the transaction boundary; application-level idempotent duplicate handling remains to be hardened.
+- The latest duplicate-order hardening suite must pass before that change is marked verified.
 - The demo identity header must be replaced/bound to authenticated identity before production user data isolation is claimed.
 - Backtest Sharpe annualization currently assumes 252 periods/year; interval-aware annualization remains future work.
 - Backtest benchmark comparison is deterministic buy-and-hold over supplied benchmark candles; durable application-level integration remains future work.
@@ -83,4 +84,4 @@ The durable PostgreSQL workspace path is wired, but it still uses the demo ident
 - Dedicated script runtime, community, authentication, durable persistence, deployment, and production security remain planned.
 
 ## Next implementation slice
-Verify the PostgreSQL integration suite, harden concurrent duplicate paper-order idempotency, then resume backtesting application integration.
+Verify duplicate-order hardening, then resume backtesting application integration with a durable application boundary and regression coverage.
