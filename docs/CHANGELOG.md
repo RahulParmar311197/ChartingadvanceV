@@ -1,6 +1,11 @@
 # Changelog
 
 ## 2026-09-07
+- Added strategy-engine defensive candle validation for direct non-HTTP callers.
+- Centralized backtest candle invariants across application and strategy-engine boundaries without moving application request-size limits into the domain runtime.
+- Added direct-engine regression coverage for malformed chronology, OHLC relationships, non-finite prices, and invalid volume.
+
+## 2026-09-07
 - Hardened the backtest application boundary with strict candle timestamp chronology and OHLC/volume semantic validation.
 - Rejected malformed timestamps, duplicate/non-monotonic bars, non-positive/non-finite prices, impossible high/low relationships, and negative/non-finite volume.
 - Applied the same validation contract to optional benchmark candle input and added regression coverage.
