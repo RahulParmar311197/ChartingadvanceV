@@ -6,7 +6,7 @@ import { createMovingAverageOverlay } from "../packages/indicator-engine/src/ove
 import { createRsiSeries } from "../packages/indicator-engine/src/oscillator.ts";
 import { addDrawing, removeDrawing, updateDrawing } from "../packages/chart-engine/src/drawing-state.ts";
 import { clampVisibleBars } from "./chart-interaction.js";
-import { advanceDrawingDraft, createDrawingDrag, createDrawingId, drawingPointFromCoordinates, drawingPointToCoordinates, drawingTypeForTool, finishDrawingDrag, hitTestDrawingPoint, shouldCommitDrawing, updateDrawingDrag } from "./drawing-interaction.js";
+import { advanceDrawingDraft, createDrawingDrag, createDrawingId, drawingPointFromCoordinates, drawingTypeForTool, finishDrawingDrag, hitTestDrawingPoint, shouldCommitDrawing, updateDrawingDrag } from "./drawing-interaction.js";
 import { publishChartCrosshair, publishChartRange, subscribeChartCrosshair, subscribeChartRange } from "./chart-pane-sync.js";
 import { fetchQuote, formatQuoteValue } from "./market.js";
 import { connectMarketStream } from "./realtime.js";
@@ -77,7 +77,7 @@ function Chart({ symbol, interval, indicators, visibleBars, drawings, onDrawings
       } else if (sourceEvent.type === "mouseup" || sourceEvent.type === "pointerup") {
         const finished = finishDrawingDrag(drag);
         drawingDrag.current = null;
-        if (finished) onDrawingsChange((current) => updateDrawing(current, finished));
+        if (finished) onDrawingsChange((current) => updateDrawing(current, finished.id, { points: finished.points }));
       }
     };
     chart.subscribeCrosshairMove(handleCrosshair);
