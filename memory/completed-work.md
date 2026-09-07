@@ -38,38 +38,7 @@
 - Dedicated screener-engine package added with normalized fundamental snapshots, typed numeric filters, AND/OR filter groups, deterministic ranking, and bounded results.
 - Screener regression coverage added for operators, missing fundamentals, grouping, ranking, limits, and invalid inputs.
 - Fundamentals provider/application boundary added with freshness metadata and bounded pagination contract.
-- Provider boundary hardened with page-shape, freshness timestamps, staleAt ordering, and bounded next-cursor validation.
-- Application-level screener pagination/freshness regression coverage added using a synthetic multi-page provider without fabricating demo pages.
-- Deterministic demo fundamentals API adapter added with explicit stale/simulated metadata.
-- Screener HTTP endpoint added with symbol selection and full query/filter/group support.
-- Centralized screener request validation added for fields, operators, ranges, groups, symbols, cursors, and query objects, with regression coverage.
-- Browser screener API client added with preflight validation and normalized query serialization.
-- Fundamentals screener panel integrated into the workspace with filter controls, deterministic ranking, score display, freshness status, and explicit simulated-data disclosure.
-- Browser screener client regression tests added.
-- Paper-trading application service added with isolated demo-user accounts, risk admission, order lifecycle submission, deterministic demo execution, fill application, and portfolio retrieval.
-- Paper-only HTTP portfolio and order-submission endpoints added with explicit simulated metadata and no brokerage execution path.
-- Browser paper-trading API client and Trading Panel added with order-type controls, portfolio summary, positions, and simulation disclosure.
-- Paper-trading cancellation/replacement/audit workflows added with shared lifecycle semantics and regression coverage.
-- Paper portfolio mark-to-market valuation added with deterministic quote marks and regression coverage.
-- Durable paper persistence boundary documented, including transactional invariants, idempotency, optimistic concurrency, and migration strategy.
-- In-memory paper repository adapter added with account/order/fill/ledger/audit storage semantics and invariant tests.
-- Paper application state migrated from direct service Maps to the repository adapter; terminal orders remain queryable and lifecycle transitions are validated against canonical stored status.
-- Canonical paper order-list HTTP endpoint and browser client method added; Trading Panel now derives open orders from stored order status rather than bounded audit reconstruction.
-- Versioned workspace persistence contract added with schema version, owner binding, monotonic revisions, authorization checks, and regression coverage.
-- PostgreSQL paper repository adapter added with injected pool, optimistic account/portfolio writes, idempotent fill/ledger/audit persistence, account-scoped order reads, and transaction support.
-- PostgreSQL migration runner and position-snapshot migration added for restart-safe paper persistence.
-- Versioned PostgreSQL workspace repository adapter and application service added with owner-scoped reads, schema-version enforcement, and optimistic revision updates.
-- Backtest regression expectations corrected to match the engine's deterministic open-price execution and realized-P&L semantics.
-- Paper lifecycle submission, cancellation, and replacement now execute through the repository transaction boundary when supported, making durable order/fill/portfolio/ledger/audit mutations atomic.
-- In-memory paper transactions now provide rollback semantics so development behavior matches the atomic repository contract.
-- PostgreSQL account initialization now uses conflict-safe insertion, and the application re-reads the durable portfolio when another concurrent initializer wins the race.
-- Migration runner now exposes a reusable `migrateDatabase(pool)` function and uses filesystem-safe URL conversion.
-- Real PostgreSQL integration coverage added for idempotent migrations, restart/recovery through a new pool, and concurrent optimistic portfolio writes.
-- CI now provisions PostgreSQL 16 and runs the real integration suite with the normal typecheck/test/build gates.
-- PostgreSQL duplicate client-order races now use atomic repository-level insert-if-absent semantics with real concurrent integration coverage.
-- Deterministic application backtest boundary and Strategy Tester UI implemented with fixed Buy & Hold strategy controls and explicit simulation metadata.
-- Second allowlisted deterministic Candle Direction strategy added without introducing arbitrary-code execution.
-- Strategy-engine Sharpe annualization made interval-aware for 1m/5m/15m/1H/4H/1D/1W/1M with explicit equity-session assumptions.
-- Backtest API now exposes the exact Sharpe annualization assumption and regression coverage spans all supported intervals.
-- Backtest application input validation now enforces non-negative integer Unix epoch-second timestamps, strict chronological ordering, finite positive OHLC prices, valid high/low relationships, and finite non-negative volume when supplied, including benchmark candles.
-- CI run 34106083667 passed PostgreSQL provisioning, package typecheck, full tests, and production build for the interval-aware Sharpe and candle-semantics hardening slice.
+- Screener completeness semantics, empty-page continuation protection, and non-advancing cursor protection added and verified.
+- Screener freshness states `fresh`/`stale`/`unknown` added and verified.
+- Browser screener API client added with typed application-contract DTOs, query/symbol/limit/cursor encoding, runtime envelope validation, and explicit simulation metadata.
+- Browser screener continuation pager added to accumulate pages, preserve opaque cursors, prevent concurrent loads, reject repeated cursors, track freshness/completeness, and reset safely; CI run 34111239978 verified typecheck, full tests, and production build.
