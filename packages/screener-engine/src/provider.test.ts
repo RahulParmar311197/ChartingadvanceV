@@ -55,6 +55,19 @@ describe('fundamentals application boundary', () => {
     });
   });
 
+  it('uses epoch seconds for the default freshness clock', async () => {
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    const provider: FundamentalsProvider = {
+      async getFundamentals() {
+        return { items: snapshots, asOf: nowSeconds - 60, staleAt: nowSeconds + 60 };
+      },
+    };
+
+    await expect(runScreener(provider, {})).resolves.toMatchObject({
+      freshness: { status: 'fresh', stale: false },
+    });
+  });
+
   it('rejects malformed provider page metadata', async () => {
     const provider: FundamentalsProvider = {
       async getFundamentals() {
