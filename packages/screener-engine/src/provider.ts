@@ -1,6 +1,7 @@
 import { screenFundamentals, type FundamentalSnapshot, type ScreenerQuery, type ScreenerMatch } from './index';
 
 export type ScreenerCompleteness = 'complete' | 'partial';
+export type ScreenerFreshnessStatus = 'fresh' | 'stale' | 'unknown';
 
 export interface FundamentalsPage {
   items: readonly FundamentalSnapshot[];
@@ -23,7 +24,7 @@ export interface FundamentalsProvider {
 export interface ScreenerApplicationResult {
   items: readonly ScreenerMatch[];
   nextCursor?: string;
-  freshness: { asOf: number; staleAt?: number; stale: boolean };
+  freshness: { asOf: number; staleAt?: number; stale: boolean; status: ScreenerFreshnessStatus };
   completeness: { status: ScreenerCompleteness; reason: 'provider-pagination' | 'provider-exhausted' };
 }
 
@@ -67,10 +68,11 @@ export async function runScreener(
   const query: ScreenerQuery = { ...request.query, limit };
   const items = screenFundamentals(page.items, query);
   const stale = page.staleAt != null && now >= page.staleAt;
+  const freshnessStatus: ScreenerFreshnessStatus = page.staleAt == null ? 'unknown' : stale ? 'stale' : 'fresh';
   return {
     items,
     nextCursor: page.nextCursor,
-    freshness: { asOf: page.asOf, staleAt: page.staleAt, stale },
+    freshness: { asOf: page.asOf, staleAt: page.staleAt, stale, status: freshnessStatus },
     completeness: {
       status: page.nextCursor == null ? 'complete' : 'partial',
       reason: page.nextCursor == null ? 'provider-exhausted' : 'provider-pagination',
