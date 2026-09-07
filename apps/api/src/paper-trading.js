@@ -15,8 +15,7 @@ export function createPaperTradingService(repository) {
     if (!portfolio) {
       const account = createPaperAccount(id, "USD", 100_000);
       await repository.createAccount(account, typeof userId === "string" && userId.trim() ? userId.trim() : "anonymous");
-      portfolio = { account, positions: [], ledger: [] };
-      await repository.savePortfolio(portfolio);
+      portfolio = await repository.savePortfolio({ account, positions: [], ledger: [] }, account.version);
     }
     return portfolio;
   }
@@ -29,16 +28,13 @@ export function createPaperTradingService(repository) {
       const order = { id: typeof input?.id === "string" && input.id ? input.id : `paper-order:${now}:${(await repository.listOrders(portfolio.account.id)).length + 1}`, accountId: portfolio.account.id, symbolId: input?.symbolId, side: input?.side, type: input?.type ?? "market", quantity: Number(input?.quantity), ...(input?.limitPrice !== undefined ? { limitPrice: Number(input.limitPrice) } : {}), ...(input?.stopPrice !== undefined ? { stopPrice: Number(input.stopPrice) } : {}), status: "pending", createdAt: now };
       if (await repository.getOrder(portfolio.account.id, order.id)) { await audit(portfolio.account.id, "order_rejected", order.id, now, "duplicate order id"); return { order: { ...order, status: "rejected" }, fill: null, portfolio, risk: { allowed: false, reason: "duplicate order id", estimatedNotional: 0 }, simulated: true }; }
       await repository.insertOrder(order); await audit(portfolio.account.id, "order_submitted", order.id, now);
-      const referenceQuote = executionQuote(order.symbolId);
-      const risk = assessOrderRisk(portfolio.account, portfolio.positions, order, referenceQuote.last, { allowShort: false, maxOrderNotional: 50_000, maxPositionQuantity: 10_000 });
+      const referenceQuote = executionQuote(order.symbolId); const risk = assessOrderRisk(portfolio.account, portfolio.positions, order, referenceQuote.last, { allowShort: false, maxOrderNotional: 50_000, maxPositionQuantity: 10_000 });
       if (!risk.allowed) { const rejected = transitionOrder(order, "reject", now); await repository.transitionOrder(portfolio.account.id, order.id, "pending", rejected); await audit(portfolio.account.id, "order_rejected", order.id, now, risk.reason); return { order: rejected, fill: null, portfolio, risk, simulated: true }; }
       const accepted = transitionOrder(order, "submit", now); await repository.transitionOrder(portfolio.account.id, order.id, "pending", accepted); await audit(portfolio.account.id, "order_accepted", accepted.id, now);
       const execution = executePaperOrder(accepted, referenceQuote, now, FEE_RATE);
       if (!execution.fill) { const storedOrder = await repository.transitionOrder(portfolio.account.id, accepted.id, "accepted", execution.order); return { ...execution, order: storedOrder, portfolio, risk, simulated: true }; }
       const filled = transitionOrder(accepted, "fill", now); await repository.transitionOrder(portfolio.account.id, accepted.id, "accepted", filled);
-      const storedFill = await repository.insertFill({ ...execution.fill, accountId: portfolio.account.id });
-      const savedPortfolio = await repository.savePortfolio(applyFillToPortfolio(portfolio, storedFill, accepted.side), portfolio.account.version);
-      await audit(portfolio.account.id, "order_filled", accepted.id, now);
+      const storedFill = await repository.insertFill({ ...execution.fill, accountId: portfolio.account.id }); const savedPortfolio = await repository.savePortfolio(applyFillToPortfolio(portfolio, storedFill, accepted.side), portfolio.account.version); await audit(portfolio.account.id, "order_filled", accepted.id, now);
       return { ...execution, order: filled, fill: storedFill, portfolio: savedPortfolio, risk, simulated: true };
     },
     async cancelPaperOrder(userId, orderId, now = Date.now()) {
@@ -59,8 +55,7 @@ export function createPaperTradingService(repository) {
       const accepted = transitionOrder(pair.replacement, "submit", now); await repository.transitionOrder(portfolio.account.id, newOrderId, "pending", accepted); await audit(portfolio.account.id, "order_accepted", newOrderId, now);
       const execution = executePaperOrder(accepted, referenceQuote, now, FEE_RATE);
       if (!execution.fill) return { replaced: true, cancelled, replacement: await repository.getOrder(portfolio.account.id, newOrderId), order: cancelled, portfolio: await service.getPaperPortfolio(userId), risk, simulated: true };
-      const filled = transitionOrder(accepted, "fill", now); await repository.transitionOrder(portfolio.account.id, newOrderId, "accepted", filled);
-      const storedFill = await repository.insertFill({ ...execution.fill, accountId: portfolio.account.id }); await repository.savePortfolio(applyFillToPortfolio(portfolio, storedFill, accepted.side), portfolio.account.version); await audit(portfolio.account.id, "order_filled", newOrderId, now);
+      const filled = transitionOrder(accepted, "fill", now); await repository.transitionOrder(portfolio.account.id, newOrderId, "accepted", filled); const storedFill = await repository.insertFill({ ...execution.fill, accountId: portfolio.account.id }); await repository.savePortfolio(applyFillToPortfolio(portfolio, storedFill, accepted.side), portfolio.account.version); await audit(portfolio.account.id, "order_filled", newOrderId, now);
       return { replaced: true, cancelled, replacement: filled, order: cancelled, fill: storedFill, portfolio: await service.getPaperPortfolio(userId), risk, simulated: true };
     },
     async getPaperPortfolio(userId) { const portfolio = await accountFor(userId); const marks = portfolio.positions.map((position) => ({ symbolId: position.symbolId, markPrice: executionQuote(position.symbolId).last })); const marked = markPortfolio(portfolio.account, portfolio.positions, marks); return structuredClone({ ...portfolio, account: marked.account, positions: marked.positions }); },
