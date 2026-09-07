@@ -63,4 +63,35 @@ describePostgres("PostgreSQL persistence integration", () => {
       await pool.end();
     }
   });
+
+  it("serializes concurrent client-order races and keeps the losing transaction usable", async () => {
+    const pool = await createPostgresPoolFromEnv();
+    const accountId = `paper:order-race-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const userId = accountId.slice("paper:".length);
+    const repository = new PostgresPaperRepository(pool);
+    try {
+      await migrateDatabase(pool);
+      const created = await repository.createAccount({ id: accountId, currency: "USD", cash: 100_000, buyingPower: 100_000, equity: 100_000, version: 0 }, userId);
+      expect(created).not.toBeNull();
+      await repository.savePortfolio({ account: created, positions: [], ledger: [] }, created.version);
+
+      const service = createPaperTradingService(repository);
+      const results = await Promise.all([
+        service.submitPaperOrder(userId, { id: "raced-order", symbolId: "NASDAQ:AAPL", side: "buy", type: "market", quantity: 1 }, 1_000),
+        service.submitPaperOrder(userId, { id: "raced-order", symbolId: "NASDAQ:AAPL", side: "buy", type: "market", quantity: 1 }, 2_000),
+      ]);
+      const statuses = results.map((result) => result.order.status).sort();
+      expect(statuses).toEqual(["filled", "rejected"]);
+      expect(results.filter((result) => result.risk.reason === "duplicate order id")).toHaveLength(1);
+      expect((await repository.listOrders(accountId))).toHaveLength(1);
+      expect((await repository.getPortfolio(accountId)).ledger).toHaveLength(1);
+    } finally {
+      await pool.query("DELETE FROM paper_audit_events WHERE account_id=$1", [accountId]);
+      await pool.query("DELETE FROM paper_ledger_entries WHERE account_id=$1", [accountId]);
+      await pool.query("DELETE FROM paper_fills WHERE account_id=$1", [accountId]);
+      await pool.query("DELETE FROM paper_orders WHERE account_id=$1", [accountId]);
+      await pool.query("DELETE FROM paper_accounts WHERE account_id=$1", [accountId]);
+      await pool.end();
+    }
+  });
 });
