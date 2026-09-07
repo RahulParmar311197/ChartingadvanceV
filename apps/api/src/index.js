@@ -1,9 +1,9 @@
 import { createServer } from "node:http";
-import { generateCandles, generateQuote, INTERVAL_SECONDS } from "../../../packages/market-domain/src/demo-core.js";
+import { generateCandles, generateQuote } from "../../../packages/market-domain/src/demo-core.js";
 import { getWorkspace, saveWorkspace } from "./workspace.js";
+import { INTERVALS, validateCandleRequest, validSymbol } from "./validation.js";
 
 const PORT = Number(process.env.PORT ?? 8787);
-const INTERVALS = new Set(Object.keys(INTERVAL_SECONDS));
 const PROVIDER = "demo";
 const MAX_BODY_BYTES = 32 * 1024;
 
@@ -11,11 +11,6 @@ function json(res, status, body) {
   res.writeHead(status, { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "access-control-allow-origin": "*", "access-control-allow-headers": "content-type,x-demo-user-id", "access-control-allow-methods": "GET,PUT,OPTIONS" });
   res.end(JSON.stringify(body));
 }
-function parseNumber(value) {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-function validSymbol(symbol) { return typeof symbol === "string" && /^[^:\s]+:[^:\s]+$/.test(symbol); }
 function readBody(req) {
   return new Promise((resolve, reject) => {
     let body = "";
@@ -41,19 +36,15 @@ const server = createServer(async (req, res) => {
   }
 
   if (url.pathname === "/v1/market/candles" && req.method === "GET") {
-    const symbol = url.searchParams.get("symbol");
-    const interval = url.searchParams.get("interval") ?? "1D";
-    const from = parseNumber(url.searchParams.get("from"));
-    const to = parseNumber(url.searchParams.get("to"));
-    if (!validSymbol(symbol)) return json(res, 400, { error: { code: "INVALID_SYMBOL", message: "symbol must use EXCHANGE:TICKER format" } });
-    if (!INTERVALS.has(interval)) return json(res, 400, { error: { code: "INVALID_INTERVAL", message: "Unsupported candle interval" } });
-    if (from === null || to === null || from >= to) return json(res, 400, { error: { code: "INVALID_RANGE", message: "from and to must be finite Unix seconds with from < to" } });
-    return json(res, 200, { data: generateCandles(symbol, interval, from, to), meta: { provider: PROVIDER, simulated: true, symbol, interval, from, to } });
+    const result = validateCandleRequest({ symbol: url.searchParams.get("symbol"), interval: url.searchParams.get("interval") ?? "1D", from: url.searchParams.get("from"), to: url.searchParams.get("to") });
+    if (!result.ok) {
+      const messages = { INVALID_SYMBOL: "symbol must use EXCHANGE:TICKER format", INVALID_INTERVAL: "Unsupported candle interval", INVALID_RANGE: "from and to must be finite Unix seconds with from < to" };
+      return json(res, 400, { error: { code: result.code, message: messages[result.code] } });
+    }
+    return json(res, 200, { data: generateCandles(result.symbol, result.interval, result.from, result.to), meta: { provider: PROVIDER, simulated: true, ...result } });
   }
 
-  if (url.pathname === "/v1/workspace" && req.method === "GET") {
-    return json(res, 200, { data: getWorkspace(userId(req)), meta: { persistent: false, simulated: true } });
-  }
+  if (url.pathname === "/v1/workspace" && req.method === "GET") return json(res, 200, { data: getWorkspace(userId(req)), meta: { persistent: false, simulated: true } });
   if (url.pathname === "/v1/workspace" && req.method === "PUT") {
     try {
       const raw = await readBody(req);
@@ -66,7 +57,6 @@ const server = createServer(async (req, res) => {
       return json(res, 400, { error: { code, message: code === "BODY_TOO_LARGE" ? "Request body exceeds 32 KiB" : "Malformed JSON body" } });
     }
   }
-
   return json(res, 404, { error: { code: "NOT_FOUND", message: "Route not found" } });
 });
 
