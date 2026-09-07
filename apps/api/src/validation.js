@@ -1,6 +1,7 @@
 export const INTERVALS = new Set(["1m", "5m", "15m", "1H", "4H", "1D", "1W", "1M"]);
 export const FUNDAMENTAL_FIELDS = new Set(["marketCap", "peRatio", "priceToBook", "revenueGrowth", "earningsGrowth", "profitMargin", "returnOnEquity", "debtToEquity", "dividendYield"]);
 export const NUMERIC_OPERATORS = new Set(["gt", "gte", "lt", "lte", "eq", "between"]);
+const MAX_SCREENER_CURSOR_LENGTH = 512;
 
 export function parseFiniteNumber(value) {
   const parsed = Number(value);
@@ -43,7 +44,9 @@ function validateGroups(groups) {
 
 export function parseScreenerRequest({ symbols = [], filters, groups, query, limit, cursor }) {
   if (!Array.isArray(symbols) || symbols.some((symbol) => !validSymbol(symbol))) throw new Error("symbol must use EXCHANGE:TICKER format");
-  if (cursor != null && typeof cursor !== "string") throw new Error("cursor must be a string");
+  if (cursor != null && (typeof cursor !== "string" || cursor.length === 0 || cursor.length > MAX_SCREENER_CURSOR_LENGTH)) {
+    throw new Error("cursor must be a non-empty string of at most 512 characters");
+  }
 
   let parsedQuery = {};
   if (query != null) {
