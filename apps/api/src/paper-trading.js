@@ -9,6 +9,7 @@ import { generateQuote } from "../../../packages/market-domain/src/demo-core.js"
 
 const FEE_RATE = 0.001;
 const accounts = new Map();
+const submittedOrderIds = new Map();
 
 function accountFor(userId) {
   const safeUserId = typeof userId === "string" && userId.trim() ? userId.trim().slice(0, 128) : "anonymous";
@@ -18,6 +19,7 @@ function accountFor(userId) {
     portfolio = { account: createPaperAccount(id, "USD", 100_000), positions: [], ledger: [] };
     accounts.set(id, portfolio);
   }
+  if (!submittedOrderIds.has(id)) submittedOrderIds.set(id, new Set());
   return portfolio;
 }
 
@@ -46,6 +48,12 @@ export function submitPaperOrder(userId, input, now = Date.now()) {
     status: "pending",
     createdAt: now,
   };
+  const ids = submittedOrderIds.get(portfolio.account.id);
+  if (ids.has(order.id)) {
+    return { order: { ...order, status: "rejected" }, fill: null, portfolio, risk: { allowed: false, reason: "duplicate order id", estimatedNotional: 0 }, simulated: true };
+  }
+  ids.add(order.id);
+
   const referenceQuote = executionQuote(order.symbolId);
   const risk = assessOrderRisk(portfolio.account, portfolio.positions, order, referenceQuote.last, { allowShort: false, maxOrderNotional: 50_000, maxPositionQuantity: 10_000 });
   if (!risk.allowed) return { order: { ...order, status: "rejected" }, fill: null, portfolio, risk, simulated: true };
@@ -65,4 +73,5 @@ export function getPaperPortfolio(userId) {
 
 export function resetPaperTradingStore() {
   accounts.clear();
+  submittedOrderIds.clear();
 }
