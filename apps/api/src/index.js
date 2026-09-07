@@ -3,7 +3,7 @@ import { generateCandles, generateQuote } from "../../../packages/market-domain/
 import { getWorkspace, saveWorkspace } from "./workspace.js";
 import { executeDemoScreener } from "./screener.js";
 import { createPaperTradingService } from "./paper-trading.js";
-import { createPostgresPoolFromEnv } from "./postgres-paper-repository.js";
+import { PostgresPaperRepository, createPostgresPoolFromEnv } from "./postgres-paper-repository.js";
 import { createPaperRepository } from "./paper-repository.js";
 import { parseScreenerRequest, validateCandleRequest, validSymbol } from "./validation.js";
 
@@ -13,8 +13,7 @@ const MAX_BODY_BYTES = 32 * 1024;
 const persistenceMode = process.env.PAPER_PERSISTENCE ?? (process.env.NODE_ENV === "production" ? "postgres" : "memory");
 if (persistenceMode !== "memory" && persistenceMode !== "postgres") throw new Error("PAPER_PERSISTENCE must be memory or postgres");
 const paperPool = persistenceMode === "postgres" ? await createPostgresPoolFromEnv() : null;
-const paperRepository = paperPool ? (await import("./postgres-paper-repository.js")).PostgresPaperRepository : null;
-const paperService = createPaperTradingService(paperPool ? new paperRepository(paperPool) : createPaperRepository());
+const paperService = createPaperTradingService(paperPool ? new PostgresPaperRepository(paperPool) : createPaperRepository());
 
 function json(res, status, body) { res.writeHead(status, { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "access-control-allow-origin": "*", "access-control-allow-headers": "content-type,x-demo-user-id", "access-control-allow-methods": "GET,POST,PUT,DELETE,OPTIONS" }); res.end(JSON.stringify(body)); }
 function readBody(req) { return new Promise((resolve, reject) => { let body = ""; req.on("data", (chunk) => { body += chunk; if (Buffer.byteLength(body) > MAX_BODY_BYTES) reject(new Error("BODY_TOO_LARGE")); }); req.on("end", () => resolve(body)); req.on("error", reject); }); }
