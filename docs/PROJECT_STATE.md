@@ -3,17 +3,25 @@
 Updated: 2026-09-07
 
 ## Status
-Phase 0 complete; Phase 1 scaffold in progress.
+Phase 1 — Chart Core foundation in progress.
 
 ## Implemented
-- React/Vite starter
-- Lightweight candlestick/volume demo chart
-- Symbol search and watchlist UI
-- TradingView-inspired workspace shell
-- Project governance and agent documentation
+- React/Vite TradingView-inspired workspace shell.
+- Lightweight candlestick/volume chart.
+- Symbol search and watchlist UI.
+- Project governance, agent rules, durable memory, and architecture documentation.
+- Typed market-domain contracts for symbols, candles, quotes, intervals, historical requests, and provider adapters.
+- Deterministic demo market-data provider behind the provider interface.
+- Web chart now consumes candles through the provider boundary instead of generating random values in the UI.
 
 ## Not production-ready
-The current chart uses synthetic data. No live exchange feed, authenticated API, persistent database, alerts worker, paper brokerage simulator, or real order execution exists.
+The current market-data implementation is deterministic demo data. No live exchange feed, historical market database, authenticated API, persistent user state, alerts worker, paper brokerage simulator, or real order execution exists.
+
+## Current risks / gaps
+- Root project is still a Vite starter rather than a complete workspace build.
+- Domain package is not yet independently packaged or tested in CI.
+- Web UI still contains static quote/news presentation data.
+- Realtime subscriptions and server APIs are not implemented.
 
 ## Next implementation slice
-Create `packages/market-domain`, `packages/chart-engine`, `packages/shared-types`, `apps/market-data`, and `apps/api`; wire historical/realtime adapter interfaces into the existing web workspace.
+Add the shared workspace/package configuration, a dedicated chart-engine boundary, and an API/market-data service contract for historical candles and realtime subscriptions. Add executable unit tests for market-domain calculations/provider behavior before introducing live adapters.
