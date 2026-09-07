@@ -9,8 +9,8 @@
   ],
   "scripts": {
     "dev": "vite",
-    "api": "node apps/api/src/index.js",
-    "realtime": "node apps/api/src/realtime.js",
+    "api": "tsx apps/api/src/index.js",
+    "realtime": "tsx apps/api/src/realtime.js",
     "build": "vite build",
     "typecheck:packages": "tsc --noEmit -p tsconfig.packages.json",
     "preview": "vite preview",
@@ -26,6 +26,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",
+    "tsx": "^4.19.2",
     "typescript": "^5.7.2",
     "vite": "^6.0.5",
     "vitest": "^3.2.4"
