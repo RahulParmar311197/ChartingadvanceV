@@ -25,6 +25,8 @@ Phase 6 — Screener/fundamentals application integration in progress; chart cor
 - Deterministic candle-based backtesting with market/limit execution, fees, slippage, opt-in short positions, signed position accounting, realized P&L, equity curve, drawdown, win rate, profit factor, and Sharpe-style performance metrics.
 - Deterministic fundamental screener contracts with typed financial fields, numeric operators, AND/OR groups, deterministic ranking, and bounded result limits.
 - Fundamentals provider/application contract with freshness metadata and bounded pagination contract.
+- Provider-boundary validation for finite freshness timestamps, staleAt ordering, page shape, and bounded pagination cursors.
+- Application-level screener pagination/freshness regression coverage using a synthetic multi-page provider; the demo provider still exposes no fabricated pages.
 - Demo fundamentals screener API endpoint with symbol selection, full query/filter/group parsing, centralized request validation, and explicit stale/simulated metadata.
 - Screener request validation regression coverage for fields, operators, groups, symbols, ranges, limits, and cursor shape.
 - Browser screener API client with preflight validation and normalized query serialization.
@@ -59,4 +61,4 @@ The screener API has a pagination contract but the deterministic demo provider c
 - Dedicated script runtime, community, authentication, durable persistence, deployment, and production security remain planned.
 
 ## Next implementation slice
-Harden the screener provider boundary and runtime conformance, then move into real-provider pagination semantics and application-level screener workflows. In parallel, continue drawing endpoint drag wiring and paper-trading application integration without enabling real-money brokerage execution.
+Resolve the production build strategy for the screener runtime so the Node API can consume the canonical TypeScript implementation without maintaining parallel logic. Then continue drawing endpoint drag wiring and paper-trading application integration without enabling real-money brokerage execution.
