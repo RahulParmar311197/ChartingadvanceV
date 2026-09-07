@@ -1,6 +1,11 @@
 # Changelog
 
 ## 2026-09-07
+- Added a pure drawing-series normalization helper that maps domain prices to Lightweight Charts values and sorts points by time without mutating drawing state.
+- Added regression tests for reversed endpoint order and immutable source points.
+- Added GitHub Codespaces setup and documented the reproducible verification gate.
+
+## 2026-09-07
 - Added browser drawing interaction primitives for toolbar-to-domain tool mapping, chart-coordinate conversion, two-click draft progression, commit thresholds, and generated IDs.
 - Wired the primary chart Line and Trend Line tools to create actual two-point drawings through the chart-engine immutable drawing-state contract.
 - Rendered stored drawings as Lightweight Charts line series and added drawing selection by clicking a rendered drawing.
