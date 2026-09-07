@@ -86,4 +86,11 @@ describe('fundamentals application boundary', () => {
     };
     await expect(runScreener(provider, {})).rejects.toThrow('provider cannot return an empty page with nextCursor');
   });
+
+  it('rejects a provider cursor that does not advance the requested cursor', async () => {
+    const provider: FundamentalsProvider = {
+      async getFundamentals() { return { items: [snapshots[0]], asOf: 100, nextCursor: 'page:2' }; },
+    };
+    await expect(runScreener(provider, { cursor: 'page:2' })).rejects.toThrow('provider nextCursor must advance beyond the request cursor');
+  });
 });
