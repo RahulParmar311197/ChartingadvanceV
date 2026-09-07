@@ -2,6 +2,8 @@ import { authConfigErrors } from "./auth.js";
 
 const DEFAULT_RATE_LIMIT = 120;
 const DEFAULT_RATE_WINDOW_MS = 60_000;
+const ALLOWED_HEADERS = "content-type,x-demo-user-id,x-auth-user,x-auth-timestamp,x-auth-signature,if-match,x-workspace-revision";
+const ALLOWED_METHODS = "GET,POST,PUT,DELETE,OPTIONS";
 
 function positiveInteger(value, fallback) {
   const parsed = Number(value);
@@ -12,23 +14,15 @@ export function createRateLimiter({ limit = DEFAULT_RATE_LIMIT, windowMs = DEFAU
   const maxRequests = positiveInteger(limit, DEFAULT_RATE_LIMIT);
   const window = positiveInteger(windowMs, DEFAULT_RATE_WINDOW_MS);
   const buckets = new Map();
-
   return {
     check(key, now = Date.now()) {
       const current = buckets.get(key);
-      if (!current || now - current.startedAt >= window) {
-        buckets.set(key, { startedAt: now, count: 1 });
-        return { allowed: true, remaining: maxRequests - 1, retryAfterSeconds: 0 };
-      }
-      if (current.count >= maxRequests) {
-        return { allowed: false, remaining: 0, retryAfterSeconds: Math.max(1, Math.ceil((window - (now - current.startedAt)) / 1000)) };
-      }
+      if (!current || now - current.startedAt >= window) { buckets.set(key, { startedAt: now, count: 1 }); return { allowed: true, remaining: maxRequests - 1, retryAfterSeconds: 0 }; }
+      if (current.count >= maxRequests) return { allowed: false, remaining: 0, retryAfterSeconds: Math.max(1, Math.ceil((window - (now - current.startedAt)) / 1000)) };
       current.count += 1;
       return { allowed: true, remaining: maxRequests - current.count, retryAfterSeconds: 0 };
     },
-    purge(now = Date.now()) {
-      for (const [key, bucket] of buckets) if (now - bucket.startedAt >= window) buckets.delete(key);
-    },
+    purge(now = Date.now()) { for (const [key, bucket] of buckets) if (now - bucket.startedAt >= window) buckets.delete(key); },
   };
 }
 
@@ -39,15 +33,9 @@ export function getClientAddress(req) {
 }
 
 export function parseCorsOrigins(value, { production = false } = {}) {
-  if (typeof value !== "string" || value.trim() === "") {
-    if (production) throw new Error("CORS_ORIGINS is required in production");
-    return [];
-  }
+  if (typeof value !== "string" || value.trim() === "") { if (production) throw new Error("CORS_ORIGINS is required in production"); return []; }
   const origins = value.split(",").map((origin) => origin.trim()).filter(Boolean);
-  for (const origin of origins) {
-    const parsed = new URL(origin);
-    if (!/^https?:$/.test(parsed.protocol)) throw new Error("CORS_ORIGINS must contain http(s) origins");
-  }
+  for (const origin of origins) { const parsed = new URL(origin); if (!/^https?:$/.test(parsed.protocol)) throw new Error("CORS_ORIGINS must contain http(s) origins"); }
   return [...new Set(origins)];
 }
 
@@ -58,13 +46,11 @@ export function createSecurityHeaders({ origin, production = false } = {}) {
     "referrer-policy": "no-referrer",
     "permissions-policy": "camera=(), microphone=(), geolocation=()",
     "cross-origin-resource-policy": "same-site",
+    "access-control-allow-methods": ALLOWED_METHODS,
+    "access-control-allow-headers": ALLOWED_HEADERS,
   };
   if (production) headers["strict-transport-security"] = "max-age=31536000; includeSubDomains";
-  if (origin) {
-    headers["access-control-allow-origin"] = origin;
-    headers["access-control-allow-credentials"] = "true";
-    headers["vary"] = "Origin";
-  }
+  if (origin) { headers["access-control-allow-origin"] = origin; headers["access-control-allow-credentials"] = "true"; headers.vary = "Origin"; }
   return headers;
 }
 
