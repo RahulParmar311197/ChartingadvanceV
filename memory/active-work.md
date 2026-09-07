@@ -9,7 +9,7 @@ Phase 6 — Screener/fundamentals provider hardening and application workflows.
 - Paper application state migrated from direct Maps to repository-backed account, portfolio, order, fill, ledger, and audit stores.
 - Canonical paper order-list endpoint/client added and Trading Panel now uses stored order status for open-order controls.
 - Versioned workspace persistence contract added with owner binding, schema version, validation, and optimistic revisions.
-- PostgreSQL paper repository adapter added with transaction support and idempotent durable writes.
+- PostgreSQL paper repository adapter added with transaction support and idempotent fill/ledger/audit writes.
 - PostgreSQL migration runner added with ordered transactional migration application.
 - Position snapshot migration added so durable paper portfolios can recover held positions after restart.
 - PostgreSQL portfolio saves now use optimistic account-version checks, including initial durable portfolio initialization.
@@ -25,10 +25,10 @@ Phase 6 — Screener/fundamentals provider hardening and application workflows.
 - Migration runner is reusable from integration tests and uses filesystem-safe path conversion.
 - Real PostgreSQL integration tests cover idempotent migrations, restart/recovery, and optimistic concurrent portfolio writes.
 - CI now provisions PostgreSQL 16 for the integration suite.
+- Duplicate paper client-order submissions now handle PostgreSQL unique-key races deterministically instead of leaking a database error.
 
 ## Immediate tasks
-- Verify the new PostgreSQL CI run end-to-end; investigate any integration failures before treating durable persistence as verified.
-- Add a concurrent paper-order submission regression for duplicate client IDs and ensure the losing transaction is handled as an idempotent duplicate rather than leaking a database uniqueness error.
+- Verify the latest PostgreSQL-enabled CI run end-to-end; investigate any integration failures before treating durable persistence as verified.
 - Continue backtesting application integration after persistence verification.
 
 ## Rule
