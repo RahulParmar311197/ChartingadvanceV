@@ -1,6 +1,15 @@
 # Changelog
 
 ## 2026-09-07
+- Added paper-order cancellation and replacement workflows at the application boundary using the shared order lifecycle contract.
+- Persisted accepted paper orders in the demo application store so untriggered limit/stop orders can be cancelled or replaced without touching filled terminal orders.
+- Added deterministic lifecycle audit events for submission, acceptance, rejection, fill, cancellation, and replacement.
+- Added bounded paper audit reads with per-demo-user isolation.
+- Added paper-only HTTP cancellation, replacement, and audit endpoints with explicit simulated metadata; no brokerage execution path was introduced.
+- Added browser paper-trading lifecycle client methods for audit, cancellation, and replacement.
+- Added regression coverage for terminal-order protection, replacement semantics, audit ordering, user isolation, and bounded audit reads.
+
+## 2026-09-07
 - Fixed drawing endpoint drag lifecycle by keeping the chart-construction effect independent of selection state.
 - Wired DOM pointer capture for endpoint dragging, updating an immutable render preview during movement and committing the final point only on pointer release.
 - Added a browser paper-trading API client with explicit API configuration failure semantics rather than silent client-side simulation.
@@ -33,14 +42,3 @@
 - Added deterministic backtesting support for opt-in short positions, average-entry tracking, realized P&L, win rate, profit factor, net/average trade P&L, maximum drawdown, equity curve, and Sharpe-style performance measurement.
 - Added a benchmark comparison contract for strategy return, buy-and-hold return, excess return, and benchmark terminal value.
 - Added regression coverage for long/short execution policy, realized P&L, and benchmark comparison.
-
-## 2026-09-07
-- Added deterministic alert evaluation for threshold and crossing operators, disabled rules, cooldowns, invalid values, and stable delivery IDs.
-- Added unit coverage for alert triggering, crossing semantics, cooldown blocking, and invalid inputs.
-- Added deterministic paper-trading execution primitives for market, limit, stop, and stop-limit orders using explicit bid/ask inputs.
-- Added paper-order validation, fee calculation, rejected/accepted/filled lifecycle outcomes, deterministic fill IDs, and position fill accounting with realized P&L.
-- Added unit coverage for order validation, trigger semantics, fills, invalid execution inputs, and realized P&L.
-
-## 2026-09-07
-- Added drawing drag lifecycle primitives for validating editable endpoints, creating unlocked drag state, producing immutable preview drawings, and finalizing a preview for persistence through the chart-engine update contract.
-- Added unit coverage for locked endpoint rejection, invalid endpoint rejection, immutable drag previews, and invalid preview coordinates.
