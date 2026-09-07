@@ -1,6 +1,12 @@
 # Changelog
 
 ## 2026-09-07
+- Added an RSI 14 oscillator adapter in the indicator engine with deterministic warmup and timestamp mapping tests.
+- Added a real secondary RSI chart pane to the web workspace using Lightweight Charts.
+- Added fixed 0–100 RSI scaling and 70/30 reference levels.
+- Added an Indicators menu toggle for RSI 14; it is explicitly local UI state and is not yet persisted in the demo workspace contract.
+
+## 2026-09-07
 - Wired the web workspace to load normalized state from the demo workspace API and debounce saves after user state changes.
 - Added SMA 20 and EMA 50 chart overlay controls backed by the indicator engine and Lightweight Charts line series.
 - Kept workspace identity explicitly demo-only and non-authenticated.
