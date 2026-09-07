@@ -27,8 +27,8 @@ export class PostgresPaperRepository {
     return accountRow(result.rows[0]);
   }
   async createAccount(account, ownerId = account.id, now = new Date()) {
-    await this.pool.query("INSERT INTO paper_accounts(account_id,owner_id,currency,cash,buying_power,equity,version,positions,created_at,updated_at) VALUES($1,$2,$3,$4,$5,$6,0,'[]'::jsonb,$7,$7)", [account.id, ownerId, account.currency, account.cash, account.buyingPower, account.equity, now]);
-    return structuredClone({ ...account, version: 0 });
+    const result = await this.pool.query("INSERT INTO paper_accounts(account_id,owner_id,currency,cash,buying_power,equity,version,positions,created_at,updated_at) VALUES($1,$2,$3,$4,$5,$6,0,'[]'::jsonb,$7,$7) ON CONFLICT (account_id) DO NOTHING RETURNING account_id,currency,cash,buying_power,equity,version", [account.id, ownerId, account.currency, account.cash, account.buyingPower, account.equity, now]);
+    return result.rowCount ? accountRow(result.rows[0]) : null;
   }
   async updateAccount(account, expectedVersion, now = new Date()) {
     const result = await this.pool.query("UPDATE paper_accounts SET cash=$2,buying_power=$3,equity=$4,version=version+1,updated_at=$5 WHERE account_id=$1 AND version=$6 RETURNING account_id,currency,cash,buying_power,equity,version", [account.id, account.cash, account.buyingPower, account.equity, now, expectedVersion]);
