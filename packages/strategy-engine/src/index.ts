@@ -1,13 +1,17 @@
 import type { Candle } from '../../market-domain/src/index';
 
+export type BacktestInterval = '1m' | '5m' | '15m' | '1H' | '4H' | '1D' | '1W' | '1M';
 export interface BacktestOrder { side: 'buy' | 'sell'; quantity: number; type?: 'market' | 'limit'; limitPrice?: number; }
 export interface BacktestContext { index: number; candle: Candle; position: number; cash: number; }
 export type StrategyStep = (context: BacktestContext) => BacktestOrder | null;
-export interface BacktestConfig { initialCash: number; feeRate?: number; slippageBps?: number; allowShort?: boolean; }
+export interface BacktestConfig { initialCash: number; feeRate?: number; slippageBps?: number; allowShort?: boolean; interval?: BacktestInterval; }
 export interface BacktestTrade { index: number; time: number; side: 'buy' | 'sell'; quantity: number; price: number; fee: number; realizedPnl: number; }
 export interface BacktestMetrics { totalReturn: number; maxDrawdown: number; tradeCount: number; winRate: number; profitFactor: number; netProfit: number; averageTradePnl: number; sharpeRatio: number; }
 export interface BacktestResult { initialCash: number; finalCash: number; finalEquity: number; trades: readonly BacktestTrade[]; equityCurve: readonly number[]; metrics: BacktestMetrics; }
 export interface BenchmarkComparison { strategyReturn: number; benchmarkReturn: number; excessReturn: number; benchmarkFinalValue: number; }
+
+const PERIODS_PER_YEAR: Record<BacktestInterval, number> = { '1m': 252 * 390, '5m': 252 * 78, '15m': 252 * 26, '1H': 252 * 6.5, '4H': 252 * 1.625, '1D': 252, '1W': 52, '1M': 12 };
+export function annualizationPeriodsPerYear(interval: BacktestInterval = '1D'): number { return PERIODS_PER_YEAR[interval]; }
 
 function validateConfig(config: BacktestConfig): void {
   if (!Number.isFinite(config.initialCash) || config.initialCash < 0) throw new Error('initialCash must be non-negative');
@@ -21,17 +25,18 @@ function executionPrice(candle: Candle, order: BacktestOrder, slippageBps: numbe
   if (order.type === 'limit' && (order.side === 'buy' ? candle.low > raw! : candle.high < raw!)) return null;
   return raw! * (1 + (order.side === 'buy' ? 1 : -1) * slippageBps / 10_000);
 }
-function sharpe(values: readonly number[]): number {
+function sharpe(values: readonly number[], periodsPerYear: number): number {
   if (values.length < 2) return 0;
   const returns = values.slice(1).map((value, i) => values[i] === 0 ? 0 : value / values[i] - 1);
   const mean = returns.reduce((sum, value) => sum + value, 0) / returns.length;
   const variance = returns.reduce((sum, value) => sum + (value - mean) ** 2, 0) / returns.length;
-  return variance > 0 ? mean / Math.sqrt(variance) * Math.sqrt(252) : 0;
+  return variance > 0 ? mean / Math.sqrt(variance) * Math.sqrt(periodsPerYear) : 0;
 }
 
 export function runBacktest(candles: readonly Candle[], strategy: StrategyStep, config: BacktestConfig): BacktestResult {
   validateConfig(config);
   if (!candles.length) throw new Error('candles are required');
+  const periodsPerYear = annualizationPeriodsPerYear(config.interval);
   let cash = config.initialCash, position = 0, averageEntry = 0, equity = cash, peak = cash, maxDrawdown = 0;
   const trades: BacktestTrade[] = [], equityCurve: number[] = [];
   const feeRate = config.feeRate ?? 0, slippageBps = config.slippageBps ?? 0;
@@ -69,7 +74,7 @@ export function runBacktest(candles: readonly Candle[], strategy: StrategyStep, 
   const completedPnls = trades.map(t => t.realizedPnl - t.fee).filter(v => v !== 0);
   const gains = completedPnls.filter(v => v > 0), losses = completedPnls.filter(v => v < 0);
   const netProfit = equity - config.initialCash, grossLoss = Math.abs(losses.reduce((a,b)=>a+b,0)), grossProfit = gains.reduce((a,b)=>a+b,0);
-  const metrics: BacktestMetrics = { totalReturn: config.initialCash > 0 ? netProfit / config.initialCash : 0, maxDrawdown, tradeCount: trades.length, winRate: completedPnls.length ? gains.length / completedPnls.length : 0, profitFactor: grossLoss > 0 ? grossProfit / grossLoss : grossProfit > 0 ? Infinity : 0, netProfit, averageTradePnl: completedPnls.length ? completedPnls.reduce((a,b)=>a+b,0) / completedPnls.length : 0, sharpeRatio: sharpe(equityCurve) };
+  const metrics: BacktestMetrics = { totalReturn: config.initialCash > 0 ? netProfit / config.initialCash : 0, maxDrawdown, tradeCount: trades.length, winRate: completedPnls.length ? gains.length / completedPnls.length : 0, profitFactor: grossLoss > 0 ? grossProfit / grossLoss : grossProfit > 0 ? Infinity : 0, netProfit, averageTradePnl: completedPnls.length ? completedPnls.reduce((a,b)=>a+b,0) / completedPnls.length : 0, sharpeRatio: sharpe(equityCurve, periodsPerYear) };
   return { initialCash: config.initialCash, finalCash: cash, finalEquity: equity, trades, equityCurve, metrics };
 }
 
