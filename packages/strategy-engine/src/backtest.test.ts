@@ -1,0 +1,36 @@
+import { describe, expect, it } from 'vitest';
+import { runBacktest } from './index';
+
+const candles = [
+  { time: 1, open: 100, high: 105, low: 99, close: 102 },
+  { time: 2, open: 102, high: 110, low: 101, close: 108 },
+  { time: 3, open: 108, high: 112, low: 107, close: 110 },
+];
+
+describe('runBacktest', () => {
+  it('executes deterministic buy and sell orders and calculates return', () => {
+    const result = runBacktest(candles, ({ index, position }) => {
+      if (index === 0 && position === 0) return { side: 'buy', quantity: 1 };
+      if (index === 2 && position === 1) return { side: 'sell', quantity: 1 };
+      return null;
+    }, { initialCash: 1_000 });
+    expect(result.trades).toHaveLength(2);
+    expect(result.finalCash).toBe(1_010);
+    expect(result.finalEquity).toBe(1_010);
+    expect(result.totalReturn).toBeCloseTo(0.01);
+    expect(result.maxDrawdown).toBe(0);
+  });
+
+  it('applies fees and slippage deterministically', () => {
+    const result = runBacktest(candles.slice(0, 1), () => ({ side: 'buy', quantity: 1 }), { initialCash: 1_000, feeRate: 0.001, slippageBps: 100 });
+    expect(result.trades[0].price).toBeCloseTo(101);
+    expect(result.trades[0].fee).toBeCloseTo(0.101);
+    expect(result.finalCash).toBeCloseTo(898.899);
+  });
+
+  it('does not execute a limit order when the candle does not touch it', () => {
+    const result = runBacktest(candles.slice(0, 1), () => ({ side: 'buy', quantity: 1, type: 'limit', limitPrice: 98 }), { initialCash: 1_000 });
+    expect(result.trades).toHaveLength(0);
+    expect(result.finalEquity).toBe(1_000);
+  });
+});
