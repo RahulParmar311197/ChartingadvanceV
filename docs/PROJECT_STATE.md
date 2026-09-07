@@ -27,11 +27,9 @@ Phase 6 — Screener/fundamentals application integration in progress; chart cor
 - Fundamentals provider/application contract with freshness metadata and bounded pagination contract.
 - Provider-boundary validation for finite freshness timestamps, staleAt ordering, page shape, and bounded pagination cursors.
 - Application-level screener pagination/freshness regression coverage using a synthetic multi-page provider; the demo provider still exposes no fabricated pages.
-- Canonical TypeScript screener runtime consumed by the Node API through `tsx`; the duplicated JavaScript screener implementation and obsolete conformance test were removed.
+- Canonical TypeScript screener runtime consumed through `tsx`; duplicated JavaScript screener implementation removed.
 - Demo fundamentals screener API endpoint with symbol selection, full query/filter/group parsing, centralized request validation, and explicit stale/simulated metadata.
-- Screener request validation regression coverage for fields, operators, groups, symbols, ranges, limits, and cursor shape.
-- Browser screener API client with preflight validation and normalized query serialization.
-- Workspace-integrated fundamentals screener panel with filter controls, deterministic results, score display, freshness state, and explicit simulated-data warning.
+- Browser screener API client and workspace-integrated fundamentals screener panel with filter controls, deterministic results, score display, freshness state, and explicit simulated-data warning.
 - Browser screener client regression coverage.
 - Paper-trading application service with isolated demo-user paper accounts, risk admission, order lifecycle submission, deterministic demo execution, fill application, and portfolio retrieval.
 - Paper-only HTTP portfolio and order-submission endpoints with explicit simulated metadata and no brokerage execution path.
@@ -42,20 +40,22 @@ Phase 6 — Screener/fundamentals application integration in progress; chart cor
 - Paper-only HTTP cancellation (`DELETE /v1/paper/orders/:id`), replacement (`PUT /v1/paper/orders/:id`), and bounded audit (`GET /v1/paper/audit`) endpoints with explicit simulated metadata.
 - Browser paper-trading lifecycle API client methods for audit reads, cancellation, and replacement.
 - Regression coverage for cancellation, replacement, terminal-order protection, audit ordering, user isolation, and bounded audit reads.
+- Paper portfolio application valuation now marks every held symbol to the deterministic quote, updates unrealized P&L and equity without mutating cash, and exposes valuation through the existing portfolio response.
+- Trading-engine valuation regression coverage verifies long-position marking and safe behavior for positions without a current mark.
 
 ## Not production-ready
 The market-data and fundamentals implementations are deterministic demo data. No licensed live exchange/fundamentals feeds, durable production market database, authenticated user system, production WebSocket gateway, alerts worker, or real order execution exists.
 
 The workspace API remains intentionally in-memory and demo-only. Drawing state remains browser-session state until a versioned authorized workspace schema is implemented.
 
-Paper trading and backtesting are simulation/domain logic only. They do not claim broker execution, margin, exchange microstructure, historical-data completeness, or real-money guarantees. The current paper application uses deterministic demo quotes with bid/ask equal to the generated demo last price, a fixed demo fee rate, a bounded notional/position policy, and no short selling. Paper order lifecycle/audit state is also in-memory demo state and is not durable across process restart.
+Paper trading and backtesting are simulation/domain logic only. They do not claim broker execution, margin, exchange microstructure, historical-data completeness, or real-money guarantees. The current paper application uses deterministic demo quotes with bid/ask equal to the generated demo last price, a fixed demo fee rate, a bounded notional/position policy, and no short selling. Paper order lifecycle/audit state is also in-memory demo state and is not durable across process restart. Mark-to-market valuation is likewise based on the deterministic demo quote and is not a live valuation feed.
 
 The screener API has a pagination contract but the deterministic demo provider currently has no additional pages and therefore returns no next cursor. This is intentional; no fake pagination state is exposed.
 
 ## Verification
 - Previous CI run 168 passed package typecheck, all tests, and the production Vite build.
 - CI run 176 completed the substantive install, package typecheck, full test suite, and production build successfully for the previous project-state transition.
-- Latest paper-trading/drawing commits require fresh CI verification; GitHub currently reports no workflow status checks for the recent main commits.
+- Latest paper-trading commits require fresh CI verification; GitHub currently reports no workflow status checks for the recent main commits.
 
 ## Current risks / gaps
 - Backtest Sharpe annualization currently assumes 252 periods/year; interval-aware annualization remains future work.
@@ -64,9 +64,9 @@ The screener API has a pagination contract but the deterministic demo provider c
 - Screener needs a real fundamentals provider, durable provider pagination, and freshness/completeness policy before production use.
 - Drawing handles, rays, richer geometry, and versioned server persistence remain future work.
 - Realtime stream currently sends an initial quote snapshot only; candle streaming, heartbeats, provider failover, rate limits, and observability remain future work.
-- Paper trading still needs portfolio mark-to-market valuation, durable persistence, and application/UI order-list lifecycle controls.
+- Paper trading still needs durable persistence and application/UI order-list lifecycle controls.
 - Alerts still need persistence, scheduler/worker delivery, webhook/notification adapters, idempotency, and application/UI integration.
 - Dedicated script runtime, community, authentication, durable persistence, deployment, and production security remain planned.
 
 ## Next implementation slice
-Add portfolio mark-to-market valuation to the paper-trading application workflow, then define durable persistence boundaries for paper accounts/audit and versioned authorized workspace state.
+Add application/UI order-list lifecycle controls using cancellation/replacement endpoints, then define durable persistence boundaries for paper accounts/audit and versioned authorized workspace state.
