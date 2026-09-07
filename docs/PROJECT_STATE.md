@@ -46,7 +46,9 @@ Phase 6 — Screener/fundamentals application integration in progress; chart cor
 - Durable screener continuation migration `003_screener_continuations.sql` added.
 - In-memory and PostgreSQL screener continuation repositories added with owner/request-fingerprint/provider scoping, atomic single-use consumption, bounded expiry, and expired-row cleanup.
 - Provider cursor values remain infrastructure-only and are not used as browser continuation identifiers.
-- Regression coverage added for continuation scope isolation, expiry, single-use behavior, PostgreSQL atomic consume query shape, and cleanup.
+- Screener application continuation boundary now converts provider cursors into server-owned application continuation IDs and binds them to owner/request fingerprint/provider.
+- Screener API route now uses the continuation boundary; PostgreSQL mode persists continuation state across API restarts, while demo memory mode remains process-local.
+- Regression coverage added for continuation scope isolation, expiry, single-use behavior, PostgreSQL atomic consume query shape, cleanup, provider-token non-disclosure, and application-route semantics.
 - Paper-trading application service with isolated demo paper accounts, risk admission, order lifecycle, deterministic execution, fills, and portfolio retrieval.
 - Paper-only HTTP portfolio/order endpoints with explicit simulated metadata and no brokerage execution path.
 - Browser paper-trading client and workspace Trading Panel with simulation disclosure.
@@ -73,18 +75,20 @@ Paper trading and backtesting are simulation/domain logic only. They do not clai
 
 The backtest API accepts only registered built-in strategies and never evaluates arbitrary JavaScript/Pine/code. Current built-ins are Buy & Hold and Candle Direction. Candle-level execution does not model intrabar ordering, queue position, partial fills, borrow fees, margin calls, or corporate actions. Annualization assumptions are equity-market session assumptions, not universal exchange calendars.
 
+Screener continuation persistence is production-incomplete until authenticated identity is introduced and provider cursors can be encrypted with deployment-managed keys. Demo mode is intentionally simulated.
+
 ## Verification
 - CI run 34108387596 on commit `299a2d4` passed PostgreSQL provisioning, package typecheck, full tests, and production build for the screener cursor-validation slice.
 - CI run 34109685837 passed PostgreSQL provisioning, package typecheck, full tests, and production build for the screener freshness-state slice.
 - CI run 34111239978 passed package typecheck, full tests, and production build for the browser screener continuation slice at commit `1d70192`.
 - CI run 34112051500 passed package typecheck, full tests, and production build for timestamp-unit hardening.
-- The durable continuation migration/repository slice is pushed to `main`; a fresh push-CI result is required before treating the new persistence code as verified.
+- The continuation repository/application route changes are pushed to `main`; no new CI result is currently available through the connected status endpoint, so this slice is not claimed CI-verified.
 
 ## Current risks / gaps
 - Demo identity must be bound to authenticated identity before production user isolation.
+- Provider cursor encryption/key management is required before production storage of sensitive vendor tokens.
 - Intraday annualization uses a 6.5-hour/252-day equity-session assumption; exchange/calendar-aware annualization remains future work.
-- Screener requires a real fundamentals provider and application-route wiring for durable continuations once authenticated identity/provider credentials are available.
-- Provider cursor encryption/key management is still required before production storage of sensitive vendor tokens.
+- Screener still requires a real fundamentals provider and documented provider credentials/API terms.
 - External-provider timestamp units must be explicitly translated into the canonical Unix epoch-second application contract.
 - Drawings need richer geometry and durable server persistence.
 - Realtime needs candle streaming, heartbeats, provider failover, rate limits, and observability.
@@ -92,4 +96,4 @@ The backtest API accepts only registered built-in strategies and never evaluates
 - Dedicated script runtime, community, authentication, deployment, and production security remain planned.
 
 ## Next implementation slice
-Wire application-level continuation IDs into the screener route while keeping provider cursors entirely behind the infrastructure boundary; require authenticated owner identity and provider-specific cursor protection before production activation.
+Add provider-cursor encryption/key-management abstraction without committing secrets, then add production-oriented integration coverage for continuation persistence/restart and authenticated-owner enforcement.
