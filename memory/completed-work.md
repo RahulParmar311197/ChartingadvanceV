@@ -36,3 +36,7 @@
 - Deterministic candle-based backtesting added with market/limit execution, fees, slippage, opt-in short positions, realized P&L, drawdown, win rate, profit factor, Sharpe-style metrics, and benchmark comparison.
 - Dedicated screener-engine package added with normalized fundamental snapshots, typed numeric operators, AND/OR filter groups, deterministic ranking, and bounded result limits.
 - Screener regression coverage added for operators, missing fundamentals, grouping, ranking, limits, and invalid inputs.
+- Fundamentals provider/application boundary added with freshness metadata and bounded pagination contract.
+- Deterministic demo fundamentals API adapter added with explicit stale/simulated metadata.
+- Screener HTTP endpoint added with symbol selection and full query/filter/group support.
+- Centralized screener request validation added for fields, operators, ranges, groups, symbols, limits, cursors, and query objects, with regression coverage.
