@@ -4,6 +4,7 @@ import {
   createPaperAccount,
   executePaperOrder,
   markPortfolio,
+  replaceOrder,
   transitionOrder,
 } from "../../../packages/trading-engine/src/index.ts";
 import { generateQuote } from "../../../packages/market-domain/src/demo-core.js";
@@ -72,48 +73,52 @@ export function submitPaperOrder(userId, input, now = Date.now()) {
 }
 
 export function cancelPaperOrder(userId, orderId, now = Date.now()) {
+  if (!Number.isFinite(now)) throw new Error("invalid cancellation timestamp");
   const portfolio = accountFor(userId);
   const order = openOrders.get(portfolio.account.id)?.get(orderId);
   if (!order) throw new Error("open paper order not found");
   const cancelled = transitionOrder(order, "cancel", now);
   openOrders.get(portfolio.account.id).delete(orderId);
   audit(portfolio.account.id, "order_cancelled", orderId, now);
-  return { order: cancelled, portfolio: getPaperPortfolio(userId, now), simulated: true };
+  return { order: cancelled, portfolio: getPaperPortfolio(userId), simulated: true };
 }
 
-export function replacePaperOrder(userId, orderId, request, now = Date.now()) {
+export function replacePaperOrder(userId, orderId, request = {}, now = Date.now()) {
+  if (!Number.isFinite(now)) throw new Error("invalid replacement timestamp");
   const portfolio = accountFor(userId);
   const order = openOrders.get(portfolio.account.id)?.get(orderId);
   if (!order) throw new Error("open paper order not found");
   const newOrderId = typeof request?.id === "string" && request.id ? request.id : `${orderId}:replace:${now}`;
-  const replacement = { ...request, id: newOrderId, symbolId: order.symbolId, side: order.side, type: order.type };
   const ids = submittedOrderIds.get(portfolio.account.id);
   if (ids.has(newOrderId)) throw new Error("duplicate replacement order id");
-  const pair = awaitableReplace(order, replacement, now);
+  const pair = replaceOrder(order, {
+    quantity: request.quantity === undefined ? undefined : Number(request.quantity),
+    limitPrice: request.limitPrice === undefined ? undefined : Number(request.limitPrice),
+    stopPrice: request.stopPrice === undefined ? undefined : Number(request.stopPrice),
+    createdAt: now,
+  }, newOrderId);
   ids.add(newOrderId);
   openOrders.get(portfolio.account.id).delete(orderId);
-  rememberOrder(portfolio.account.id, pair.replacement);
+  const accepted = transitionOrder(pair.replacement, "submit", now);
+  rememberOrder(portfolio.account.id, accepted);
+  audit(portfolio.account.id, "order_cancelled", orderId, now, "replaced");
   audit(portfolio.account.id, "order_replaced", orderId, now);
   audit(portfolio.account.id, "order_submitted", newOrderId, now);
   audit(portfolio.account.id, "order_accepted", newOrderId, now);
-  return { cancelled: pair.cancelled, replacement: pair.replacement, portfolio: getPaperPortfolio(userId, now), simulated: true };
-}
-function awaitableReplace(order, replacement, now) {
-  const quantity = Number(replacement.quantity ?? order.quantity);
-  if (!Number.isFinite(quantity) || quantity <= 0) throw new Error("replacement quantity must be positive");
-  const cancelled = { ...order, status: "cancelled" };
-  const next = { ...order, ...replacement, id: replacement.id, quantity, status: "accepted", createdAt: now };
-  return { cancelled, replacement: next };
+  return { replaced: true, cancelled: pair.cancelled, replacement: accepted, portfolio: getPaperPortfolio(userId), simulated: true };
 }
 
-export function getPaperPortfolio(userId, now = Date.now()) {
+export function getPaperPortfolio(userId) {
   const portfolio = accountFor(userId);
   const marks = portfolio.positions.map((position) => ({ symbolId: position.symbolId, markPrice: executionQuote(position.symbolId).last }));
-  return structuredClone(markPortfolio(portfolio.account, portfolio.positions, marks).account ? { ...portfolio, ...markPortfolio(portfolio.account, portfolio.positions, marks) } : portfolio);
+  const marked = markPortfolio(portfolio.account, portfolio.positions, marks);
+  return structuredClone({ ...portfolio, account: marked.account, positions: marked.positions });
 }
+
 export function getPaperAudit(userId, limit = 100) {
   const portfolio = accountFor(userId);
   const bounded = Math.max(1, Math.min(100, Number(limit) || 100));
   return structuredClone((auditEvents.get(portfolio.account.id) ?? []).slice(-bounded));
 }
+
 export function resetPaperTradingStore() { accounts.clear(); submittedOrderIds.clear(); openOrders.clear(); auditEvents.clear(); }
