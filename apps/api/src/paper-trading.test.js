@@ -55,4 +55,14 @@ describe("paper trading application service", () => {
     expect(result.reason).toBe("order conditions not met");
     expect(getPaperPortfolio("user-a").ledger).toEqual([]);
   });
+
+  it("rejects duplicate client order ids without creating a second fill", () => {
+    const first = submitPaperOrder("user-a", { id: "duplicate", symbolId: "NASDAQ:AAPL", side: "buy", type: "market", quantity: 1 }, 1_000);
+    const second = submitPaperOrder("user-a", { id: "duplicate", symbolId: "NASDAQ:AAPL", side: "buy", type: "market", quantity: 1 }, 2_000);
+
+    expect(first.order.status).toBe("filled");
+    expect(second.order.status).toBe("rejected");
+    expect(second.risk.reason).toBe("duplicate order id");
+    expect(getPaperPortfolio("user-a").ledger).toHaveLength(1);
+  });
 });
