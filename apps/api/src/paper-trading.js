@@ -11,7 +11,8 @@ const FEE_RATE = 0.001;
 const accounts = new Map();
 
 function accountFor(userId) {
-  const id = `paper:${userId}`;
+  const safeUserId = typeof userId === "string" && userId.trim() ? userId.trim().slice(0, 128) : "anonymous";
+  const id = `paper:${safeUserId}`;
   let portfolio = accounts.get(id);
   if (!portfolio) {
     portfolio = { account: createPaperAccount(id, "USD", 100_000), positions: [], ledger: [] };
@@ -20,7 +21,12 @@ function accountFor(userId) {
   return portfolio;
 }
 
+function validSymbol(symbol) {
+  return typeof symbol === "string" && /^[A-Z0-9_.-]+:[A-Z0-9_.-]+$/i.test(symbol);
+}
+
 function executionQuote(symbol) {
+  if (!validSymbol(symbol)) throw new Error("symbol must use EXCHANGE:TICKER format");
   const quote = generateQuote(symbol);
   return { bid: quote.last, ask: quote.last, last: quote.last };
 }
