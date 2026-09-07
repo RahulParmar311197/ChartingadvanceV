@@ -1,6 +1,9 @@
 # Changelog
 
 ## 2026-09-07
+- Replaced the duplicated JavaScript screener runtime with the canonical TypeScript screener implementation.
+- Added `tsx` as the Node runtime bridge so API/realtime entrypoints can execute TypeScript package contracts without a second implementation.
+- Removed the obsolete TypeScript/JavaScript runtime conformance test now that there is a single screener implementation.
 - Hardened the fundamentals provider/application boundary with validation for provider page shape, finite freshness timestamps, staleAt ordering, and bounded next cursors.
 - Added application-level regression coverage for multi-page cursor forwarding, limit propagation, freshness transitions, and malformed provider pagination metadata using a synthetic provider.
 - Added a dedicated screener-engine package with normalized fundamental snapshots, typed numeric filters, AND/OR filter groups, deterministic scoring, and bounded results.
@@ -11,7 +14,7 @@
 - Kept demo screener pagination explicit: the provider returns no next cursor because the demo dataset has no additional page.
 - Added a browser screener API client with local filter validation and normalized query serialization.
 - Integrated a fundamentals screener panel into the workspace with filter controls, deterministic ranking/score display, freshness status, and explicit simulated-data disclosure.
-- Added browser-client regression tests and TypeScript/JavaScript runtime conformance coverage.
+- Added browser-client regression coverage.
 
 ## 2026-09-07
 - Added deterministic backtesting support for opt-in short positions, average-entry tracking, realized P&L, win rate, profit factor, net/average trade P&L, maximum drawdown, equity curve, and Sharpe-style performance measurement.
